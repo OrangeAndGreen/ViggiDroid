@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/commentMainLayout"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <TextView
+    	android:id="@+id/commentIntro"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:text="Add Comment"
+    />
+    <EditText
+    	android:id="@+id/commentText"
+    	android:layout_width="200sp"
+    	android:layout_height="wrap_content"
+    />
+    <LinearLayout
+		android:id="@+id/commentButLayout"
+	   	android:orientation="horizontal"
+	   	android:layout_width="fill_parent"
+	   	android:layout_height="wrap_content">
+    	<Button
+    		android:id="@+id/commentOkButton" 
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="fill_parent"
+            android:gravity="center"
+            android:layout_weight="1"
+	    	android:text="Set"
+	    	 />
+    	<Button android:id="@+id/commentCancelButton"
+			android:layout_width="wrap_content"
+	    	android:layout_height="fill_parent"
+            android:gravity="center"
+            android:layout_weight="1"
+	    	android:text="Cancel" />
+    
+    </LinearLayout>
+    
+</LinearLayout>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+  	<LinearLayout
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:orientation="horizontal" >
+  		<ToggleButton
+		    android:id="@+id/recordButton"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="-" />
+		<Spinner
+			android:id="@+id/pageSelector"
+  			android:layout_width="170sp"
+  			android:layout_height="wrap_content"
+  			android:layout_marginTop="8dp"
+  			android:text="Page" />
+  		<TextView
+  			android:id="@+id/statusText"
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"
+  			android:layout_marginTop="8dp" />
+  	</LinearLayout>
+  	
+  	<include layout="@layout/divider"/>
+  	
+  	<com.Dave.Graph.GraphView
+  		android:id="@+id/graphView"
+  		android:layout_width="fill_parent"
+  		android:layout_height="fill_parent" />
+  	
+  	<com.google.android.maps.MapView
+    	android:id="@+id/mapview"
+    	android:layout_width="fill_parent"
+    	android:layout_height="fill_parent"
+    	android:clickable="true"
+    	android:apiKey="0dv6CIbiOnLsHi7SCi9n2ZogSgr4yaGGsIvCl5Q" />
+  	
+  	<ScrollView
+  		android:id="@+id/scrollview"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content" >
+  		<TextView
+  			android:id="@+id/textView"
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content" />
+  	</ScrollView>
+  	
+  	
+  	<ScrollView
+  		android:id="@+id/scrollview2"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content" >
+  		<LinearLayout
+  	    	android:id="@+id/settings_layout"
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"
+  			android:orientation="vertical" >
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/history_label"
+	  			    android:layout_width="175sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Graph History" />
+	  			<Spinner
+	  			    android:id="@+id/history_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />"
+	  		</LinearLayout>
+	  	
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/average_label"
+	  			    android:layout_width="175sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Running Average" />
+	  			<Spinner
+	  			    android:id="@+id/average_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  		</LinearLayout>
+	
+	  		<CheckBox 
+	  		    android:id="@+id/check_satellite"
+	  		    android:layout_width="wrap_content"
+	  			android:layout_height="wrap_content"
+	  			android:text="Show Satellites" />"
+	  		
+	  		<CheckBox 
+	  		    android:id="@+id/check_traffic"
+	  		    android:layout_width="wrap_content"
+	  			android:layout_height="wrap_content"
+	  			android:text="Show Traffic" />
+	  		
+	  				
+	  		<include layout="@layout/divider"/>
+	  		
+	  		<TextView 
+	  		    android:id="@+id/units_label"
+	  		    android:layout_width="wrap_content"
+	  			android:layout_height="wrap_content"
+	  			android:textSize="25sp"
+	  			android:text="Units:" />
+	  		
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/altitude_label"
+	  			    android:layout_width="175sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Altitude" />
+	  			<Spinner
+	  			    android:id="@+id/altitude_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  		</LinearLayout>
+	  	
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/accuracy_label"
+	  			    android:layout_width="175sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Accuracy" />
+	  			<Spinner
+	  			    android:id="@+id/accuracy_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  		</LinearLayout>
+	  	
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/distance_label"
+	  			    android:layout_width="175sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Distance" />
+	  			<Spinner
+	  			    android:id="@+id/distance_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  		</LinearLayout>
+	  	
+	  		<LinearLayout
+	  			android:layout_width="fill_parent"
+	  			android:layout_height="wrap_content"
+	  			android:orientation="horizontal" >
+	  			<TextView 
+	  			    android:id="@+id/speed_label"
+	  			    android:layout_width="50sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Speed" />
+	  			<Spinner
+	  			    android:id="@+id/speed_distance_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  			<TextView 
+	  			    android:id="@+id/per_label"
+	  			    android:layout_width="25sp"
+	  				android:layout_height="wrap_content"
+	  				android:text="Per" />
+	  			<Spinner
+	  			    android:id="@+id/speed_time_selector"
+	  			    android:layout_width="100sp"
+	  				android:layout_height="wrap_content" />
+	  		</LinearLayout>
+	  	</LinearLayout>
+  	</ScrollView>
+  	
+</LinearLayout>

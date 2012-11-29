@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+	<TextView
+		android:id="@+id/introText"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:text="@string/hello"
+  		android:textSize="30sp"/>
+  	<LinearLayout
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:orientation="horizontal" >
+		<Button
+			android:id="@+id/incButton"
+  			android:layout_width="wrap_content"
+  			android:layout_height="wrap_content"
+  			android:text="Count" />
+  		<Button
+  			android:id="@+id/resetButton"
+  			android:layout_width="wrap_content"
+  			android:layout_height="wrap_content"
+  			android:text="Reset" />  			
+  	</LinearLayout>
+  	<TextView android:id="@+id/countText"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:text="@string/num"
+  		android:gravity="center_horizontal"
+  		android:textStyle="bold"
+  		android:textSize="20sp"/>
+  	<AutoCompleteTextView
+  		android:id="@+id/autotext"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		/>
+  	<Button
+  		android:id="@+id/closeButton"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:text="@string/app_close" />
+    <TextView
+    	android:id="@+id/dateText"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:text="NONE" />
+</LinearLayout>

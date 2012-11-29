@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/accelLayout"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+>
+	<TextView
+		android:id="@+id/accelText"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content" 
+	    android:text="@string/hello"
+    />
+    
+    <LinearLayout
+    	android:id="@+id/graphLayout"
+    	android:orientation="vertical"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    >
+    </LinearLayout>
+    
+    <Button
+    	android:id="@+id/closeButton"
+	    android:layout_width="75sp"
+	    android:layout_height="wrap_content" 
+	    android:text="Close"
+    />
+</LinearLayout>

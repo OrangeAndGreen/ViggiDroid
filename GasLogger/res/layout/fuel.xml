@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+    
+    <LinearLayout
+        android:orientation="horizontal"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:gravity="right"
+    	>
+    	<Button
+    		android:id="@+id/button_ok_fuel"
+    		android:layout_gravity="right"
+    		android:layout_width="75dp"
+    		android:layout_height="50dp"
+    		android:text="@string/ok"
+    		/>
+    	<Button
+    		android:id="@+id/button_back_fuel"
+    		android:layout_gravity="right"
+    		android:layout_width="75dp"
+    		android:layout_height="50dp"
+    		android:text="@string/back"
+    		/>
+    	<Button
+    		android:id="@+id/button_quit_fuel"
+    		android:layout_gravity="right"
+    		android:layout_width="75dp"
+    		android:layout_height="50dp"
+    		android:text="@string/quit"
+    		/>
+    </LinearLayout>
+    
+    <include layout="@layout/divider"/>
+    
+    <ScrollView
+        android:layout_height="wrap_content"
+		android:layout_width="fill_parent"
+		>
+    	<TableLayout
+    	    android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:stretchColumns="0,1"
+			>
+			
+    	    <TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_date"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Date"
+    				/>
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/date"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    		</TableRow>
+    	    
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_mileage"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Fillup mileage"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_octane"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Octane"
+    				/>
+
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/mileage"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<Spinner
+    				android:id="@+id/octane"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+
+    		</TableRow>
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_gallons"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Gallons"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_costpergallon"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Cost/Gallon"
+    				/>
+
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/gallons"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<EditText
+    				android:id="@+id/costpergallon"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+
+    		</TableRow>
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_indicator"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Fuel Indicator"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_station"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Station"
+    				/>
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<Spinner
+    				android:id="@+id/indicator"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<Spinner
+    				android:id="@+id/station"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    		</TableRow>
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_location"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Location"
+    				/>
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/location"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    		</TableRow>
+    	
+    		<include layout="@layout/divider"/>
+    	
+    		<!-- Low Fuel Indicator Info -->
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_lowmileage"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Low fuel mileage"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_lowdays"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Low Fuel Days"
+    				/>
+
+    		</TableRow>
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/lowmileage"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<EditText
+    				android:id="@+id/lowdays"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+
+    		</TableRow>
+    		
+    	</TableLayout>
+    	
+    </ScrollView>
+    
+</LinearLayout>

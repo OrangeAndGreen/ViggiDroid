@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Gas Logger</string>
+    <string name="quit">Quit</string>
+    <string name="back">Back</string>
+    <string name="ok">OK</string>
+    <string name="selectlowfuel">Enter low fuel info</string>
+    <string name="selectfuel">Enter fillup info</string>
+    <string name="selectview">View Stats</string>
+    <string name="selectsettings">Settings</string>
+    <string name="settings_edit">Edit data</string>
+    <string name="settings_import">Import data</string>
+    <string name="settings_export">Export data</string>
+
+</resources>

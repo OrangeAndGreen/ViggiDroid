@@ -1,0 +1,35 @@
+
+Keystore for TravelTracker
+
+G:\Projects\workspace1\TravelTrackerKeystore
+Pass: D1...
+
+Alias: TravelTrackerAlias
+Pass: D8a2...
+
+
+
+Followed this tutorial:
+http://www.remwebdevelopment.com/dev/a35/Android-How-To-Set-Up-an-API-Key-for-Google-Maps.html
+
+Used debug.keystore instead
+
+Navigate to:
+	C:\Users\Dave\.android
+Run this command:
+	"C:\Program Files (x86)\Java\jre7\bin\keytool" -list -v -alias androiddebugkey -storepass android -keypass android -keystore debug.keystore
+
+Certificate fingerprints:
+         MD5:  0A:C1:90:35:3E:4C:68:4E:14:AD:AC:50:83:ED:C6:2A
+         SHA1: 6B:CC:90:95:FE:7B:54:C5:7F:08:2A:DD:83:12:7C:B0:89:38:13:97
+         SHA256: 1E:67:0B:48:1C:02:89:27:66:D8:AA:66:3C:27:3D:9B:13:1C:FB:82:CC:C7:0E:F9:BB:95:87:27:AE:59:9A:11
+
+Entered the MD5 fingerprint at the following site:
+	http://code.google.com/intl/ja/android/maps-api-signup.html
+		 
+Then Google gives the following Maps API Key:
+	0dv6CIbiOnLsHi7SCi9n2ZogSgr4yaGGsIvCl5Q
+It will work for all apps with fingerprint:
+	0A:C1:90:35:3E:4C:68:4E:14:AD:AC:50:83:ED:C6:2A
+	
+Note: In order to use MapView, have to have a "Google API" as the build target in Project settings	

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">\nDave\'s Logger!\n</string>
+    <string name="app_name">Dave Logger</string>
+    <string name="close">Close</string>
+    <string name="dateSliderTitle">Selected date</string>
+</resources>

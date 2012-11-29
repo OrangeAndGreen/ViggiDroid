@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+    <LinearLayout
+    	android:orientation="horizontal"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:gravity="top"
+    >
+    	<Button android:id="@+id/addButton"
+    		android:layout_marginTop="5sp"
+    		android:layout_width="75sp"
+    		android:layout_height="wrap_content"
+    		android:text="+"
+    	/>
+	    <TextView android:id="@+id/summaryText"
+	    	android:layout_gravity="top"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="wrap_content"
+	    	android:text="-"
+	    />
+    </LinearLayout>
+    <include android:id="@+id/logsetDivider" layout="@layout/divider"/>
+</LinearLayout>

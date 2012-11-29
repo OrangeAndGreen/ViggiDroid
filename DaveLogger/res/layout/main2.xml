@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/mainScroll"
+	android:layout_height="fill_parent"
+	android:layout_width="fill_parent"
+>
+	<RelativeLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    >
+	    <!-- First row: date string and safe button  -->
+	    <TextView  android:id="@+id/introText"
+			    android:layout_width="215sp" 
+			    android:layout_height="wrap_content"
+			    android:layout_alignParentTop="true"
+			    android:layout_alignParentLeft="true"
+			    android:text="Dave's Logger!"
+			    android:textSize="25sp"
+	    	/>
+	    <Button android:id="@+id/safeButton"
+	    		android:layout_width="35sp"
+	    		android:layout_height="wrap_content"
+	    		android:layout_alignParentTop="true"
+	    		android:layout_alignParentRight="true"
+	    		android:text="S"
+	    	/>
+	    <Button android:id="@+id/viewButton"
+				android:layout_width="70sp"
+				android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+	    		android:layout_toLeftOf="@id/safeButton"
+				android:text="View"
+			/>
+	    
+	    <include android:id="@+id/div1"
+	        	layout="@layout/divider"
+	        	android:layout_alignParentLeft="true"
+	        	android:layout_below="@id/introText"
+	        />
+	    
+	    <!-- Second row: logging options  -->
+	    
+	    <CheckBox android:id="@+id/dateCheck"
+	    		android:layout_width="150sp"
+	    		android:layout_height="wrap_content"
+	    		android:layout_below="@id/div1"
+	    		android:layout_alignLeft="@id/div1"
+	    		android:text="Edit date"
+	    	/>
+	    <CheckBox android:id="@+id/commentCheck"
+	    		android:layout_width="wrap_content"
+	    		android:layout_height="wrap_content"
+	    		android:layout_below="@id/div1"
+	    		android:layout_toRightOf="@id/dateCheck"
+	    		android:text="Add comment"
+	    	/>
+	    
+	    <include layout="@layout/divider"
+	        	android:id="@+id/div2"
+	        	android:layout_alignParentLeft="true"
+	        	android:layout_below="@id/dateCheck"
+	        />
+	    
+	    <!-- Third row: Toggles  -->
+	    <LinearLayout
+	    	android:orientation="horizontal"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="wrap_content"
+	    	android:layout_marginTop="2sp"
+	    	>
+	    	<include android:id="@+id/toggleStub0" layout="@layout/togglestub" />
+	    	<include android:id="@+id/toggleStub1" layout="@layout/togglestub" />
+	    	<include android:id="@+id/toggleStub2" layout="@layout/togglestub" />
+	    	<include android:id="@+id/toggleStub3" layout="@layout/togglestub" />
+	    	<include android:id="@+id/toggleStub4" layout="@layout/togglestub" />
+	    	<include android:id="@+id/toggleStub5" layout="@layout/togglestub" />
+	    </LinearLayout>
+	    	
+	    <include layout="@layout/divider"
+	        	android:id="@+id/div3"
+	        	android:layout_alignParentLeft="true"
+	        	android:layout_below="@id/toggleStub0"
+	        />
+	    
+	    <LinearLayout
+		    	android:orientation="vertical"
+		    	android:layout_width="fill_parent"
+		    	android:layout_height="fill_parent"
+		    	android:layout_alignParentLeft="true"
+	        	android:layout_below="@id/div3"
+		    >
+	
+			<!-- Log Sets -->	
+			<include android:id="@+id/logstub0" layout="@layout/logstub" />
+			<include android:id="@+id/logstub1" layout="@layout/logstub" />
+			<include android:id="@+id/logstub2" layout="@layout/logstub" />
+			<include android:id="@+id/logstub3" layout="@layout/logstub" />
+			<include android:id="@+id/logstub4" layout="@layout/logstub" />
+			<include android:id="@+id/logstub5" layout="@layout/logstub" />
+			<include android:id="@+id/logstub6" layout="@layout/logstub" />
+			<include android:id="@+id/logstub7" layout="@layout/logstub" />
+			<include android:id="@+id/logstub8" layout="@layout/logstub" />
+			<include android:id="@+id/logstub9" layout="@layout/logstub" />
+			<include android:id="@+id/logstub10" layout="@layout/logstub" />
+	
+			<!-- Last row: Stats and Close buttons -->
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="300sp"
+				android:layout_height="wrap_content"
+				android:gravity="right"
+				>
+			</LinearLayout>
+			<!--
+			<Button android:id="@+id/testingButton"
+				android:layout_width="100sp"
+				android:layout_height="wrap_content"
+				android:text="Test"
+			/>
+			-->
+			<TextView
+				android:id="@+id/debugText"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+			/>
+		</LinearLayout>
+
+	</RelativeLayout>
+</ScrollView>
