@@ -37,6 +37,13 @@ public class CommentPrompt extends Dialog
 		mEditText.setText("");
 	}
 	
+	@Override
+	public void show()
+	{
+		mEditText.setText("");
+		super.show();
+	}
+	
 	private android.view.View.OnClickListener okButtonClickListener = new android.view.View.OnClickListener() {
 		public void onClick(View v)
 		{

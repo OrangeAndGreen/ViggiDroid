@@ -12,10 +12,12 @@ public class LoggerConfig
 {
 	public String ConfigFilename = "/sdcard/00Logs/DaveConfig.txt";
 	public boolean Simulation = true;
+	public boolean Debug = true;
 	public String Username = "Dave";
 	public int AveragingWindow = 30;
 	public List<String> Toggles = new ArrayList<String>();
 	public List<String> Buttons = new ArrayList<String>();
+	public List<String> SafeItems = new ArrayList<String>();
 	public String LogFilePath = "/sdcard/00Logs/DaveLog.txt";
 	public String ExportDirectory = "/sdcard/01Files/";
 	public int MidnightHour = 5;
@@ -52,13 +54,25 @@ public class LoggerConfig
     			if(parts[0].equals("Username"))
     				ret.Username = parts[1].trim();
     			if(parts[0].equals("Simulation"))
+    			{
     				ret.Simulation = parts[1].trim().equals("on");
+    				if(!ret.Simulation)
+    					ret.Simulation = parts[1].trim().equals("true");
+    			}
+    			if(parts[0].equals("Debug"))
+    			{
+    				ret.Debug = parts[1].trim().equals("on");
+    				if(!ret.Debug)
+    					ret.Debug = parts[1].trim().equals("true");
+    			}
     			if(parts[0].equals("AveragingWindow"))
     				ret.AveragingWindow = Integer.parseInt(parts[1].trim());
     			if(parts[0].equals("Toggle"))
     				ret.Toggles.add(parts[1].trim());
     			if(parts[0].equals("Button"))
     				ret.Buttons.add(parts[1].trim());
+    			if(parts[0].equals("Safe"))
+    				ret.SafeItems.add(parts[1].trim());
     			if(parts[0].equals("LogFilePath"))
     				ret.LogFilePath = parts[1].trim();
     			if(parts[0].equals("ExportDirectory"))
@@ -131,6 +145,11 @@ public class LoggerConfig
     			sim="on";
     		fw.write("Simulation = " + sim + "\n");
     		
+    		String debug = "off";
+    		if(Debug)
+    			debug="on";
+    		fw.write("Debug = " + debug + "\n");
+    		
     		fw.write("Username = " + Username + "\n");
     		fw.write("LogFilePath = " + LogFilePath + "\n");
     		fw.write("ExportDirectory = " + ExportDirectory + "\n");
@@ -143,6 +162,8 @@ public class LoggerConfig
     			fw.write("Toggle = " + Toggles.get(i) + "\n");
     		for(int i=0; i<Buttons.size(); i++)
     			fw.write("Button = " + Buttons.get(i) + "\n");
+    		for(int i=0; i<SafeItems.size(); i++)
+    			fw.write("Safe = " + SafeItems.get(i) + "\n");
     		
     		fw.close();
     	}

@@ -15,6 +15,8 @@ public class LoggerState
 	public String TempFilename = "/sdcard/DaveLogger/TempFile.txt";
 	public Calendar ActiveDate = null;
 	
+	public boolean Safe = false;
+	
 	public String[] EventNames = null;
 	public int[] EventDailyCounts = null;
 	public Calendar[][] EventRecentHistories = null;
@@ -22,7 +24,7 @@ public class LoggerState
 	public String[] ToggleNames = null;
 	public boolean[] ToggleStates = null;
 	public Calendar[] ToggleLastDates = null;
-	
+	 
 	private LoggerState(String tempFilename)
 	{
 		TempFilename = tempFilename;
@@ -85,6 +87,12 @@ public class LoggerState
     				ret.ToggleNames[index] = subparts[0];
     				ret.ToggleStates[index] = subparts[1].trim().equals("on");
     				ret.ToggleLastDates[index] = DateStrings.ParseDateTimeString(subparts[2].trim());
+    			}
+    			if(parts[0].equals("Safe"))
+    			{
+    				ret.Safe = parts[1].trim().equals("on");
+    				if(!ret.Safe)
+    					ret.Safe = parts[1].trim().equals("true");
     			}
     		}
     		br.close();
@@ -172,6 +180,7 @@ public class LoggerState
     public void StartNewActiveDay(LoggerConfig config)
     {
     	ActiveDate = DateStrings.GetActiveDate(Calendar.getInstance(), config.MidnightHour);
+    	Safe = false;
     	
     	for(int i=0; i<EventDailyCounts.length; i++)
     		EventDailyCounts[i] = 0;
@@ -208,6 +217,7 @@ public class LoggerState
     		FileWriter fw = new FileWriter(TempFilename, false);
     		
     		fw.write(String.format("ActiveDate = %s\n", DateStrings.GetDateTimeString(ActiveDate)));
+    		fw.write(String.format("Safe = %s\n", Safe));
     		
     		for(int i=0; i<config.Buttons.size(); i++)
     		{

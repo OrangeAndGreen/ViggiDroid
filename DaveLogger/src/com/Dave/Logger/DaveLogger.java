@@ -111,7 +111,7 @@ import com.Dave.Files.LogFile;
 public class DaveLogger extends Activity implements Runnable
 {
 	//Tracking Fields
-    public static boolean Safe = false; //Move to ConfigFile
+	public static boolean Safe = false;
     private LogAdder mAdder = new LogAdder();
     
     private String mRootDirectory = null;
@@ -162,7 +162,6 @@ public class DaveLogger extends Activity implements Runnable
         	if(savedInstanceState != null)
             {
         		Log.i("Logger", "Reloaded bundle");
-            	Safe = savedInstanceState.getBoolean("safe");
             }
         	
         	setContentView(R.layout.main);
@@ -244,7 +243,12 @@ public class DaveLogger extends Activity implements Runnable
         	mUpdateThread = new Thread(this);
         	mUpdateThread.start();
         	
-        	if(Safe)
+        	Safe = mState.Safe;
+        	
+        	if(mConfig.SafeItems.size() == 0 || mState.Safe)
+        		mSafeButton.setVisibility(View.GONE);
+        	
+        	if(mState.Safe)
         		EnterSafeMode();
         }
         catch(Exception e)
@@ -256,7 +260,6 @@ public class DaveLogger extends Activity implements Runnable
     @Override
     protected void onSaveInstanceState (Bundle outState)
     {
-    	outState.putBoolean("safe", Safe);
     	super.onSaveInstanceState(outState);
     }
     
@@ -313,21 +316,23 @@ public class DaveLogger extends Activity implements Runnable
     {
     	try
 		{
-			Safe = true;
+    		Safe = true;
+			mState.Safe = true;
+			mState.Save(mConfig);
 			//Hide safe button
 			mSafeButton.setVisibility(View.GONE);
 			//Hide smoke logset
-			int smokeId = -1;
-			for(int i=0; i<mConfig.Buttons.size(); i++)
-				if(mConfig.Buttons.get(i).equals("Smoke"))
-					smokeId = i;
-			if(smokeId >= 0)
+			
+			for(int x = 0; x<mConfig.SafeItems.size(); x++)
 			{
-				mLayouts[smokeId].setVisibility(View.GONE);
-				mConfig.Buttons.remove(smokeId);
-				
-				//TODO: Make this work again
-				//mState.LoadTempFile();
+				int foundId = -1;
+				for(int i=0; i<mConfig.Buttons.size(); i++)
+					if(mConfig.Buttons.get(i).equals(mConfig.SafeItems.get(x)))
+						foundId = i;
+				if(foundId >= 0)
+				{
+					mLayouts[foundId].setVisibility(View.GONE);
+				}
 			}
 		}
 		catch(Exception e)
