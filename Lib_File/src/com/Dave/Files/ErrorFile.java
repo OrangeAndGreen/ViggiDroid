@@ -6,13 +6,14 @@ import java.util.Calendar;
 import com.Dave.DateStrings.DateStrings;
 
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
 
 public class ErrorFile
 {
-	public static String ErrorFile = "/sdcard/ErrorLog.txt";
+	public static String ErrorFile = "ErrorLog.txt";
 	
 	public static void Write(String who, String error, Context context)
 	{
@@ -20,7 +21,7 @@ public class ErrorFile
 		String entry = String.format("%s - %s: %s\n", DateStrings.GetDateTimeString(date), who, error);
 		try
 		{
-			FileWriter fw = new FileWriter(ErrorFile, true);
+			FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/" + ErrorFile, true);
 			fw.write(entry);
 			fw.close();
 		}
@@ -46,7 +47,7 @@ public class ErrorFile
 	   	String entry = String.format("%s:\n%s\n%s\n", DateStrings.GetDateTimeString(date), e.getCause(), stackTrace);
 	   	try
 	   	{
-	   		FileWriter fw = new FileWriter(ErrorFile, true);
+	   		FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/" + ErrorFile, true);
 	   		fw.write(entry);
 	   		fw.close();
 	   	}

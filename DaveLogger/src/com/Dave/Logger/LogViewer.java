@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.Dave.DateStrings.DateStrings;
 import com.Dave.Graph.GraphPlot;
+import com.Dave.Files.DebugFile;
 import com.Dave.Files.ErrorFile;
 import com.Dave.Files.LogEntry;
 import com.Dave.Files.LogFile;
@@ -38,23 +39,25 @@ import android.widget.TextView;
 
 public class LogViewer extends Activity implements Runnable
 {
-	private static Spinner mTypeSpinner = null;
-	private static Spinner mDataSpinner = null;
-	private static com.Dave.Graph.GraphView mGraph = null;
-	private static ScrollView mTextScroller = null;
-	private static TextView mTextView = null;
-	private static CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Stats", "Recent History"};
-	private static CharSequence[] mCategoryStrings = null;
-	private static LoggerConfig mConfig = null;
-	private static String mConfigFile = "/sdcard/00Logs/DaveConfig.txt";
-	private static LogFile mLog = null;    
-    private static String mLogFile = "/sdcard/00Logs/DaveLog.txt";
+	private Spinner mTypeSpinner = null;
+	private Spinner mDataSpinner = null;
+	private com.Dave.Graph.GraphView mGraph = null;
+	private ScrollView mTextScroller = null;
+	private TextView mTextView = null;
+	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Stats", "Recent History"};
+	private CharSequence[] mCategoryStrings = null;
+	private LoggerConfig mConfig = null;
+	private LogFile mLog = null;    
 	
+    private boolean mSafe = false;
+    private String mRootDirectory = null;
+    private String mLogFile = null;
+    
     private Context mContext = null;
     private ProgressDialog mDialog = null;
-    private static String mStatsText = null;
+    private String mStatsText = null;
     
-    private static boolean mInitialized = false;
+    private boolean mInitialized = false;
     private boolean mThreadRunning = false;
 	
 	@Override
@@ -65,7 +68,13 @@ public class LogViewer extends Activity implements Runnable
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.logview);
        
-			Log.i("LogViewer", "Loading activity");
+			Intent intent = getIntent();
+			mSafe = intent.getBooleanExtra("safe", false);
+			mRootDirectory = intent.getStringExtra("directory");
+			String configFile = intent.getStringExtra("configfile");
+			mLogFile = intent.getStringExtra("logfile");
+			
+			Debug("LogViewer", "Loading activity", false);
 			mContext = this;
 			
 			//Find GUI Views
@@ -82,12 +91,12 @@ public class LogViewer extends Activity implements Runnable
 
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
-   			mConfig = LoggerConfig.FromFile(mConfigFile);
+   			mConfig = LoggerConfig.FromFile(mRootDirectory + configFile);
    			for(int i=0; i<mConfig.Buttons.size(); i++)
    			{
    				
    				String button = mConfig.Buttons.get(i);
-   				if((!DaveLogger.Safe || !button.equals("Smoke"))   )// && typeCounts.get(button) > 0)
+   				if((!mSafe || !button.equals("Smoke"))   )// && typeCounts.get(button) > 0)
    					categories.add(button);
    			}
    			for(int i=0; i<mConfig.Toggles.size(); i++)
@@ -115,7 +124,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		catch(Exception e)
 		{
-			Log.e("LogViewer", "Error loading activity");
+			Debug("LogViewer", "Error loading activity", false);
 			ErrorFile.WriteException(e, this);
 		}
     }
@@ -129,14 +138,14 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
-			Log.w("LogViewer.LaunchThreadWithWaitDialog", "Tried to launch thread twice");
+			Debug("LogViewer", "Tried to launch thread twice", false);
 		}
 	}
 	
 	@Override
 	public void onBackPressed()
 	{
-		Log.i("LogViewer", "Back button pressed");
+		Debug("LogViewer", "Back button pressed", false);
 		finish();
 	}
 	
@@ -175,8 +184,8 @@ public class LogViewer extends Activity implements Runnable
     					mCategoryStrings[dataIndex], mGraphTypes[typeIndex]);
     	try
     	{
-    	FileOutputStream out = new FileOutputStream(filename);
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+    		FileOutputStream out = new FileOutputStream(filename);
+    		bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
     	}
     	catch(Exception e)
     	{
@@ -192,8 +201,8 @@ public class LogViewer extends Activity implements Runnable
     	String filename = mConfig.ExportDirectory + mCategoryStrings[dataIndex] + "_" + mGraphTypes[typeIndex] + ".png";
     	try
     	{
-    	FileOutputStream out = new FileOutputStream(filename);
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+    		FileOutputStream out = new FileOutputStream(filename);
+    		bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
     	}
     	catch(Exception e)
     	{
@@ -212,11 +221,11 @@ public class LogViewer extends Activity implements Runnable
         context.startActivity(Intent.createChooser(emailIntent, "Send mail..."));
     }
 	
-	public static void UpdateGraph(boolean prepare)
+	public void UpdateGraph(boolean prepare)
 	{
 		if(!mInitialized)
 		{
-			Log.i("LogViewer.UpdateGraph", "UpdateGraph called before initialized");
+			Debug("LogViewer", "UpdateGraph called before initialized", false);
 			return;
 		}
 		try
@@ -226,7 +235,7 @@ public class LogViewer extends Activity implements Runnable
 			String category = mCategoryStrings[dataIndex].toString();
 
 			String action = prepare ? "Preparing" : "Drawing";
-			Log.i("LogViewer.UpdateGraph", action + " graph: " + category + ", " + typeIndex);
+			Debug("LogViewer", action + " graph: " + category + ", " + typeIndex, false);
 			
 			switch(typeIndex)
 			{
@@ -255,7 +264,7 @@ public class LogViewer extends Activity implements Runnable
 					break;
 			}
 			
-			Log.i("LogViewer.UpdateGraph", "Done " + action + " graph");
+			Debug("LogViewer", "Done " + action + " graph", false);
 		}
 		catch(Exception e)
 		{
@@ -263,11 +272,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private static void DrawDailyCountsGraph(String category, boolean prepare)
+	private void DrawDailyCountsGraph(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
-			Log.i("LogViewer.DrawDailyCountsGraph", "Drawing daily counts graph");
+			Debug("LogViewer", "Drawing daily counts graph", false);
 			//Set the graph visible and text invisible
 			mGraph.setVisibility(View.VISIBLE);
 			mTextScroller.setVisibility(View.GONE);
@@ -276,7 +285,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
-			Log.i("LogViewer.DrawDailyCountsGraph", "Preparing daily counts graph");
+			Debug("LogViewer", "Preparing daily counts graph", false);
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
@@ -341,10 +350,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 
-	private static void DrawDailyTimingGraph(String category, boolean prepare)
+	private void DrawDailyTimingGraph(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing daily timing graph", false);
 			//Set the graph visible and text invisible
 			mGraph.setVisibility(View.VISIBLE);
 			mTextScroller.setVisibility(View.GONE);
@@ -353,6 +363,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing daily timing graph", false);
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
@@ -439,10 +450,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private static void DrawDistribution(String category, boolean prepare)
+	private void DrawDistribution(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing distribution graph", false);
 			//Set the graph visible and text invisible
 			mGraph.setVisibility(View.VISIBLE);
 			mTextScroller.setVisibility(View.GONE);
@@ -451,6 +463,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing distribution graph", false);
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
@@ -527,10 +540,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private static void DrawDailyHistogramGraph(String category, boolean prepare)
+	private void DrawDailyHistogramGraph(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing daily histogram graph", false);
 			mGraph.setVisibility(View.VISIBLE);
 			mTextScroller.setVisibility(View.GONE);
 			
@@ -538,6 +552,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing daily histogram graph", false);
 			//Extract the specified data
 			float[] allData = null;
 			int catIndex = mConfig.Buttons.indexOf(category);
@@ -611,10 +626,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private static void DrawIntervalsGraph(String category, boolean prepare)
+	private void DrawIntervalsGraph(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing intervals graph", false);
 			mGraph.setVisibility(View.VISIBLE);
 			mTextScroller.setVisibility(View.GONE);
 			
@@ -622,6 +638,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing intervals graph", false);
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the specified data
@@ -775,10 +792,11 @@ public class LogViewer extends Activity implements Runnable
 	}
 	*/
 
-	private static void DrawStats(String category, boolean prepare)
+	private void DrawStats(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing stats", false);
 			mGraph.setVisibility(View.GONE);
 			mTextScroller.setVisibility(View.VISIBLE);
 			
@@ -786,6 +804,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing stats", false);
 			int catIndex = mConfig.Buttons.indexOf(category);
 			if(catIndex < 0)
 			{
@@ -799,10 +818,11 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private static void DrawRecentHistory(String category, boolean prepare)
+	private void DrawRecentHistory(String category, boolean prepare)
 	{
 		if(!prepare)
 		{
+			Debug("LogViewer", "Drawing recent history", false);
 			mGraph.setVisibility(View.GONE);
 			mTextScroller.setVisibility(View.VISIBLE);
 			
@@ -820,6 +840,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		else
 		{
+			Debug("LogViewer", "Preparing recent history", false);
 			List<LogEntry> entries = null;
 			int catIndex = mConfig.Buttons.indexOf(category);
 			if(catIndex < 0)
@@ -870,12 +891,12 @@ public class LogViewer extends Activity implements Runnable
 		
 		if(!mInitialized)
 		{
-			Log.i("LogViewer.run", "Loading data");
-			mLog = new LogFile(mLogFile, true);
+			Debug("LogViewer", "Loading data", false);
+			mLog = new LogFile(mRootDirectory + mLogFile, true);
 			mInitialized = true;
 		}
 		
-		Log.i("LogViewer.run", "Preparing graph");
+		Debug("LogViewer", "Preparing display", false);
 		UpdateGraph(true);
 		
 		handler.sendEmptyMessage(0);
@@ -884,7 +905,7 @@ public class LogViewer extends Activity implements Runnable
     	mThreadRunning = false;
 	}
 	
-	private static Handler handler = new Handler()
+	private Handler handler = new Handler()
     {
         @Override
         public void handleMessage(Message msg)
@@ -892,4 +913,17 @@ public class LogViewer extends Activity implements Runnable
         	UpdateGraph(false);
         }
     };
+    
+    //Debug helper
+    private void Debug(String tag, String message, boolean showToast)
+    {
+    	Log.i(tag, message);
+    	if(mConfig != null && mConfig.Debug)
+    	{
+    		Context context = null;
+    		if(showToast)
+    			context = getApplicationContext();
+    		DebugFile.Write(mRootDirectory, tag, message, context);
+    	}
+    }
 }

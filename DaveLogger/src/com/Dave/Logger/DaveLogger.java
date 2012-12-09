@@ -25,6 +25,7 @@ import android.view.ViewStub;
 import com.Dave.DateTimeSlider.DateSlider;
 import com.Dave.DateTimeSlider.DateTimeSlider;
 import com.Dave.DateStrings.DateStrings;
+import com.Dave.Files.DebugFile;
 import com.Dave.Files.ErrorFile;
 import com.Dave.Files.LoggerState;
 import com.Dave.Files.LoggerConfig;
@@ -104,14 +105,11 @@ import com.Dave.Files.LogFile;
  * BUGS:
  * 		-Crash when viewing toggle after adding entry
  * 
- * 20120730 Refactoring:
- * 		-Fix LogViewer
  */
 
 public class DaveLogger extends Activity implements Runnable
 {
 	//Tracking Fields
-	public static boolean Safe = false;
     private LogAdder mAdder = new LogAdder();
     
     private String mRootDirectory = null;
@@ -159,13 +157,6 @@ public class DaveLogger extends Activity implements Runnable
         super.onCreate(savedInstanceState);
         try
         {
-        	if(savedInstanceState != null)
-            {
-        		Log.i("Logger", "Reloaded bundle");
-            }
-        	
-        	setContentView(R.layout.main);
-
         	mRootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + mStorageDirectory + "/";
         	
         	File dir = new File(mRootDirectory);
@@ -175,27 +166,42 @@ public class DaveLogger extends Activity implements Runnable
         		t.show();
         	}
         	
+        	Debug("Logger", "Starting app", false);
+        	
+        	if(savedInstanceState != null)
+            {
+        		Debug("Logger", "Reloaded bundle", false);
+            }
+        	
+        	setContentView(R.layout.main);
+
+        	Debug("Logger", "Loading config file", false);
         	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile);
         	if(mConfig == null)
         	{
-        		Toast t = Toast.makeText(this, "Creating new config at " + mRootDirectory + mConfigFile, Toast.LENGTH_LONG);
+        		Debug("Logger", "Creating new config at " + mRootDirectory + mConfigFile, false);
+        		
+        		Toast t = Toast.makeText(getApplicationContext(), "Creating new config at " + mRootDirectory + mConfigFile, Toast.LENGTH_SHORT);
         		t.show();
         		
         		mConfig = LoggerConfig.Create(mRootDirectory + mConfigFile);
         	}
+    		int numButtons = mConfig.Buttons.size();
+    		int numToggles = mConfig.Toggles.size();
     		
+        	Debug("Logger", "Loading log file at " + mRootDirectory + mLogFile, false);
         	mLog = new LogFile(mRootDirectory + mLogFile, false);
         
-        	int numLogsets = mConfig.Buttons.size();
-        
         	//Create member arrays
-        	mToggleButtons = new ToggleButton[mConfig.Toggles.size()];
-        	mToggleElapsedLabels = new TextView[mConfig.Toggles.size()];
-        	mLayouts = new View[numLogsets];
-        	mAddButtons = new Button[numLogsets];
-        	mSummaryTextViews = new TextView[numLogsets];
+        	Debug("Logger", "Creating internal arrays", false);
+        	mToggleButtons = new ToggleButton[numToggles];
+        	mToggleElapsedLabels = new TextView[numToggles];
+        	mLayouts = new View[numButtons];
+        	mAddButtons = new Button[numButtons];
+        	mSummaryTextViews = new TextView[numButtons];
 
         	//Find and configure common GUI components
+        	Debug("Logger", "Finding GUI components", false);
         	mIntroText = (TextView) findViewById(R.id.introText);
         	mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
         	mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
@@ -207,7 +213,8 @@ public class DaveLogger extends Activity implements Runnable
         	mDebugText.setText("");
         	
         	//Setup toggle sets
-        	for(int i=0; i<mConfig.Toggles.size(); i++)
+        	Debug("Logger", "Configuring toggles", false);
+        	for(int i=0; i<numToggles; i++)
         	{
         		View stub = ((ViewStub) findViewById(mToggleIds[i])).inflate();
         		mToggleButtons[i] = (ToggleButton) stub.findViewById(R.id.toggleButton);
@@ -219,7 +226,8 @@ public class DaveLogger extends Activity implements Runnable
         	}
 
         	//Setup log sets
-        	for(int i=0; i<numLogsets; i++)
+        	Debug("Logger", "Configuring buttons", false);
+        	for(int i=0; i<numButtons; i++)
         	{
         		mLayouts[i] = ((ViewStub) findViewById(mButtonIds[i])).inflate();
         		mAddButtons[i] = (Button) mLayouts[i].findViewById(R.id.addButton);
@@ -228,10 +236,11 @@ public class DaveLogger extends Activity implements Runnable
         		mSummaryTextViews[i] = (TextView) mLayouts[i].findViewById(R.id.summaryText);
         	}
         
+        	Debug("Logger", "Loading temp file", false);
         	mState = LoggerState.FromFile(mRootDirectory + mStateFile, mConfig);
         	if(mState == null)
         	{
-        		Log.i("DaveLogger", "Temp file not found, creating new");
+        		Debug("Logger", "Temp file not found, creating new", false);
         		mState = LoggerState.Create(mRootDirectory + mStateFile, mLog.GetLogEntries(), mConfig);
         	}
         	
@@ -240,19 +249,22 @@ public class DaveLogger extends Activity implements Runnable
         		mToggleButtons[i].setChecked(mState.ToggleStates[i]);
         	}
         
+        	Debug("Logger", "Launching GUI update thread", false);
         	mUpdateThread = new Thread(this);
         	mUpdateThread.start();
-        	
-        	Safe = mState.Safe;
         	
         	if(mConfig.SafeItems.size() == 0 || mState.Safe)
         		mSafeButton.setVisibility(View.GONE);
         	
         	if(mState.Safe)
+        	{
+        		Debug("Logger", "Going into safe mode during startup", false);
         		EnterSafeMode();
+        	}
         }
         catch(Exception e)
         {
+        	Debug("Logger", "Error encountered during startup", false);
         	ErrorFile.WriteException(e, this);
         }
     }
@@ -306,8 +318,12 @@ public class DaveLogger extends Activity implements Runnable
     //Shows the LogViewer Activity
     private void ShowViewer()
     {
-    	Log.i("DaveLogger", "Starting LogViewer");
-		Intent i = new Intent(DaveLogger.this, LogViewer.class);
+    	Debug("Logger", "Starting LogViewer", false);
+		Intent i = new Intent(getApplicationContext(), LogViewer.class);
+		i.putExtra("safe", mState.Safe);
+		i.putExtra("directory", mRootDirectory);
+		i.putExtra("configfile", mConfigFile);
+		i.putExtra("logfile", mLogFile);
 		startActivity(i);
 		//startActivityForResult(i, 0);
     }
@@ -316,12 +332,10 @@ public class DaveLogger extends Activity implements Runnable
     {
     	try
 		{
-    		Safe = true;
 			mState.Safe = true;
 			mState.Save(mConfig);
 			//Hide safe button
 			mSafeButton.setVisibility(View.GONE);
-			//Hide smoke logset
 			
 			for(int x = 0; x<mConfig.SafeItems.size(); x++)
 			{
@@ -355,6 +369,7 @@ public class DaveLogger extends Activity implements Runnable
     	{
     		try
     		{
+    			Debug("Logger", "Logging toggle", false);
     			Calendar gc = Calendar.getInstance();
     			boolean checked =mToggleButtons[mIndex].isChecked();
     			mState.UpdateToggle(mIndex, gc, checked, mConfig);
@@ -362,6 +377,8 @@ public class DaveLogger extends Activity implements Runnable
     			if(checked)
     				state = "on";
     			mLog.AddLogEntry(gc, mIndex+1000, state, null, mConfig);
+    			
+    			Debug("Logger", "Added toggle entry", false);
     			Toast t = Toast.makeText(getApplicationContext(), "Added toggle entry", Toast.LENGTH_SHORT);
     			t.show();
     		}
@@ -388,6 +405,13 @@ public class DaveLogger extends Activity implements Runnable
     			boolean setDate = mDateCheck.isChecked();
     			boolean addComment = mCommentCheck.isChecked();
 
+    			String withDate = null;
+    			if(setDate)
+    				withDate = " with custom date";
+    			String withComment = null;
+    			if(addComment)
+    				withComment = " with comment";
+    			Debug("Logger", "Logging button" + withDate + withComment, false);
     			mAdder.PromptAndSave(mIndex, setDate, addComment);
     		}
     		catch(Exception e)
@@ -401,6 +425,7 @@ public class DaveLogger extends Activity implements Runnable
     {
     	public void onClick(View v)
     	{
+    		Debug("Logger", "User entered safe mode", false);
     		EnterSafeMode();
     	}
     }
@@ -411,6 +436,7 @@ public class DaveLogger extends Activity implements Runnable
     	{
     		try
     		{
+    			Debug("Logger", "User clicked View", false);
     			ShowViewer();
     		}
 			catch(Exception e)
@@ -431,6 +457,7 @@ public class DaveLogger extends Activity implements Runnable
     		case 0:
     			try
     			{
+    				Debug("Logger", "Showing custom date prompt", false);
     				return new DateTimeSlider(this, mDateTimeSetListener, Calendar.getInstance());
     			}
     			catch(Exception e)
@@ -441,6 +468,7 @@ public class DaveLogger extends Activity implements Runnable
     		case 1:
     			try
     			{
+    				Debug("Logger", "Showing comment prompt", false);
     				return new CommentPrompt(this, mCommentSetListener);
     			}
     			catch(Exception e)
@@ -486,6 +514,9 @@ public class DaveLogger extends Activity implements Runnable
     
     private class LogAdder
     {
+    	/*
+    	 * This class is used to show the prompts when adding a log entry 
+    	 */
     	public int Index = -1;
     	public Calendar Date = null;
     	public String Comment = null;
@@ -535,6 +566,7 @@ public class DaveLogger extends Activity implements Runnable
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
+    	Debug("Logger", "Opening options menu", false);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
         return true;
@@ -549,15 +581,19 @@ public class DaveLogger extends Activity implements Runnable
         switch (item.getItemId())
         {
         case R.id.mainmenu_view:
+        	Debug("Logger", "Showing viewer from options menu", false);
         	ShowViewer();
             return true;
         case R.id.mainmenu_export:
+        	Debug("Logger", "Exporting log", false);
         	mLog.ExportLog(mConfig);
         	return true;
         case R.id.mainmenu_email:
+        	Debug("Logger", "Emailing log", false);
         	mLog.EmailLog(this, mConfig);
         	return true;
         case R.id.mainmenu_refresh:
+        	Debug("Logger", "Refreshing temp file", false);
         	mProgress = ProgressDialog.show(this, "Loading", "Please wait...", true);
         	new Thread(new Runnable()
         	{
@@ -570,6 +606,7 @@ public class DaveLogger extends Activity implements Runnable
         	}).start();
         	return true;
         case R.id.mainmenu_settings:
+        	Debug("Logger", "User clicked Settings, not implemented yet", false);
             return true;
         default:
             return super.onOptionsItemSelected(item);
@@ -602,12 +639,14 @@ public class DaveLogger extends Activity implements Runnable
     @Override
     public void onDestroy()
     {
+    	Debug("Logger", "Logger destroyed", false);
     	Shutdown();
         super.onDestroy();
     }
     
     private void Shutdown()
     {
+    	Debug("Logger", "Shutting down", false);
     	mQuitThread = true;
     	try
     	{
@@ -616,4 +655,17 @@ public class DaveLogger extends Activity implements Runnable
     	catch(Exception e){}
     }
 
+    
+    //Debug helper
+    private void Debug(String tag, String message, boolean showToast)
+    {
+    	Log.i(tag, message);
+    	if(mConfig != null && mConfig.Debug)
+    	{
+    		Context context = null;
+    		if(showToast)
+    			context = getApplicationContext();
+    		DebugFile.Write(mRootDirectory, tag, message, context);
+    	}
+    }
 }

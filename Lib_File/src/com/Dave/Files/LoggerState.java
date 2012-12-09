@@ -12,7 +12,7 @@ import com.Dave.DateStrings.DateStrings;
 
 public class LoggerState
 {
-	public String TempFilename = "/sdcard/DaveLogger/TempFile.txt";
+	public String TempFilename = null;
 	public Calendar ActiveDate = null;
 	
 	public boolean Safe = false;
