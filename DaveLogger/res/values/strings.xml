@@ -4,4 +4,6 @@
     <string name="app_name">Dave Logger</string>
     <string name="close">Close</string>
     <string name="dateSliderTitle">Selected date</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

@@ -3,15 +3,19 @@ package com.Dave.Logger;
 import java.io.File;
 import java.util.Calendar;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -412,6 +416,7 @@ public class DaveLogger extends Activity implements Runnable
     			if(addComment)
     				withComment = " with comment";
     			Debug("Logger", "Logging button" + withDate + withComment, false);
+    			
     			mAdder.PromptAndSave(mIndex, setDate, addComment);
     		}
     		catch(Exception e)
@@ -469,6 +474,32 @@ public class DaveLogger extends Activity implements Runnable
     			try
     			{
     				Debug("Logger", "Showing comment prompt", false);
+    				
+    				//DAVE: Think this is how to do an easier comment dialog
+    				//AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    				// Get the layout inflater
+    			    //LayoutInflater inflater = getLayoutInflater();
+    			    // Inflate and set the layout for the dialog
+    			    // Pass null as the parent view because its going in the dialog layout
+    			    //builder.setView(inflater.inflate(R.layout.comment2, null));
+    			    // Add action buttons
+    			    //builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+    			    //{
+    			    //    @Override
+    			    //    public void onClick(DialogInterface dialog, int id)
+    			    //    {
+    			            // sign in the user ...
+    			    //    }
+    			    //});
+    			    //builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+    			    //{
+    			    //    public void onClick(DialogInterface dialog, int id)
+    			    //    {
+    			        	
+    			    //    }
+    			    //});      
+    			    //return builder.create();
+    				
     				return new CommentPrompt(this, mCommentSetListener);
     			}
     			catch(Exception e)
