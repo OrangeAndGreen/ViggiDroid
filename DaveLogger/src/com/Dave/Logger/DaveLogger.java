@@ -14,14 +14,17 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -177,7 +180,7 @@ public class DaveLogger extends Activity implements Runnable
         		Debug("Logger", "Reloaded bundle", false);
             }
         	
-        	setContentView(R.layout.main);
+        	setContentView(R.layout.main2);
 
         	Debug("Logger", "Loading config file", false);
         	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile);
@@ -218,6 +221,10 @@ public class DaveLogger extends Activity implements Runnable
         	
         	//Setup toggle sets
         	Debug("Logger", "Configuring toggles", false);
+        	DisplayMetrics metrics = new DisplayMetrics();
+        	getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        	int width =  metrics.widthPixels;
+        	int toggleWidth = width / numToggles;
         	for(int i=0; i<numToggles; i++)
         	{
         		View stub = ((ViewStub) findViewById(mToggleIds[i])).inflate();
@@ -226,6 +233,8 @@ public class DaveLogger extends Activity implements Runnable
         		mToggleButtons[i].setOnClickListener(new ToggleListener(i));
         		mToggleButtons[i].setTextOff(mConfig.Toggles.get(i));
         		mToggleButtons[i].setTextOn(mConfig.Toggles.get(i));
+        		mToggleButtons[i].setLayoutParams(new LinearLayout.LayoutParams(toggleWidth, LayoutParams.WRAP_CONTENT));
+        		mToggleElapsedLabels[i].setLayoutParams(new LinearLayout.LayoutParams(toggleWidth, LayoutParams.WRAP_CONTENT));
         		//mToggleButtons[i].setChecked(false);
         	}
 
@@ -248,7 +257,7 @@ public class DaveLogger extends Activity implements Runnable
         		mState = LoggerState.Create(mRootDirectory + mStateFile, mLog.GetLogEntries(), mConfig);
         	}
         	
-        	for(int i=0; i<mConfig.Toggles.size(); i++)
+        	for(int i=0; i<numToggles; i++)
         	{
         		mToggleButtons[i].setChecked(mState.ToggleStates[i]);
         	}

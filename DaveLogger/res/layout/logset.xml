@@ -23,5 +23,11 @@
 	    	android:text="-"
 	    />
     </LinearLayout>
-    <include android:id="@+id/logsetDivider" layout="@layout/divider"/>
+    
+    <View   android:id="@+id/logsetDivider"
+	    		android:layout_height="2dp"
+	    		android:layout_width="fill_parent"
+	    		android:background="@color/divider"
+				/>
+    
 </LinearLayout>
