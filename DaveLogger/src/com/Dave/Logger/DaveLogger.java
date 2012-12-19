@@ -120,7 +120,7 @@ public class DaveLogger extends Activity implements Runnable
     private LogAdder mAdder = new LogAdder();
     
     private String mRootDirectory = null;
-    private String mStorageDirectory = "Logger";//"00Logs/";
+    private String mStorageDirectory = "00Logs/";
     private LoggerConfig mConfig = null;
     private String mConfigFile = "Config.txt";
     

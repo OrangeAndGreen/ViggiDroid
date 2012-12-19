@@ -9,20 +9,20 @@
 	    android:layout_height="wrap_content"
 	    >
 	    <!-- First row: date string and safe button  -->
-	    <Button android:id="@+id/safeButton"
-	    		android:layout_width="35sp"
-	    		android:layout_height="wrap_content"
-	    		android:layout_alignParentTop="true"
-	    		android:layout_alignParentRight="true"
-	    		android:text="@string/safe_short"
-	    		/>
 	    <Button android:id="@+id/viewButton"
 				android:layout_width="70sp"
 				android:layout_height="wrap_content"
 				android:layout_alignParentTop="true"
-	    		android:layout_toLeftOf="@id/safeButton"
+				android:layout_alignParentRight="true"
 				android:text="@string/view"
 				/>
+	    <Button android:id="@+id/safeButton"
+	    		android:layout_width="35sp"
+	    		android:layout_height="wrap_content"
+	    		android:layout_alignParentTop="true"
+	    		android:layout_toLeftOf="@id/viewButton"
+	    		android:text="@string/safe_short"
+	    		/>
 	    <TextView  android:id="@+id/introText"
 			    android:layout_width="fill_parent" 
 			    android:layout_height="wrap_content"
