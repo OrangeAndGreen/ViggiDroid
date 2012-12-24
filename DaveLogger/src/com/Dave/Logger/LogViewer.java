@@ -91,7 +91,7 @@ public class LogViewer extends Activity implements Runnable
 
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
-   			mConfig = LoggerConfig.FromFile(mRootDirectory + configFile);
+   			mConfig = LoggerConfig.FromFile(mRootDirectory + configFile, getApplicationContext());
    			for(int i=0; i<mConfig.Buttons.size(); i++)
    			{
    				

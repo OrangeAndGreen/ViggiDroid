@@ -32,7 +32,7 @@ public class QuickDrive extends Activity
     {
         super.onCreate(savedInstanceState);
         
-        mConfig = LoggerConfig.FromFile(mConfigFile);
+        mConfig = LoggerConfig.FromFile(mConfigFile, getApplicationContext());
         
         mLog = new LogFile(mLogFile, false);
         

@@ -120,7 +120,7 @@ public class DaveLogger extends Activity implements Runnable
     private LogAdder mAdder = new LogAdder();
     
     private String mRootDirectory = null;
-    private String mStorageDirectory = "00Logs/";
+    private String mStorageDirectory = "00Logs";
     private LoggerConfig mConfig = null;
     private String mConfigFile = "Config.txt";
     
@@ -183,7 +183,7 @@ public class DaveLogger extends Activity implements Runnable
         	setContentView(R.layout.main2);
 
         	Debug("Logger", "Loading config file", false);
-        	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile);
+        	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile, getApplicationContext());
         	if(mConfig == null)
         	{
         		Debug("Logger", "Creating new config at " + mRootDirectory + mConfigFile, false);
@@ -195,6 +195,9 @@ public class DaveLogger extends Activity implements Runnable
         	}
     		int numButtons = mConfig.Buttons.size();
     		int numToggles = mConfig.Toggles.size();
+    		
+    		Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , mRootDirectory + mConfigFile, numButtons, numToggles), false);
+    		Debug("Logger", "External storage: " + Environment.getExternalStorageDirectory().getPath(), false);
     		
         	Debug("Logger", "Loading log file at " + mRootDirectory + mLogFile, false);
         	mLog = new LogFile(mRootDirectory + mLogFile, false);
@@ -278,7 +281,7 @@ public class DaveLogger extends Activity implements Runnable
         catch(Exception e)
         {
         	Debug("Logger", "Error encountered during startup", false);
-        	ErrorFile.WriteException(e, this);
+        	Error(e);
         }
     }
     
@@ -320,7 +323,7 @@ public class DaveLogger extends Activity implements Runnable
         	catch(Exception e)
         	{
         		Log.e("DaveLogger", String.format("UpdateSummaries Error: %s\n%s", e.toString(), e.getStackTrace().toString()));
-        		ErrorFile.WriteException(e, this);
+        		Error(e);
         		mHadUpdateError = true;
         	}
     	}
@@ -364,7 +367,7 @@ public class DaveLogger extends Activity implements Runnable
 		}
 		catch(Exception e)
 		{
-			ErrorFile.WriteException(e, this);
+			Error(e);
 		}
     }
     
@@ -397,7 +400,7 @@ public class DaveLogger extends Activity implements Runnable
     		}
 			catch(Exception e)
 			{
-				ErrorFile.WriteException(e, getApplicationContext());
+				Error(e);
 			}
     	}
     }
@@ -430,7 +433,7 @@ public class DaveLogger extends Activity implements Runnable
     		}
     		catch(Exception e)
     		{
-    			ErrorFile.WriteException(e, getApplicationContext());
+    			Error(e);
     		}
     	}
     }
@@ -455,7 +458,7 @@ public class DaveLogger extends Activity implements Runnable
     		}
 			catch(Exception e)
 			{
-				ErrorFile.WriteException(e, getApplicationContext());
+				Error(e);
 			}
     	}
     }
@@ -476,7 +479,7 @@ public class DaveLogger extends Activity implements Runnable
     			}
     			catch(Exception e)
     			{
-    				ErrorFile.WriteException(e, getApplicationContext());
+    				Error(e);
     			}
     			break;
     		case 1:
@@ -513,7 +516,7 @@ public class DaveLogger extends Activity implements Runnable
     			}
     			catch(Exception e)
     			{
-    				ErrorFile.WriteException(e, getApplicationContext());
+    				Error(e);
     			}
     			break;
     	}
@@ -531,7 +534,7 @@ public class DaveLogger extends Activity implements Runnable
             	}
     			catch(Exception e)
     			{
-    				ErrorFile.WriteException(e, getApplicationContext());
+    				Error(e);
     			}
             }
     	};
@@ -547,7 +550,7 @@ public class DaveLogger extends Activity implements Runnable
             	}
     			catch(Exception e)
     			{
-    				ErrorFile.WriteException(e, getApplicationContext());
+    				Error(e);
     			}
             }
     	};
@@ -595,7 +598,7 @@ public class DaveLogger extends Activity implements Runnable
     		}
     		catch(Exception e)
     		{
-    			ErrorFile.WriteException(e, getApplicationContext());
+    			Error(e);
     		}
     	}
     }
@@ -707,5 +710,11 @@ public class DaveLogger extends Activity implements Runnable
     			context = getApplicationContext();
     		DebugFile.Write(mRootDirectory, tag, message, context);
     	}
+    }
+    
+    private void Error(Exception e)
+    {
+    	String entry = ErrorFile.WriteException(e, getApplicationContext());
+    	Debug("Error", entry, false);
     }
 }

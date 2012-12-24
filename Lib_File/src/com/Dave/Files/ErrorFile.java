@@ -15,7 +15,7 @@ public class ErrorFile
 {
 	public static String ErrorFile = "ErrorLog.txt";
 	
-	public static void Write(String who, String error, Context context)
+	public static String Write(String who, String error, Context context)
 	{
 		Calendar date = Calendar.getInstance();
 		String entry = String.format("%s - %s: %s\n", DateStrings.GetDateTimeString(date), who, error);
@@ -35,16 +35,21 @@ public class ErrorFile
 			Toast t = Toast.makeText(context, entry, Toast.LENGTH_LONG);
 			t.show();
 		}
+		
+		return entry;
 	}
 	
-	public static void WriteException(Exception e, Context context)
+	public static String WriteException(Exception e, Context context)
 	{
 		String stackTrace = "";
 		for (StackTraceElement ste : e.getStackTrace())
 			stackTrace += ste.toString() + "\n";
 		
 		Calendar date = Calendar.getInstance();
-	   	String entry = String.format("%s:\n%s\n%s\n", DateStrings.GetDateTimeString(date), e.getCause(), stackTrace);
+	   	String entry = String.format("%s:\n%s\n", DateStrings.GetDateTimeString(date), e.getCause());
+	   	if(e.getLocalizedMessage() != null)
+	   		entry += e.getLocalizedMessage() + "\n";
+	   	entry += stackTrace + "\n";
 	   	try
 	   	{
 	   		FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/" + ErrorFile, true);
@@ -61,5 +66,7 @@ public class ErrorFile
 	   		Toast t = Toast.makeText(context, stackTrace, Toast.LENGTH_LONG);
 	   		t.show();
 		}
+	   	
+	   	return entry;
 	}
 }

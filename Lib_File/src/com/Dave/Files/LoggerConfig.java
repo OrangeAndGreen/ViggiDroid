@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
 import android.util.Log;
 
 public class LoggerConfig
@@ -29,7 +30,7 @@ public class LoggerConfig
 		ConfigFilename = filename;
 	}
 	
-	public static LoggerConfig FromFile(String filename)
+	public static LoggerConfig FromFile(String filename, Context context)
 	{
 		Log.i("LoggerConfig", "Loading from file " + filename);
 		
@@ -47,42 +48,45 @@ public class LoggerConfig
     			if(line == null)
     				break;
     			
-    			String[] parts = line.split(" = ");
-    			if(parts==null)
+    			String[] parts = line.split("=");
+    			if(parts==null || parts.length < 2)
     				continue;
     			
-    			if(parts[0].equals("Username"))
-    				ret.Username = parts[1].trim();
-    			if(parts[0].equals("Simulation"))
+    			String tag = parts[0].trim();
+    			String value = parts[1].trim();
+    			
+    			if(tag.equals("Username"))
+    				ret.Username = value.trim();
+    			if(tag.equals("Simulation"))
     			{
-    				ret.Simulation = parts[1].trim().equals("on");
+    				ret.Simulation = value.equals("on");
     				if(!ret.Simulation)
-    					ret.Simulation = parts[1].trim().equals("true");
+    					ret.Simulation = value.equals("true");
     			}
-    			if(parts[0].equals("Debug"))
+    			if(tag.equals("Debug"))
     			{
-    				ret.Debug = parts[1].trim().equals("on");
+    				ret.Debug = value.equals("on");
     				if(!ret.Debug)
-    					ret.Debug = parts[1].trim().equals("true");
+    					ret.Debug = value.equals("true");
     			}
-    			if(parts[0].equals("AveragingWindow"))
-    				ret.AveragingWindow = Integer.parseInt(parts[1].trim());
-    			if(parts[0].equals("Toggle"))
-    				ret.Toggles.add(parts[1].trim());
-    			if(parts[0].equals("Button"))
-    				ret.Buttons.add(parts[1].trim());
-    			if(parts[0].equals("Safe"))
-    				ret.SafeItems.add(parts[1].trim());
-    			if(parts[0].equals("LogFilePath"))
-    				ret.LogFilePath = parts[1].trim();
-    			if(parts[0].equals("ExportDirectory"))
-    				ret.ExportDirectory = parts[1].trim();
-    			if(parts[0].equals("MidnightHour"))
-    				ret.MidnightHour = Integer.parseInt(parts[1].trim());
-    			if(parts[0].equals("EmailAddress"))
-    				ret.EmailAddress = parts[1].trim();
-    			if(parts[0].equals("EmailAutoSubject"))
-    				ret.EmailAutoSubject = parts[1].trim();
+    			if(tag.equals("AveragingWindow"))
+    				ret.AveragingWindow = Integer.parseInt(value);
+    			if(tag.equals("Toggle"))
+    				ret.Toggles.add(value);
+    			if(tag.equals("Button"))
+    				ret.Buttons.add(value);
+    			if(tag.equals("Safe"))
+    				ret.SafeItems.add(value);
+    			if(tag.equals("LogFilePath"))
+    				ret.LogFilePath = value;
+    			if(tag.equals("ExportDirectory"))
+    				ret.ExportDirectory = value;
+    			if(tag.equals("MidnightHour"))
+    				ret.MidnightHour = Integer.parseInt(value);
+    			if(tag.equals("EmailAddress"))
+    				ret.EmailAddress = value;
+    			if(tag.equals("EmailAutoSubject"))
+    				ret.EmailAutoSubject = value;
     		}
     		br.close();
     		
@@ -94,6 +98,7 @@ public class LoggerConfig
     	{
     		//Setup simulation
     		Log.e("LoggerConfig", "Failed to load LoggerConfig");
+    		ErrorFile.WriteException(e, null);
     		
     		return null;
     	}

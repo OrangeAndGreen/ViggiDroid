@@ -59,7 +59,7 @@ public class QuickCig extends Activity
     {
     	try
     	{
-    		LoggerConfig config = LoggerConfig.FromFile(mConfigFile);
+    		LoggerConfig config = LoggerConfig.FromFile(mConfigFile, getApplicationContext());
     
     		LogFile log = new LogFile(mLogFile, false);
     
