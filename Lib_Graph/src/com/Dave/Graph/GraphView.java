@@ -151,8 +151,6 @@ public class GraphView extends View
 			RightAxis.GenerateLabels(Plots);
 			LeftAxis.GenerateLabels(Plots);
 			BottomAxis.GenerateLabels(data.length - 1, 1, true);
-		
-			this.invalidate();
 		}
 		catch(Exception e)
 		{

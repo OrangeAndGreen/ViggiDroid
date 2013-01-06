@@ -1,7 +1,11 @@
 package com.Dave.Logger;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -10,6 +14,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -196,6 +201,8 @@ public class DaveLogger extends Activity implements Runnable
     		int numButtons = mConfig.Buttons.size();
     		int numToggles = mConfig.Toggles.size();
     		
+    		Debug("Logger", "Build: " + GetBuildDate(), false);
+    		
     		Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , mRootDirectory + mConfigFile, numButtons, numToggles), false);
     		Debug("Logger", "External storage: " + Environment.getExternalStorageDirectory().getPath(), false);
     		
@@ -289,6 +296,24 @@ public class DaveLogger extends Activity implements Runnable
     protected void onSaveInstanceState (Bundle outState)
     {
     	super.onSaveInstanceState(outState);
+    }
+    
+    private String GetBuildDate()
+    {
+    	try
+    	{
+    	     ApplicationInfo ai = getPackageManager().getApplicationInfo(getPackageName(), 0);
+    	     ZipFile zf = new ZipFile(ai.sourceDir);
+    	     ZipEntry ze = zf.getEntry("classes.dex");
+    	     Calendar curDate = Calendar.getInstance();
+    	     curDate.setTimeInMillis(ze.getTime());
+    	     return DateStrings.GetDateTimeString(curDate);
+    	}
+    	catch(Exception e)
+    	{
+    	}
+    	
+    	return "Unknown";
     }
     
     //Called to update the displayed text
