@@ -164,6 +164,7 @@ public class LogFile
 			Calendar curDate = entries.get(j).GetDate();
 			if(curDate == null)
 				continue;
+			
 			if(lastDate != null && !DateStrings.SameDay(lastDate, curDate, config.MidnightHour))
 			{
 			//This entry starts a new day

@@ -10,9 +10,14 @@
   		android:orientation="horizontal" >
 		<Spinner
 			android:id="@+id/dataSelector"
-  			android:layout_width="125sp"
+  			android:layout_width="100sp"
   			android:layout_height="wrap_content"
   			android:text="Data" />
+  		<Spinner
+  			android:id="@+id/timeSelector"
+  			android:layout_width="100sp"
+  			android:layout_height="wrap_content"
+  			android:text="Type" />
   		<Spinner
   			android:id="@+id/graphSelector"
   			android:layout_width="fill_parent"

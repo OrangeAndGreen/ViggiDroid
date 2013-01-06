@@ -41,11 +41,13 @@ public class LogViewer extends Activity implements Runnable
 {
 	private Spinner mTypeSpinner = null;
 	private Spinner mDataSpinner = null;
+	private Spinner mTimeSpinner = null;
 	private com.Dave.Graph.GraphView mGraph = null;
 	private ScrollView mTextScroller = null;
 	private TextView mTextView = null;
 	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Stats", "Recent History"};
 	private CharSequence[] mCategoryStrings = null;
+	private CharSequence[] mTimeOptions = { "All-time", "Month", "Week" };
 	private LoggerConfig mConfig = null;
 	private LogFile mLog = null;    
 	
@@ -80,6 +82,7 @@ public class LogViewer extends Activity implements Runnable
 			//Find GUI Views
 			mTypeSpinner = (Spinner) findViewById(R.id.graphSelector);
 			mDataSpinner = (Spinner) findViewById(R.id.dataSelector);
+			mTimeSpinner = (Spinner) findViewById(R.id.timeSelector);
 			mGraph = (com.Dave.Graph.GraphView) findViewById(R.id.graphView);
 			mTextScroller = (ScrollView) findViewById(R.id.scrollView);
 			mTextView = (TextView) findViewById(R.id.textView);
@@ -88,6 +91,11 @@ public class LogViewer extends Activity implements Runnable
 			ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mGraphTypes);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			mTypeSpinner.setAdapter(adapter);
+			
+			//Setup the graph times Spinner
+			adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mTimeOptions);
+			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+			mTimeSpinner.setAdapter(adapter);
 
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
@@ -118,6 +126,7 @@ public class LogViewer extends Activity implements Runnable
 			//Prepare the Spinner listeners
    			mTypeSpinner.setOnItemSelectedListener(new myOnItemSelectedListener());
         	mDataSpinner.setOnItemSelectedListener(new myOnItemSelectedListener());
+        	mTimeSpinner.setOnItemSelectedListener(new myOnItemSelectedListener());
         	
         	//Launch a wait dialog and a thread to load the data and draw the graph
         	LaunchThreadWithWaitDialog();
@@ -232,7 +241,9 @@ public class LogViewer extends Activity implements Runnable
 		{
 			int typeIndex = mTypeSpinner.getSelectedItemPosition();
 			int dataIndex = mDataSpinner.getSelectedItemPosition();
+			int timeIndex = mTimeSpinner.getSelectedItemPosition();
 			String category = mCategoryStrings[dataIndex].toString();
+			String timeRange = mTimeOptions[timeIndex].toString();
 
 			String action = prepare ? "Preparing" : "Drawing";
 			Debug("LogViewer", action + " graph: " + category + ", " + typeIndex, false);
@@ -240,7 +251,7 @@ public class LogViewer extends Activity implements Runnable
 			switch(typeIndex)
 			{
 			case 0:
-				DrawDailyCountsGraph(category, prepare);
+				DrawDailyCountsGraph(category, timeRange, prepare);
 				break;
 			case 1:
 				DrawDailyTimingGraph(category, prepare);
@@ -272,7 +283,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private void DrawDailyCountsGraph(String category, boolean prepare)
+	private void DrawDailyCountsGraph(String category, String timeRange, boolean prepare)
 	{
 		if(!prepare)
 		{
@@ -321,6 +332,32 @@ public class LogViewer extends Activity implements Runnable
 			float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 			float average = ArrayMath.GetAverage(data);
 	
+			//Filter to the desired time range
+			int desiredLength = 0;
+			if(timeRange == "Week")
+				desiredLength = 7;
+			else if(timeRange == "Month")
+				desiredLength = 30;
+			
+			if(desiredLength > 0)
+			{
+				float[] tempData = new float[desiredLength];
+				float[] tempAve = new float[desiredLength];
+				float[] tempAllAve = new float[desiredLength];
+				for(int i=0; i<desiredLength; i++)
+				{
+					int grabIndex = data.length - desiredLength + i;
+					tempData[i] = data[grabIndex];
+					tempAve[i] = ave[grabIndex];
+					tempAllAve[i] = allAve[grabIndex];
+				}
+				data = tempData;
+				ave = tempAve;
+				allAve = tempAllAve;
+				average = ArrayMath.GetAverage(data);
+				startDate.setTimeInMillis(Calendar.getInstance().getTimeInMillis() - ((long)(desiredLength - 1) * 24 * 3600 * 1000));
+			}
+			
 			mGraph.EasyGraph(data);
 			
 			//Setup the all-data plot
