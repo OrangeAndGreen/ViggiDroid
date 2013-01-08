@@ -185,9 +185,7 @@ public class GraphView extends View
 			RightAxis.GenerateLabels(Plots);
 			LeftAxis.GenerateLabels(Plots);
 			//TODO: Does this work? May need better way to generate labels
-			BottomAxis.GenerateLabels(xValues.length - 1, 1, true);
-		
-			this.invalidate();
+			//BottomAxis.GenerateLabels(DateStrings.GetActiveDiffInDays(oldDate, newDate, midnightHour), 1, true);
 		}
 		catch(Exception e)
 		{
@@ -213,8 +211,6 @@ public class GraphView extends View
 			RightAxis = null;
 			LeftAxis = null;
 			TopAxis = null;
-		
-			this.invalidate();
 		}
 		catch(Exception e)
 		{

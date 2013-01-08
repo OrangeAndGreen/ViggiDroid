@@ -254,7 +254,7 @@ public class LogViewer extends Activity implements Runnable
 				DrawDailyCountsGraph(category, timeRange, prepare);
 				break;
 			case 1:
-				DrawDailyTimingGraph(category, prepare);
+				DrawDailyTimingGraph(category, timeRange, prepare);
 				break;
 			case 2:
 				DrawDistribution(category, prepare);
@@ -263,13 +263,13 @@ public class LogViewer extends Activity implements Runnable
 				DrawDailyHistogramGraph(category, prepare);
 				break;
 			case 4:
-				DrawIntervalsGraph(category, prepare);
+				DrawIntervalsGraph(category, timeRange, prepare);
 				break;
 			case 5:
 				DrawStats(category, prepare);
 				break;
 			case 6:
-				DrawRecentHistory(category, prepare);
+				DrawRecentHistory(category, timeRange, prepare);
 				break;
 			default:
 					break;
@@ -389,7 +389,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 
-	private void DrawDailyTimingGraph(String category, boolean prepare)
+	private void DrawDailyTimingGraph(String category, String timeRange, boolean prepare)
 	{
 		if(!prepare)
 		{
@@ -420,6 +420,32 @@ public class LogViewer extends Activity implements Runnable
 				data = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 	
+			int historyDays = 0;
+			if(timeRange == "Week")
+				historyDays = 7;
+			else if(timeRange == "Month")
+				historyDays = 30;
+			
+			if(historyDays > 0)
+			{
+				Calendar filterDate = Calendar.getInstance();
+				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
+				filterDate.set(Calendar.HOUR, 0);
+				filterDate.set(Calendar.MINUTE, 0);
+				filterDate.set(Calendar.SECOND, 0);
+				
+				List<LogEntry> tempData = new ArrayList<LogEntry>();
+				
+				for(int i=0; i<data.size(); i++)
+					if(data.get(i).GetDate().after(filterDate))
+						tempData.add(data.get(i));
+				
+				if(isToggle && tempData.get(0).ToggleState == "off")
+					tempData.remove(0);
+				
+				data = tempData;
+			}
+			
 			Calendar firstDate = data.get(0).GetDate();
 			
 			List<Float> xValues = new ArrayList<Float>();
@@ -482,7 +508,7 @@ public class LogViewer extends Activity implements Runnable
 			//							average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
 			
 			//Add the weekend shading and start-of-month indicators
-			mGraph.AddDateInfo(startDate);
+			//mGraph.AddDateInfo(startDate);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
 			mGraph.BottomAxis.DrawLabels = false;
@@ -665,7 +691,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private void DrawIntervalsGraph(String category, boolean prepare)
+	private void DrawIntervalsGraph(String category, String timeRange, boolean prepare)
 	{
 		if(!prepare)
 		{
@@ -705,6 +731,38 @@ public class LogViewer extends Activity implements Runnable
 				numEntries = entries.size();
 			}
 			
+			int historyDays = 0;
+			if(timeRange == "Week")
+				historyDays = 7;
+			else if(timeRange == "Month")
+				historyDays = 30;
+			
+			if(historyDays > 0)
+			{
+				Calendar filterDate = Calendar.getInstance();
+				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
+				filterDate.set(Calendar.HOUR, 0);
+				filterDate.set(Calendar.MINUTE, 0);
+				filterDate.set(Calendar.SECOND, 0);
+				
+				List<LogEntry> tempData = new ArrayList<LogEntry>();
+				
+				for(int i=0; i<entries.size(); i++)
+					if(entries.get(i).GetDate().after(filterDate))
+						tempData.add(entries.get(i));
+				
+				if(isToggle && tempData.get(0).ToggleState == "off")
+					tempData.remove(0);
+				
+				entries = tempData;
+				
+				if(isToggle)
+					numEntries = entries.size() / 2;
+				else
+					numEntries = entries.size();
+			}
+			
+			//Calculate the intervals
 			float[] intervals = new float[numEntries];
 			Calendar lastDate = null;
 			for(int i=0; i<numEntries*multiplier; i++)
@@ -857,7 +915,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
-	private void DrawRecentHistory(String category, boolean prepare)
+	private void DrawRecentHistory(String category, String timeRange, boolean prepare)
 	{
 		if(!prepare)
 		{
@@ -890,6 +948,29 @@ public class LogViewer extends Activity implements Runnable
 			else
 			{
 				entries = mLog.ExtractEventLog(catIndex, mConfig);
+			}
+			
+			int historyDays = 0;
+			if(timeRange == "Week")
+				historyDays = 7;
+			else if(timeRange == "Month")
+				historyDays = 30;
+			
+			if(historyDays > 0)
+			{
+				Calendar filterDate = Calendar.getInstance();
+				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
+				filterDate.set(Calendar.HOUR, 0);
+				filterDate.set(Calendar.MINUTE, 0);
+				filterDate.set(Calendar.SECOND, 0);
+				
+				List<LogEntry> tempData = new ArrayList<LogEntry>();
+				
+				for(int i=0; i<entries.size(); i++)
+					if(entries.get(i).GetDate().after(filterDate))
+						tempData.add(entries.get(i));
+				
+				entries = tempData;
 			}
 			
 			int numEntries = entries.size();

@@ -120,7 +120,6 @@ public class DateStrings
     	timeTemp = timeTemp - (hours * secondsPerHour);
     	long minutes = (long) (timeTemp / secondsPerMinute);
     	long seconds = (long) (timeTemp - (minutes * secondsPerMinute));
-    	seconds = (long) milliseconds;
     	
     	//Log.d("DateStrings", String.format("%d months, %d weeks, %d days, %d hours", months, weeks, days, hours));
     	
