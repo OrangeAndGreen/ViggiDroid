@@ -60,7 +60,7 @@ public class GraphPlot implements IGraphElement
 	
 	public FloatRectangle GetDataRange()
 	{
-		float yMax = ArrayMath.GetMax(Data);
+		float yMax = ArrayMath.GetCeiling(Data);
 		float xMax = Math.round(Data.length * XInterval);
 		
 		if(XValues != null)

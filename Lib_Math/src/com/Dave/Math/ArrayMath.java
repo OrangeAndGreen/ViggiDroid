@@ -7,26 +7,26 @@ public class ArrayMath
 		if(data==null)
 			return null;
 		if(window <= 0)
-			window++;
+			window = 1;
+		if (window > data.length)
+			window = data.length;
 		
 		float[] averaged = new float[data.length];
-		float curAverage = 0;
-		int startLength = Math.min(data.length, (int)window);
-		for(int i=0; i<startLength; i++)
-			curAverage += data[i];
-		curAverage /= startLength;
-		
-		averaged[0] = curAverage;
-		float initialAverage = curAverage;
 
-		for(int i=1; i<data.length; i++)
+		//Calculate the initial average
+		float initialAverage = 0;
+		for(int i=0; i<window; i++)
+			initialAverage += data[i];
+		initialAverage /= window;
+		
+		float curAverage = initialAverage;
+		for(int i=0; i<data.length; i++)
 		{
-			int index = i - (int) window;
-			float curValue = initialAverage;
-			if(index >= 0)
-				curValue = data[index];
-			//Subtract off the old point and add the new
-			curAverage = curAverage - (curValue / window) + (data[i] / window);
+			if(i >= window)
+			{
+				//Subtract off the old point and add the new
+				curAverage = curAverage - (data[i - (int) window] / window) + (data[i] / window);
+			}
 			averaged[i] = curAverage;
 		}
 		return averaged;

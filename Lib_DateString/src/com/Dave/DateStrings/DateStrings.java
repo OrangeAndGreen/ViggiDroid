@@ -2,6 +2,8 @@ package com.Dave.DateStrings;
 
 import java.util.Calendar;
 
+import android.util.Log;
+
 public class DateStrings
 {
 	public static String GetDateString(Calendar curDate)
@@ -85,25 +87,42 @@ public class DateStrings
     	}
     	long elapsed = newDate.getTimeInMillis() - oldDate.getTimeInMillis();
     	
+    	String elapsedStr = GetElapsedTimeString(elapsed, maxCount);
+    	float days = (float)(newDate.getTimeInMillis() - oldDate.getTimeInMillis()) / 1000/3600 /24;
+    	
+    	//Log.d("DateString", String.format("Difference between %s and %s  (%.02f days) is %s", GetDateTimeString(oldDate), GetDateTimeString(newDate), days, elapsedStr));
+    	
     	return GetElapsedTimeString(elapsed, maxCount);
     }
     
     public static String GetElapsedTimeString(long milliseconds, int maxCount)
     {
-    	milliseconds = milliseconds / 1000;
+    	double timeTemp = milliseconds / 1000;
     	String output = "";
     	
-    	int months = (int) milliseconds / 2580000;
-    	milliseconds = milliseconds - (months * 2580000);
-    	int weeks = (int) milliseconds / 602000;
-    	milliseconds = milliseconds - (weeks * 602000);
-    	int days = (int) milliseconds / 86000;
-    	milliseconds = milliseconds - (days * 86000);
-    	int hours = (int) milliseconds / 3600;
-    	milliseconds = milliseconds - (hours * 3600);
-    	int minutes = (int) milliseconds / 60;
-    	milliseconds = milliseconds - (minutes * 60);
-    	int seconds = (int) milliseconds;
+    	final double secondsPerMinute = 60;
+    	final double secondsPerHour = 3600;          //s/minute * 60
+    	final double secondsPerDay = 86400;          //s/hr * 24 hr/day
+    	final double secondsPerWeek = 604800;        //s/day * 7 days/week
+    	final double secondsPerMonth = 2629743.8328; //s/day * (365.242199 days/year / 12 months/year)
+    	
+    	long months = (long) (timeTemp / secondsPerMonth);
+    	timeTemp = timeTemp - (months * secondsPerMonth);
+    	long weeks = 0;
+    	if(months == 0)
+    	{
+    		weeks = (long) (timeTemp / secondsPerWeek);
+    		timeTemp = timeTemp - (weeks * secondsPerWeek);
+    	}
+    	long days = (long) (timeTemp / secondsPerDay);
+    	timeTemp = timeTemp - (days * secondsPerDay);
+    	long hours = (long) (timeTemp / secondsPerHour);
+    	timeTemp = timeTemp - (hours * secondsPerHour);
+    	long minutes = (long) (timeTemp / secondsPerMinute);
+    	long seconds = (long) (timeTemp - (minutes * secondsPerMinute));
+    	seconds = (long) milliseconds;
+    	
+    	//Log.d("DateStrings", String.format("%d months, %d weeks, %d days, %d hours", months, weeks, days, hours));
     	
     	int outCount = 0;
     	
@@ -112,7 +131,7 @@ public class DateStrings
     		outCount++;
     		output += String.format("%dM", months);
     	}
-    	if(weeks>0 && months == 0 && outCount < maxCount)
+    	if(weeks > 0 && months == 0 && outCount < maxCount)
     	{
     		outCount++;
     		output += String.format("%dW", weeks);

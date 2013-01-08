@@ -354,7 +354,6 @@ public class LogViewer extends Activity implements Runnable
 				data = tempData;
 				ave = tempAve;
 				allAve = tempAllAve;
-				average = ArrayMath.GetAverage(data);
 				startDate.setTimeInMillis(Calendar.getInstance().getTimeInMillis() - ((long)(desiredLength - 1) * 24 * 3600 * 1000));
 			}
 			
@@ -374,6 +373,9 @@ public class LogViewer extends Activity implements Runnable
 			mGraph.Plots.add(new GraphPlot(ave, 1));
 			mGraph.Plots.get(2).SetColor(Color.GREEN);
 			mGraph.Plots.get(2).DrawPoints = false;
+			
+			mGraph.RightAxis.GenerateLabels(mGraph.Plots);
+			mGraph.LeftAxis.GenerateLabels(mGraph.Plots);
 			
 			//Setup the title
 			mGraph.Title.Text = String.format("All-time: %.02f%s/day, currently: %.02f%s/day\nFirst entry: %s",
