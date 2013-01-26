@@ -158,6 +158,41 @@ public class GraphView extends View
 		}
 	}
 	
+	public void EasyLineGraph(float[] xValues, float[] yValues)
+	{
+		try
+		{
+			//Draw the default graph
+			ClearGraph();
+		
+			Title.Text = "Scatter plot";
+		
+			Plots.add(new GraphPlot(xValues, yValues));
+			Plots.get(0).SetColor(Color.RED);
+			Plots.get(0).DrawLine = true;
+			Plots.get(0).DrawPoints = true;
+		
+			if(LeftAxis == null)
+				LeftAxis = new GraphAxis(EdgeType.LEFT);
+			if(RightAxis == null)
+				RightAxis = new GraphAxis(EdgeType.RIGHT);
+			if(BottomAxis == null)
+				BottomAxis = new GraphAxis(EdgeType.BOTTOM);
+			if(TopAxis == null)
+				TopAxis = new GraphAxis(EdgeType.TOP);
+			
+			BottomAxis.DrawLines = false;
+			RightAxis.GenerateLabels(Plots);
+			LeftAxis.GenerateLabels(Plots);
+			//TODO: Does this work? May need better way to generate labels
+			//BottomAxis.GenerateLabels(DateStrings.GetActiveDiffInDays(oldDate, newDate, midnightHour), 1, true);
+		}
+		catch(Exception e)
+		{
+			ErrorFile.WriteException(e, null);
+		}
+	}
+	
 	public void EasyScatterPlot(float[] xValues, float[] yValues, boolean drawLinePairs)
 	{
 		try

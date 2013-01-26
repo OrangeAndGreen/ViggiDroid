@@ -45,8 +45,9 @@ public class LogViewer extends Activity implements Runnable
 	private com.Dave.Graph.GraphView mGraph = null;
 	private ScrollView mTextScroller = null;
 	private TextView mTextView = null;
-	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Stats", "Recent History"};
+	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Values", "Stats", "Recent History"};
 	private CharSequence[] mCategoryStrings = null;
+	private boolean[] mCategoryTypes = null;
 	private CharSequence[] mTimeOptions = { "All-time", "Month", "Week" };
 	private LoggerConfig mConfig = null;
 	private LogFile mLog = null;    
@@ -99,25 +100,34 @@ public class LogViewer extends Activity implements Runnable
 
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
+			List<Boolean> categoryTypes = new ArrayList<Boolean>();
    			mConfig = LoggerConfig.FromFile(mRootDirectory + configFile, getApplicationContext());
    			for(int i=0; i<mConfig.Buttons.size(); i++)
    			{
-   				
    				String button = mConfig.Buttons.get(i);
-   				if((!mSafe || !button.equals("Smoke"))   )// && typeCounts.get(button) > 0)
+   				boolean isValue = mConfig.ButtonValues.get(i);
+   				if((!mSafe || !button.equals("Smoke")))// && typeCounts.get(button) > 0)
+   				{
    					categories.add(button);
+   					categoryTypes.add(isValue);
+   				}
    			}
    			for(int i=0; i<mConfig.Toggles.size(); i++)
    			{
    				String button = mConfig.Toggles.get(i);
    				//if(typeCounts.get(button) > 0)
-   					categories.add(button);
+   				categories.add(button);
+   				categoryTypes.add(false);
    			}
    		
    			//Setup the graph categories Spinner
    			mCategoryStrings = new CharSequence[categories.size()];
+   			mCategoryTypes = new boolean[categories.size()];
    			for(int i=0; i<categories.size(); i++)
+   			{
    				mCategoryStrings[i] = categories.get(i);
+   				mCategoryTypes[i] = categoryTypes.get(i);
+   			}
    			
 			ArrayAdapter<CharSequence> adapter2 = new ArrayAdapter<CharSequence>(mContext, android.R.layout.simple_spinner_item, mCategoryStrings);
 		   	adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -243,6 +253,7 @@ public class LogViewer extends Activity implements Runnable
 			int dataIndex = mDataSpinner.getSelectedItemPosition();
 			int timeIndex = mTimeSpinner.getSelectedItemPosition();
 			String category = mCategoryStrings[dataIndex].toString();
+			boolean categoryType = mCategoryTypes[dataIndex];
 			String timeRange = mTimeOptions[timeIndex].toString();
 
 			String action = prepare ? "Preparing" : "Drawing";
@@ -266,9 +277,19 @@ public class LogViewer extends Activity implements Runnable
 				DrawIntervalsGraph(category, timeRange, prepare);
 				break;
 			case 5:
-				DrawStats(category, prepare);
+				if(categoryType)
+				{
+					DrawValuesGraph(category, timeRange, prepare);
+				}
+				else
+				{
+					DrawDailyCountsGraph(category, timeRange, prepare);
+				}
 				break;
 			case 6:
+				DrawStats(category, prepare);
+				break;
+			case 7:
 				DrawRecentHistory(category, timeRange, prepare);
 				break;
 			default:
@@ -807,6 +828,146 @@ public class LogViewer extends Activity implements Runnable
 										average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
 			//mGraph.AddDateInfo(startDate);
 	
+			mGraph.BottomAxis.DrawLabels = false;
+		}
+	}
+	
+	private void DrawValuesGraph(String category, String timeRange, boolean prepare)
+	{
+		if(!prepare)
+		{
+			Debug("LogViewer", "Drawing values graph", false);
+			//Set the graph visible and text invisible
+			mGraph.setVisibility(View.VISIBLE);
+			mTextScroller.setVisibility(View.GONE);
+			
+			mGraph.invalidate();
+		}
+		else
+		{
+			Debug("LogViewer", "Preparing values graph", false);
+			Calendar startDate = Calendar.getInstance();
+	
+			//Extract the data specified by "category"
+			List<LogEntry> data = null;
+			int catIndex = mConfig.Buttons.indexOf(category);
+			boolean isToggle = false;
+			if(catIndex < 0)
+			{
+				isToggle = true;
+				catIndex = mConfig.Toggles.indexOf(category);
+				data = mLog.ExtractToggleLog(catIndex, mConfig);
+			}
+			else
+			{
+				data = mLog.ExtractEventLog(catIndex, mConfig);
+			}
+	
+			int historyDays = 0;
+			if(timeRange == "Week")
+				historyDays = 7;
+			else if(timeRange == "Month")
+				historyDays = 30;
+			
+			if(historyDays > 0)
+			{
+				Calendar filterDate = Calendar.getInstance();
+				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
+				filterDate.set(Calendar.HOUR, 0);
+				filterDate.set(Calendar.MINUTE, 0);
+				filterDate.set(Calendar.SECOND, 0);
+				
+				List<LogEntry> tempData = new ArrayList<LogEntry>();
+				
+				for(int i=0; i<data.size(); i++)
+					if(data.get(i).GetDate().after(filterDate))
+						tempData.add(data.get(i));
+				
+				if(isToggle && tempData.get(0).ToggleState == "off")
+					tempData.remove(0);
+				
+				data = tempData;
+			}
+			
+			Debug("LogViewer", "Entries: " + data.size(), false);
+			
+			Calendar firstDate = data.get(0).GetDate();
+			
+			List<Float> xValues = new ArrayList<Float>();
+			List<Float> yValues = new ArrayList<Float>();
+			LogEntry lastEntry = null;
+			int lastX = 0;
+			for(int i=0; i<data.size(); i++)
+			{
+				LogEntry curEntry = data.get(i);
+				Calendar date = curEntry.GetDate();
+				
+				float hour = date.get(Calendar.HOUR_OF_DAY);
+				float minute = date.get(Calendar.MINUTE);
+				float second = date.get(Calendar.SECOND);
+				
+				if(isToggle)
+				{
+					int curX = DateStrings.GetActiveDiffInDays(firstDate, date, 0);
+					
+					if(lastEntry != null)
+					{
+						//Code for "off" entries
+						for(int j=0; j<curX - lastX; j++)
+						{
+							xValues.add((float)(lastX + j));
+							yValues.add((float)24);
+							
+							xValues.add((float)(lastX + j + 1));
+							yValues.add((float)0);
+						}
+						
+						lastEntry = null;
+					}
+					else
+					{
+						//Code for "on" entries
+						lastEntry = curEntry;
+					}
+					
+					lastX = curX;
+				}
+				
+				xValues.add((float)DateStrings.GetActiveDiffInDays(firstDate, date, 0));
+				
+				float value = -1;
+				try
+				{
+					value = Float.parseFloat(curEntry.GetComment());
+				}
+				catch(Exception e)
+				{
+					Debug("LogViewer", String.format("Error parsing value %s for entry at %s", curEntry.GetComment(), DateStrings.GetDateTimeString(curEntry.GetDate())), false);
+				}
+				Debug("Viewer", String.format("Parsed value: %f", value), false);
+				yValues.add(value);
+			}
+			
+			//Convert the lists to arrays
+			float[] x = new float[xValues.size()];
+			float[] y = new float[yValues.size()];
+			for(int i = 0; i < xValues.size(); i++)
+			{
+				x[i] = xValues.get(i);
+				y[i] = yValues.get(i);
+			}
+			
+			mGraph.EasyLineGraph(x, y);
+			mGraph.Plots.get(0).PointColor = Color.YELLOW;
+			
+			//Setup the title
+			//mGraph.Title.Text = String.format("All-time: %.02f%s/day, currently: %.02f%s/day\nFirst entry: %s",
+			//							average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
+			
+			//Add the weekend shading and start-of-month indicators
+			//mGraph.AddDateInfo(startDate);
+	
+			//Turn off labels for the bottom axis since they are drawn with the date info
 			mGraph.BottomAxis.DrawLabels = false;
 		}
 	}

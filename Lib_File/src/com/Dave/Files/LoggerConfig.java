@@ -18,6 +18,7 @@ public class LoggerConfig
 	public int AveragingWindow = 30;
 	public List<String> Toggles = new ArrayList<String>();
 	public List<String> Buttons = new ArrayList<String>();
+	public List<Boolean> ButtonValues = new ArrayList<Boolean>();
 	public List<String> SafeItems = new ArrayList<String>();
 	public String LogFilePath = "/sdcard/00Logs/DaveLog.txt";
 	public String ExportDirectory = "/sdcard/01Files/";
@@ -73,8 +74,11 @@ public class LoggerConfig
     				ret.AveragingWindow = Integer.parseInt(value);
     			if(tag.equals("Toggle"))
     				ret.Toggles.add(value);
-    			if(tag.equals("Button"))
+    			if(tag.equals("Button") || tag.equals("Value"))
+    			{
     				ret.Buttons.add(value);
+    				ret.ButtonValues.add(tag.equals("Value"));
+    			}
     			if(tag.equals("Safe"))
     				ret.SafeItems.add(value);
     			if(tag.equals("LogFilePath"))
@@ -117,20 +121,19 @@ public class LoggerConfig
 		ret.LogFilePath = directory + "/Log.txt";
 		ret.ExportDirectory = directory + '/';
 		
-		ret.Toggles.add("Home");
-		ret.Toggles.add("Sleep");
-		ret.Toggles.add("Wash");
-		ret.Toggles.add("Drive");
-		ret.Toggles.add("Work");
-		ret.Toggles.add("Fish");
+		String[] toggles = { "Home", "Sleep", "Wash", "Drive", "Work", "Fish"};
 		
-		ret.Buttons.add("Caffeine");
-		ret.Buttons.add("Eat");
-		ret.Buttons.add("Friend");
-		ret.Buttons.add("Family");
-		ret.Buttons.add("Teeth");
-		ret.Buttons.add("Trash");
-		ret.Buttons.add("Diaper");
+		for(int i=0; i<toggles.length; i++)
+			ret.Toggles.add(toggles[i]);
+		
+		String[] buttons = { "Caffeine", "Weight", "Eat", "Friend", "Family", "Teeth", "Trash", "Diaper"};
+		boolean[] buttonTypes = { false, true, false, false, false, false, false, false};
+		
+		for(int i=0; i<buttons.length; i++)
+		{
+			ret.Buttons.add(buttons[i]);
+			ret.ButtonValues.add(buttonTypes[i]);
+		}
 
 		ret.Save();
 		

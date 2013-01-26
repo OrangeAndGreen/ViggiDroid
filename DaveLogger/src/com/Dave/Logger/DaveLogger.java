@@ -138,11 +138,15 @@ public class DaveLogger extends Activity implements Runnable
     private boolean mHadUpdateError = false;
 
     //Fields to edit when adding new log sets
-	private int[] mButtonIds = { R.id.logstub0, R.id.logstub1, R.id.logstub2, R.id.logstub3,
-								 R.id.logstub4, R.id.logstub5, R.id.logstub6, R.id.logstub7,
-								 R.id.logstub8, R.id.logstub9, R.id.logstub10 };
-	private int[] mToggleIds = { R.id.toggleStub0, R.id.toggleStub1, R.id.toggleStub2,
-								 R.id.toggleStub3, R.id.toggleStub4, R.id.toggleStub5 };
+	private int[] mButtonIds = { R.id.logstub0, R.id.logstub1, R.id.logstub2, R.id.logstub3, R.id.logstub4, R.id.logstub5, R.id.logstub6, R.id.logstub7, R.id.logstub8, R.id.logstub9,
+								 R.id.logstub10, R.id.logstub11, R.id.logstub12, R.id.logstub13, R.id.logstub14, R.id.logstub15, R.id.logstub16, R.id.logstub17, R.id.logstub18, R.id.logstub19,
+								 R.id.logstub20, R.id.logstub21, R.id.logstub22, R.id.logstub23, R.id.logstub24, R.id.logstub25, R.id.logstub26, R.id.logstub27, R.id.logstub28, R.id.logstub29,
+								 R.id.logstub30, R.id.logstub31, R.id.logstub32, R.id.logstub33, R.id.logstub34, R.id.logstub35, R.id.logstub36, R.id.logstub37, R.id.logstub38, R.id.logstub39,
+								 R.id.logstub40, R.id.logstub41, R.id.logstub42, R.id.logstub43, R.id.logstub44, R.id.logstub45, R.id.logstub46, R.id.logstub47, R.id.logstub48, R.id.logstub49
+								 };
+	private int[] mToggleIds = { R.id.toggleStub0, R.id.toggleStub1, R.id.toggleStub2, R.id.toggleStub3, R.id.toggleStub4, R.id.toggleStub5,
+								 R.id.toggleStub6, R.id.toggleStub7, R.id.toggleStub8, R.id.toggleStub9, R.id.toggleStub10, R.id.toggleStub11
+								 };
     
     //GUI components
 	private TextView mIntroText = null;
@@ -185,7 +189,7 @@ public class DaveLogger extends Activity implements Runnable
         		Debug("Logger", "Reloaded bundle", false);
             }
         	
-        	setContentView(R.layout.main2);
+        	setContentView(R.layout.main);
 
         	Debug("Logger", "Loading config file", false);
         	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile, getApplicationContext());
@@ -255,7 +259,7 @@ public class DaveLogger extends Activity implements Runnable
         		mLayouts[i] = ((ViewStub) findViewById(mButtonIds[i])).inflate();
         		mAddButtons[i] = (Button) mLayouts[i].findViewById(R.id.addButton);
         		mAddButtons[i].setText(mConfig.Buttons.get(i));
-        		mAddButtons[i].setOnClickListener(new AddListener(i));
+        		mAddButtons[i].setOnClickListener(new AddListener(i, mConfig.ButtonValues.get(i)));
         		mSummaryTextViews[i] = (TextView) mLayouts[i].findViewById(R.id.summaryText);
         	}
         
@@ -433,10 +437,12 @@ public class DaveLogger extends Activity implements Runnable
     private class AddListener implements View.OnClickListener
     {
     	private int mIndex = -1;
+    	private boolean mIsValue = false;
     	
-    	public AddListener(int id)
+    	public AddListener(int id, boolean isValue)
     	{
     		mIndex = id;
+    		mIsValue = isValue;
     	}
     	
     	public void onClick(View v)
@@ -444,7 +450,7 @@ public class DaveLogger extends Activity implements Runnable
     		try
     		{
     			boolean setDate = mDateCheck.isChecked();
-    			boolean addComment = mCommentCheck.isChecked();
+    			boolean addComment = mIsValue || mCommentCheck.isChecked();
 
     			String withDate = null;
     			if(setDate)

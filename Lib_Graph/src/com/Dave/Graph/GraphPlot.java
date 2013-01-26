@@ -42,6 +42,16 @@ public class GraphPlot implements IGraphElement
 		SetColor(Color.WHITE);
 	}
 	
+	public GraphPlot(float[] xValues, float[] yValues)
+	{
+		XValues = xValues;
+		Data = yValues;
+		DrawLine = true;
+		if(Data == null)
+			Data = new float[0];
+		SetColor(Color.WHITE);
+	}
+	
 	public GraphPlot(float[] xValues, float[] yValues, boolean drawPairs)
 	{
 		XValues = xValues;

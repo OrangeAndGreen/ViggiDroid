@@ -3,108 +3,191 @@
 	android:id="@+id/mainScroll"
 	android:layout_height="fill_parent"
 	android:layout_width="fill_parent"
->
-	<LinearLayout
-	    android:orientation="vertical"
+	>
+	<RelativeLayout
 	    android:layout_width="fill_parent"
-	    android:layout_height="fill_parent"
+	    android:layout_height="wrap_content"
 	    >
 	    <!-- First row: date string and safe button  -->
-	    <LinearLayout
-	    	android:orientation="horizontal"
-	    	android:layout_width="fill_parent"
-	    	android:layout_height="35sp"
-	    >
-			<TextView  android:id="@+id/introText"
-			    android:layout_width="215sp" 
-			    android:layout_height="wrap_content"
-			    android:layout_gravity="left"
-			    android:text="Dave's Logger!"
-			    android:textSize="25sp"
-	    	/>
-	    	<Button android:id="@+id/viewButton"
-	    		android:layout_gravity="right"
+	    <Button android:id="@+id/viewButton"
 				android:layout_width="70sp"
 				android:layout_height="wrap_content"
-				android:text="View"
-			/>
-	    	<Button android:id="@+id/safeButton"
-	    		android:layout_gravity="right"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:text="@string/view"
+				/>
+	    <Button android:id="@+id/safeButton"
 	    		android:layout_width="35sp"
 	    		android:layout_height="wrap_content"
-	    		android:text="S"
-	    	/>
-	    </LinearLayout>
-	    <include layout="@layout/divider"/>
+	    		android:layout_alignParentTop="true"
+	    		android:layout_toLeftOf="@id/viewButton"
+	    		android:text="@string/safe_short"
+	    		/>
+	    <TextView  android:id="@+id/introText"
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:layout_alignParentTop="true"
+			    android:layout_alignParentLeft="true"
+			    android:text="@string/hello"
+			    android:textSize="25sp"
+	    		/>
+	    
+	    <View   android:id="@+id/divider1"
+	    		android:layout_height="2dp"
+	    		android:layout_width="fill_parent"
+	    		android:layout_alignParentLeft="true"
+	        	android:layout_below="@+id/viewButton"
+	    		android:background="@color/divider"
+				/>
 	    
 	    <!-- Second row: logging options  -->
-	    <LinearLayout
-	    	android:orientation="horizontal"
-	    	android:layout_width="fill_parent"
-	    	android:layout_height="40sp"
-	    >
-	    	<CheckBox android:id="@+id/dateCheck"
+	    
+	    <CheckBox android:id="@+id/dateCheck"
 	    		android:layout_width="150sp"
 	    		android:layout_height="wrap_content"
-	    		android:text="Edit date"
-	    	/>
-	    	<CheckBox android:id="@+id/commentCheck"
+	    		android:layout_below="@+id/divider1"
+	    		android:layout_alignParentLeft="true"
+	    		android:text="@string/date_edit"
+	    		/>
+	    <CheckBox android:id="@+id/commentCheck"
 	    		android:layout_width="wrap_content"
 	    		android:layout_height="wrap_content"
-	    		android:layout_gravity="right"
-	    		android:text="Add comment"
-	    	/>
-	    </LinearLayout>
-		<include layout="@layout/divider"/>
-
-		<!-- Third row: Toggles  -->	    
+	    		android:layout_below="@+id/divider1"
+	    		android:layout_toRightOf="@id/dateCheck"
+	    		android:text="@string/comment_add"
+	    		/>
+	    
+	    <View   android:id="@+id/divider2"
+	    		android:layout_height="2dp"
+	    		android:layout_width="fill_parent"
+	    		android:layout_alignParentLeft="true"
+	        	android:layout_below="@+id/dateCheck"
+	    		android:background="@color/divider"
+				/>
+	    
+	    <!-- Third row: Toggles  -->
 	    <LinearLayout
-	    	android:orientation="horizontal"
-	    	android:layout_width="fill_parent"
-	    	android:layout_height="wrap_content"
-	    	android:layout_marginTop="2sp"
-	    	>
-	    	<include android:id="@+id/toggleStub0" layout="@layout/togglestub" />
-	    	<include android:id="@+id/toggleStub1" layout="@layout/togglestub" />
-	    	<include android:id="@+id/toggleStub2" layout="@layout/togglestub" />
-	    	<include android:id="@+id/toggleStub3" layout="@layout/togglestub" />
-	    	<include android:id="@+id/toggleStub4" layout="@layout/togglestub" />
-	    	<include android:id="@+id/toggleStub5" layout="@layout/togglestub" />
+		        android:id="@+id/togglelayout"
+		    	android:orientation="horizontal"
+		    	android:layout_width="fill_parent"
+		    	android:layout_height="wrap_content"
+		    	android:layout_alignParentLeft="true"
+		        android:layout_below="@+id/divider2"
+		    	android:layout_marginTop="2sp"
+		    	>
+		    	<include android:id="@+id/toggleStub0" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub1" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub2" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub3" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub4" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub5" layout="@layout/togglestub" />
 	    </LinearLayout>
-	    <include layout="@layout/divider"/>
-
-		<!-- Log Sets -->	
-		<include android:id="@+id/logstub0" layout="@layout/logstub" />
-		<include android:id="@+id/logstub1" layout="@layout/logstub" />
-		<include android:id="@+id/logstub2" layout="@layout/logstub" />
-		<include android:id="@+id/logstub3" layout="@layout/logstub" />
-		<include android:id="@+id/logstub4" layout="@layout/logstub" />
-		<include android:id="@+id/logstub5" layout="@layout/logstub" />
-		<include android:id="@+id/logstub6" layout="@layout/logstub" />
-		<include android:id="@+id/logstub7" layout="@layout/logstub" />
-		<include android:id="@+id/logstub8" layout="@layout/logstub" />
-		<include android:id="@+id/logstub9" layout="@layout/logstub" />
-		<include android:id="@+id/logstub10" layout="@layout/logstub" />
-
-		<!-- Last row: Stats and Close buttons -->
-		<LinearLayout
-			android:orientation="horizontal"
-			android:layout_width="300sp"
-			android:layout_height="wrap_content"
-			android:gravity="right"
-			>
+	    <LinearLayout
+		        android:id="@+id/togglelayout2"
+		    	android:orientation="horizontal"
+		    	android:layout_width="fill_parent"
+		    	android:layout_height="wrap_content"
+		    	android:layout_alignParentLeft="true"
+		        android:layout_below="@+id/togglelayout"
+		    	android:layout_marginTop="2sp"
+		    	>
+		    	<include android:id="@+id/toggleStub6" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub7" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub8" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub9" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub10" layout="@layout/togglestub" />
+		    	<include android:id="@+id/toggleStub11" layout="@layout/togglestub" />
+	    </LinearLayout>
+	    	
+	    <View   android:id="@+id/divider3"
+	    		android:layout_height="2dp"
+	    		android:layout_width="fill_parent"
+	    		android:layout_alignParentLeft="true"
+	        	android:layout_below="@+id/togglelayout2"
+	    		android:background="@color/divider"
+				/>
+	    
+	    <LinearLayout
+		    	android:orientation="vertical"
+		    	android:layout_width="fill_parent"
+		    	android:layout_height="fill_parent"
+		    	android:layout_alignParentLeft="true"
+	        	android:layout_below="@+id/divider3"
+			    >
+		
+				<!-- Log Sets -->	
+				<include android:id="@+id/logstub0" layout="@layout/logstub" />
+				<include android:id="@+id/logstub1" layout="@layout/logstub" />
+				<include android:id="@+id/logstub2" layout="@layout/logstub" />
+				<include android:id="@+id/logstub3" layout="@layout/logstub" />
+				<include android:id="@+id/logstub4" layout="@layout/logstub" />
+				<include android:id="@+id/logstub5" layout="@layout/logstub" />
+				<include android:id="@+id/logstub6" layout="@layout/logstub" />
+				<include android:id="@+id/logstub7" layout="@layout/logstub" />
+				<include android:id="@+id/logstub8" layout="@layout/logstub" />
+				<include android:id="@+id/logstub9" layout="@layout/logstub" />
+				<include android:id="@+id/logstub10" layout="@layout/logstub" />
+				<include android:id="@+id/logstub11" layout="@layout/logstub" />
+				<include android:id="@+id/logstub12" layout="@layout/logstub" />
+				<include android:id="@+id/logstub13" layout="@layout/logstub" />
+				<include android:id="@+id/logstub14" layout="@layout/logstub" />
+				<include android:id="@+id/logstub15" layout="@layout/logstub" />
+				<include android:id="@+id/logstub16" layout="@layout/logstub" />
+				<include android:id="@+id/logstub17" layout="@layout/logstub" />
+				<include android:id="@+id/logstub18" layout="@layout/logstub" />
+				<include android:id="@+id/logstub19" layout="@layout/logstub" />
+				<include android:id="@+id/logstub20" layout="@layout/logstub" />
+				<include android:id="@+id/logstub21" layout="@layout/logstub" />
+				<include android:id="@+id/logstub22" layout="@layout/logstub" />
+				<include android:id="@+id/logstub23" layout="@layout/logstub" />
+				<include android:id="@+id/logstub24" layout="@layout/logstub" />
+				<include android:id="@+id/logstub25" layout="@layout/logstub" />
+				<include android:id="@+id/logstub26" layout="@layout/logstub" />
+				<include android:id="@+id/logstub27" layout="@layout/logstub" />
+				<include android:id="@+id/logstub28" layout="@layout/logstub" />
+				<include android:id="@+id/logstub29" layout="@layout/logstub" />
+				<include android:id="@+id/logstub30" layout="@layout/logstub" />
+				<include android:id="@+id/logstub31" layout="@layout/logstub" />
+				<include android:id="@+id/logstub32" layout="@layout/logstub" />
+				<include android:id="@+id/logstub33" layout="@layout/logstub" />
+				<include android:id="@+id/logstub34" layout="@layout/logstub" />
+				<include android:id="@+id/logstub35" layout="@layout/logstub" />
+				<include android:id="@+id/logstub36" layout="@layout/logstub" />
+				<include android:id="@+id/logstub37" layout="@layout/logstub" />
+				<include android:id="@+id/logstub38" layout="@layout/logstub" />
+				<include android:id="@+id/logstub39" layout="@layout/logstub" />
+				<include android:id="@+id/logstub40" layout="@layout/logstub" />
+				<include android:id="@+id/logstub41" layout="@layout/logstub" />
+				<include android:id="@+id/logstub42" layout="@layout/logstub" />
+				<include android:id="@+id/logstub43" layout="@layout/logstub" />
+				<include android:id="@+id/logstub44" layout="@layout/logstub" />
+				<include android:id="@+id/logstub45" layout="@layout/logstub" />
+				<include android:id="@+id/logstub46" layout="@layout/logstub" />
+				<include android:id="@+id/logstub47" layout="@layout/logstub" />
+				<include android:id="@+id/logstub48" layout="@layout/logstub" />
+				<include android:id="@+id/logstub49" layout="@layout/logstub" />
+	
+				<!-- Last row: debugging/testing stuff -->
+				<LinearLayout
+					android:orientation="horizontal"
+					android:layout_width="300sp"
+					android:layout_height="wrap_content"
+					android:gravity="right"
+					>
+				</LinearLayout>
+				<!--
+				<Button android:id="@+id/testingButton"
+					android:layout_width="100sp"
+					android:layout_height="wrap_content"
+					android:text="Test"
+				/>
+				-->
+				<TextView
+					android:id="@+id/debugText"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+				/>
 		</LinearLayout>
-		<!--
-		<Button android:id="@+id/testingButton"
-			android:layout_width="100sp"
-			android:layout_height="wrap_content"
-			android:text="Test"
-		/>
-		-->
-		<TextView
-			android:id="@+id/debugText"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-		/>
-	</LinearLayout>
+
+	</RelativeLayout>
 </ScrollView>
