@@ -19,6 +19,7 @@ public class ErrorFile
 	{
 		Calendar date = Calendar.getInstance();
 		String entry = String.format("%s - %s: %s\n", DateStrings.GetDateTimeString(date), who, error);
+		Log.e("ErrorFile", entry);
 		try
 		{
 			FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/" + ErrorFile, true);

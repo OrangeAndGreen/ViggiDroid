@@ -21,6 +21,7 @@ public class CoordFile
 	private FileWriter mWriter = null;
 	private File mFile = null;
 	private List<GPSCoordinate> mCoords = new ArrayList<GPSCoordinate>();
+	private List<Integer> mStrengths = new ArrayList<Integer>();
 
 	//Creates a new coordinate file and autonames it
 	public CoordFile(Context context)
@@ -67,15 +68,16 @@ public class CoordFile
 
 	}
 	
-	public void WriteEntry(Location location)
+	public void WriteEntry(Location location, int strength)
 	{
 		try
 		{
 			GPSCoordinate coord = new GPSCoordinate(location);
 			
 			mCoords.add(coord);
+			mStrengths.add(strength);
 			
-			mWriter.append(coord.ToString());
+			mWriter.append(coord.ToString() + ", " + strength + "\n");
 			
 			//Toast t = Toast.makeText(mContext, "Wrote log entry", Toast.LENGTH_SHORT);
 			//t.show();
@@ -101,6 +103,7 @@ public class CoordFile
 			String[] lines = text.split("\n");
 			
 			mCoords.clear();
+			mStrengths.clear();
 			for(int i=0; i<lines.length; i++)
 			{
 				String[] parts = lines[i].split(",");
@@ -111,7 +114,7 @@ public class CoordFile
 					continue;
 				
 				Location location = new Location("File");
-				
+				int strength = 0;
 				try
 				{
 					ticks = Long.parseLong(parts[1]);
@@ -123,10 +126,12 @@ public class CoordFile
 					location.setAccuracy(Float.parseFloat(parts[5]));
 					location.setBearing(Float.parseFloat(parts[6]));
 					location.setSpeed(Float.parseFloat(parts[7]));
+					Integer.parseInt(parts[8]);
 				}
 				catch(Exception e)
 				{ }
 				
+				mStrengths.add(strength);
 				mCoords.add(new GPSCoordinate(location));
 			}
 		}
@@ -193,6 +198,10 @@ public class CoordFile
 		return  mCoords.get(i).GetSpeed(units);
 	}
 	
+	public int GetStrength(int i)
+	{
+		return mStrengths.get(i);
+	}
 	
 	
 	/* Stats about file */

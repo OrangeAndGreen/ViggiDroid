@@ -59,7 +59,7 @@ public class GPSCoordinate
         date.setTimeInMillis(mLocation.getTime());
         String dateStr = DateStrings.GetDateTimeString(date);
         
-        return String.format("%s,%d,%f,%f,%f,%f,%f,%f\n", dateStr, mLocation.getTime(), mLocation.getLongitude(),
+        return String.format("%s,%d,%f,%f,%f,%f,%f,%f", dateStr, mLocation.getTime(), mLocation.getLongitude(),
         												  mLocation.getLatitude(), mLocation.getAltitude(),
         												  mLocation.getAccuracy(), mLocation.getBearing(), mLocation.getSpeed());
 	}

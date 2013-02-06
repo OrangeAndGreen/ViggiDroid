@@ -33,6 +33,9 @@ import android.location.LocationManager;
 
 import android.os.Bundle;
 import android.os.Environment;
+import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -101,8 +104,13 @@ public class TravelTrackerActivity extends MapActivity
 	private boolean mRecording = false;
 	private boolean mStopped = true;	
 	
+	public String LogDirectory = "01Tracks";
 	private CoordFile mFile = null;
 	private LocationManager mLocMgr = null;
+	private TelephonyManager mTelephonyManager = null;
+	private PhoneStateListener mSignalListener = null;
+	private int mCurrentSignal = -1;
+	private int mDefaultSignal = -10000;
 	private MyLocationListener mListener = null;
 	private MapController mMapController = null;
 	private TrackOverlay mTrack = null;
@@ -139,10 +147,11 @@ public class TravelTrackerActivity extends MapActivity
 	private static CharSequence ALTITUDE_GRAPH = "Altitude";
 	private static CharSequence BEARING_GRAPH = "Bearing";
 	private static CharSequence ACCURACY_GRAPH = "Accuracy";
+	private static CharSequence SIGNAL_GRAPH = "Signal";
 	private static CharSequence SUMMARY = "Track Summary";
 	private static CharSequence SETTINGS = "Settings";
 
-	private static CharSequence[] mPages = { OVERVIEW, MAP, SPEED_GRAPH, ACCELERATION_GRAPH, ALTITUDE_GRAPH, ACCURACY_GRAPH, BEARING_GRAPH, SUMMARY, SETTINGS };
+	private static CharSequence[] mPages = { OVERVIEW, MAP, SPEED_GRAPH, ACCELERATION_GRAPH, ALTITUDE_GRAPH, ACCURACY_GRAPH, SIGNAL_GRAPH, BEARING_GRAPH, SUMMARY, SETTINGS };
 	private static CharSequence[] mHistoryLengths = { "30s", "1m", "5m", "10m", "15m", "30m", "1h", "2h", "5h", "10h" };
 	private static CharSequence[] mDistanceUnits = { GPSUnits.FEET, GPSUnits.METERS, GPSUnits.KILOMETERS, GPSUnits.MILES };
 	private static CharSequence[] mTimeUnits = { GPSUnits.SECONDS, GPSUnits.MINUTES, GPSUnits.HOURS };
@@ -203,7 +212,7 @@ public class TravelTrackerActivity extends MapActivity
 	        	mFile = new CoordFile(mContext, mFilename);
 	        }
 	        
-	        LoadPage(null);
+	        LoadPage(null, 0);
         }
         catch(Exception e)
         {
@@ -289,7 +298,7 @@ public class TravelTrackerActivity extends MapActivity
 					{
 						mCurrentPage = mPages[mPageSelector.getSelectedItemPosition()].toString();
 		        	
-		        		LoadPage(null);
+		        		LoadPage(null, 0);
 					}
 			    	catch(Exception e)
 			    	{
@@ -669,7 +678,7 @@ public class TravelTrackerActivity extends MapActivity
 		    			mapOverlays.add(mStops);
 		    					
 		    					
-		    			LoadPage(null);
+		    			LoadPage(null, 0);
 	    			}
 	    	    	catch(Exception e)
 	    	    	{
@@ -693,12 +702,12 @@ public class TravelTrackerActivity extends MapActivity
     }
     private List<File> mTravelFiles = null;
     
-    private void LoadPage(Location location)
+    private void LoadPage(Location location, int strength)
     {
     	try
     	{
 	    	if(mCurrentPage.equals(OVERVIEW))
-	    		LoadOverviewPage(location);
+	    		LoadOverviewPage(location, strength);
 	    	else if(mCurrentPage.equals(MAP))
 	    		LoadMapPage(location);
 	    	else if(mCurrentPage.equals(SPEED_GRAPH))
@@ -711,6 +720,8 @@ public class TravelTrackerActivity extends MapActivity
 	    		LoadBearingGraphPage();
 	    	else if(mCurrentPage.equals(ACCURACY_GRAPH))
 	    		LoadAccuracyGraphPage();
+	    	else if(mCurrentPage.equals(SIGNAL_GRAPH))
+	    		LoadSignalGraphPage();
 	    	else if(mCurrentPage.equals(SUMMARY))
 	    		LoadSummaryPage();
 	    	else if(mCurrentPage.equals(SETTINGS))
@@ -749,7 +760,7 @@ public class TravelTrackerActivity extends MapActivity
     	mMapView.invalidate();
     }
     
-    private void LoadOverviewPage(Location location)
+    private void LoadOverviewPage(Location location, int strength)
     {
     	mGraph.setVisibility(View.GONE);
     	mMainText.setVisibility(View.VISIBLE);
@@ -797,6 +808,9 @@ public class TravelTrackerActivity extends MapActivity
     		
     		status += String.format("Drive efficiency: %.02f%%\n", mFile.GetEfficiency(mStoppedThreshold, mUnits));
     	}
+    	
+    	if(strength != mDefaultSignal)
+    		status += String.format("\nSignal: %d\n", strength);
     	
         mMainText.setText(status);
     }
@@ -1258,6 +1272,96 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.invalidate();
     }
     
+    private void LoadSignalGraphPage()
+    {
+    	if(mFile == null || mFile.Size() == 0)
+    	{
+        	mGraph.setVisibility(View.GONE);
+        	mMainText.setVisibility(View.VISIBLE);
+        	mSettingsLayout.setVisibility(View.GONE);
+        	mMapView.setVisibility(View.GONE);
+        	
+        	mMainText.setText("No data to display");
+        	
+        	return;
+    	}
+    	
+    	//Set the graph visible and text invisible
+    	mGraph.setVisibility(View.VISIBLE);
+    	mMainText.setVisibility(View.GONE);
+    	mSettingsLayout.setVisibility(View.GONE);
+    	mMapView.setVisibility(View.GONE);
+    	
+		Calendar startDate = Calendar.getInstance();
+
+		//Extract the data
+		float[] data = new float[mFile.Size()];
+		int numValues = 0;
+		for(int i=0; i<mFile.Size(); i++)
+		{
+			if(i == 0)
+				startDate.setTimeInMillis(mFile.GetTime(i));
+			data[i] = mFile.GetStrength(i);
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			{
+				numValues++;
+			}
+		}
+		
+		//Calculate the average curves
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
+		float average = ArrayMath.GetAverage(data);
+
+		//Crop all the data arrays down to what will be displayed
+		float[] tempData = new float[numValues];
+		float[] tempAve = new float[numValues];
+		float[] tempAllAve = new float[numValues];
+		int curValue = 0;
+		for(int i=0; i<mFile.Size(); i++)
+		{
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			{
+				tempData[curValue] = data[i];
+				tempAve[curValue] = ave[i];
+				tempAllAve[curValue] = allAve[i];
+				curValue++;
+			}
+		}
+		data = tempData;
+		ave = tempAve;
+		allAve = tempAllAve;
+		
+		
+		mGraph.EasyGraph(data);
+		
+		//Setup the all-data plot
+		mGraph.Plots.get(0).SetColor(Color.WHITE);
+		mGraph.Plots.get(0).DrawPoints = true;
+		mGraph.Plots.get(0).PointColor = Color.YELLOW;
+
+		//Setup the all-time average plot
+		mGraph.Plots.add(new GraphPlot(allAve, 1));		
+		mGraph.Plots.get(1).SetColor(Color.RED);
+		mGraph.Plots.get(1).DrawPoints = false;
+
+		//Setup the running average plot
+		mGraph.Plots.add(new GraphPlot(ave, 1));
+		mGraph.Plots.get(2).SetColor(Color.GREEN);
+		mGraph.Plots.get(2).DrawPoints = false;
+		
+		//Setup the title
+		String units = GPSUnits.GetDistanceAbbreviation(mUnits.AccuracyUnits);
+		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
+				ACCURACY_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));		
+		//Add the weekend shading and start-of-month indicators
+		//mGraph.AddDateInfo(startDate);
+
+		//Turn off labels for the bottom axis since they are drawn with the date info
+		mGraph.BottomAxis.DrawLabels = false;
+		mGraph.invalidate();
+    }
+    
     private void LoadSummaryPage()
     {
     	mGraph.setVisibility(View.GONE);
@@ -1315,7 +1419,7 @@ public class TravelTrackerActivity extends MapActivity
         	{
 	        	mStatusText.setText(ACQUIRING);
 	        	
-	        	mFile.WriteEntry(location);
+	        	mFile.WriteEntry(location, mCurrentSignal);
 	            
 	        	mTrack.Add(new GeoPoint((int)(location.getLatitude() * 1E6), (int)(location.getLongitude() * 1E6)));
 	        	
@@ -1327,7 +1431,7 @@ public class TravelTrackerActivity extends MapActivity
 	        	}
 	        	mStopped = stoppedNow;
 	        	
-	            LoadPage(location);
+	            LoadPage(location, mCurrentSignal);
         	}
         	catch(Exception e)
         	{
@@ -1402,8 +1506,17 @@ public class TravelTrackerActivity extends MapActivity
         	            	mTrack = new TrackOverlay();
         	            	mStops = new StopOverlay();
         	            	
+        	            	String rootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + LogDirectory + "/";
+        	            	
+        	            	File dir = new File(rootDirectory);
+        	            	if(!dir.exists() && !dir.mkdirs())
+        	            	{
+        	            		Toast t = Toast.makeText(getApplicationContext(), "Could not create directory " + rootDirectory, Toast.LENGTH_LONG);
+        	            		t.show();
+        	            	}
+        	            	
         	            	//Create a new file
-        	            	mFilename = String.format("/sdcard/TravelLog_%s.txt", DateStrings.GetDateTimeString(Calendar.getInstance()));
+        	            	mFilename = String.format(rootDirectory + "TravelLog_%s.txt", DateStrings.GetDateTimeString(Calendar.getInstance()));
         	            	StartGPS();
         	            	
         	            	mRecording = !mRecording;
@@ -1472,6 +1585,20 @@ public class TravelTrackerActivity extends MapActivity
 	        mListener = new MyLocationListener();
 	        mLocMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, LogInterval, 0, mListener);
 	        
+	        mSignalListener = new PhoneStateListener()
+	        {
+	        	@Override
+	        	public void onSignalStrengthsChanged(SignalStrength signalStrength)
+	        	{
+	        		mCurrentSignal = Math.abs(signalStrength.getCdmaDbm());
+	        		//String strengths = String.format("%d, %d, %d, %d", signalStrength.getCdmaDbm(), signalStrength.getEvdoDbm(), signalStrength.getEvdoSnr(), signalStrength.getGsmSignalStrength());
+	        		//ErrorFile.Write("TravelTracker", String.format("Signal strength: %s", strengths), getApplicationContext());
+	        	}
+	        };
+	        
+	        TelephonyManager mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+	        mTelephonyManager.listen(mSignalListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+	        
 	        mStatusText.setText(INITIALIZING);
     	}
     	catch(Exception e)
@@ -1491,13 +1618,27 @@ public class TravelTrackerActivity extends MapActivity
 	    		mListener = null;
 	    		mLocMgr = null;
 	    	}
-	    	
-	    	mStatusText.setText(IDLE);
     	}
     	catch(Exception e)
     	{
     		ErrorFile.WriteException(e, getApplicationContext());
     	}
+    	try
+    	{
+	    	if(mTelephonyManager != null && mSignalListener != null)
+	    	{
+	    		mTelephonyManager.listen(mSignalListener, PhoneStateListener.LISTEN_NONE);
+	    		
+	    		mSignalListener = null;
+	    		mTelephonyManager = null;
+	    	}
+    	}
+    	catch(Exception e)
+    	{
+    		ErrorFile.WriteException(e, getApplicationContext());
+    	}
+    	
+    	mStatusText.setText(IDLE);
     }
     
     private void CloseFile()
@@ -1608,13 +1749,11 @@ public class TravelTrackerActivity extends MapActivity
 				paint.setARGB(255, 255, 0, 0);
 				paint.setStrokeWidth(2);
 				
-				Point lastPoint = null;
 				for(int i=0; i<mPoints.size(); i++)
 				{
 					Point curPoint = new Point();
 					projection.toPixels(mPoints.get(i), curPoint);
 					canvas.drawCircle(curPoint.x, curPoint.y, 5, paint);
-					lastPoint = curPoint;
 				}
 			}
 	    	catch(Exception e)
