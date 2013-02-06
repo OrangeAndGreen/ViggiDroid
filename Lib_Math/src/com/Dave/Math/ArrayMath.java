@@ -114,7 +114,7 @@ public class ArrayMath
 	{
 		float ceiling = GetMax(data);
 		if(ceiling % 1 != 0)
-			ceiling = ceiling + 1 - (ceiling % 1);
+			ceiling = (int) ceiling + 1;// - (ceiling % 1);
 		return ceiling;
 	}
 }

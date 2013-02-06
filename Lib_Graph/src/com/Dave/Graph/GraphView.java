@@ -150,7 +150,7 @@ public class GraphView extends View
 			BottomAxis.DrawLines = false;
 			RightAxis.GenerateLabels(Plots);
 			LeftAxis.GenerateLabels(Plots);
-			BottomAxis.GenerateLabels(data.length - 1, 1, true);
+			BottomAxis.GenerateLabels(0, data.length - 1, 1, true);
 		}
 		catch(Exception e)
 		{

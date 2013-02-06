@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Paint.Align;
+import android.util.Log;
 
 public class GraphLabel implements IGraphElement
 {
@@ -122,6 +123,7 @@ public class GraphLabel implements IGraphElement
 	
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
+		//Log.i("GraphLabel", String.format("Drawing label %s at (%d, %d)", Text, Location.x, Location.y));
 		GetExtent(null);
 		switch(HAlign)
 		{

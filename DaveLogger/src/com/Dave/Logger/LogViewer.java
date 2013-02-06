@@ -618,10 +618,10 @@ public class LogViewer extends Activity implements Runnable
 			
 			mGraph.Title.Text = String.format("Average: %.02f%s/day\nStd. Dev.: %.02f%s/day", average, units, stddev, units);
 	
-			mGraph.LeftAxis.GenerateLabels(ceiling, 1, false);
-			mGraph.RightAxis.GenerateLabels(ceiling, 1, false);
+			mGraph.LeftAxis.GenerateLabels(0, ceiling, 1, false);
+			mGraph.RightAxis.GenerateLabels(0, ceiling, 1, false);
 			
-			mGraph.BottomAxis.GenerateLabels(numBins - 1, axisMultiplier, false);
+			mGraph.BottomAxis.GenerateLabels(0, numBins - 1, axisMultiplier, false);
 			mGraph.BottomAxis.DrawLabels = true;
 		}
 	}
@@ -695,8 +695,8 @@ public class LogViewer extends Activity implements Runnable
 				mGraph.AddDataPoint(x[i], allData[i], Color.GREEN);
 			}
 			
-			mGraph.RightAxis.GenerateLabels(Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
-			mGraph.LeftAxis.GenerateLabels(Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
+			mGraph.RightAxis.GenerateLabels(0, Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
+			mGraph.LeftAxis.GenerateLabels(0, Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
 			
 			String[] labels = {"S", "S", "M", "T", "W", "T", "F"};
 			mGraph.BottomAxis.SetLabels(labels);

@@ -71,13 +71,18 @@ public class GraphPlot implements IGraphElement
 	public FloatRectangle GetDataRange()
 	{
 		float yMax = ArrayMath.GetCeiling(Data);
+		float yMin = (float) Math.floor(ArrayMath.GetMin(Data));
 		float xMax = Math.round(Data.length * XInterval);
+		float xMin = 0;
 		
 		if(XValues != null)
+		{
+			xMin = ArrayMath.GetMin(Data);
 			xMax = ArrayMath.GetMax(XValues);
+		}
 		
 		//Log.i("GraphPlot.GetDataRange", String.format("size: (%.02f, %d)", yMax, (int)xMax));
-		return new FloatRectangle(0, yMax, xMax, 0);
+		return new FloatRectangle(xMin, yMax, xMax, yMin);
 	}
 	
 	public GraphRectangle GetExtent(Point viewSize)
@@ -92,7 +97,7 @@ public class GraphPlot implements IGraphElement
 		int graphWidth = bounds.Right - bounds.Left;
 		if(dataBounds.Top % 1 != 0)
 			dataBounds.Top = dataBounds.Top + 1 - (dataBounds.Top % 1);
-		float dataYMultiplier = graphHeight / dataBounds.Top;
+		float dataYMultiplier = graphHeight / (dataBounds.Top - dataBounds.Bottom);
 		float dataXMultiplier = 0;
 		float xMax = (Data.length - 1) * XInterval;
 		
@@ -112,7 +117,7 @@ public class GraphPlot implements IGraphElement
 				xValue = XValues[i];
 			
 			int xPixel = bounds.Left + Math.round(xValue / xMax * graphWidth);
-			int yPixel = bounds.Bottom - (int)(Data[i]*dataYMultiplier);
+			int yPixel = bounds.Bottom - (int)((Data[i] - dataBounds.Bottom) * dataYMultiplier);
 			Point newPoint = new Point(xPixel, yPixel);
 			if((DrawLine || DrawLinePairs) && lastPoint != null)
 				canvas.drawLine(lastPoint.x, lastPoint.y, newPoint.x, newPoint.y, mPaint);

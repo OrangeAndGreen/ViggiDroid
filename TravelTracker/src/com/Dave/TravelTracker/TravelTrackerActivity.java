@@ -36,6 +36,7 @@ import android.os.Environment;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -1274,6 +1275,7 @@ public class TravelTrackerActivity extends MapActivity
     
     private void LoadSignalGraphPage()
     {
+    	//Log.i("TravelTracker", "Loading signal graph page");
     	if(mFile == null || mFile.Size() == 0)
     	{
         	mGraph.setVisibility(View.GONE);
@@ -1352,8 +1354,8 @@ public class TravelTrackerActivity extends MapActivity
 		
 		//Setup the title
 		String units = GPSUnits.GetDistanceAbbreviation(mUnits.AccuracyUnits);
-		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
-				ACCURACY_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));		
+		mGraph.Title.Text = String.format("%s\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
+				SIGNAL_GRAPH.toString(), average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));		
 		//Add the weekend shading and start-of-month indicators
 		//mGraph.AddDateInfo(startDate);
 

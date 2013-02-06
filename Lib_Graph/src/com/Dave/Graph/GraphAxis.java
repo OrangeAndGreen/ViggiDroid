@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Point;
+import android.util.Log;
 
 /*
  * Contains information for a graph axis
@@ -123,8 +124,9 @@ public class GraphAxis implements IGraphElement
 			}
 	}
 	
-    public void GenerateLabels(int range, float labelMultiplier, boolean forceAll)
+    public void GenerateLabels(int min, int max, float labelMultiplier, boolean forceAll)
     {
+    	int range = max - min;
     	//Auto-adjust the label interval so at-most 20 labels are shown
     	int multiplier = 1;
     	float actualLabelMultiplier = labelMultiplier;
@@ -148,27 +150,37 @@ public class GraphAxis implements IGraphElement
     	}
     		
     	int numLabels = range / multiplier + 1;
+    	//int minLabel = (int) (min / multiplier);
+    	//if(min % multiplier != 0)
+    	//	minLabel = minLabel * multiplier - multiplier;
+    	
+    	//Log.i("GraphAxis", String.format("Generating %d labels for %s between %d and %d", numLabels, Edge, min, max));
     	if(range % multiplier > 0)
     		numLabels++;
     	String[] labels = new String[numLabels];
 		for(int i = 0; i < numLabels; i++)
 			if(labelMultiplier % 1 == 0)
-				labels[i] = String.format("%d", Math.round(i * actualLabelMultiplier));
+				labels[i] = String.format("%d", Math.round(min + (i * actualLabelMultiplier)));
 			else
-				labels[i] = String.format("%.01f", i * actualLabelMultiplier);
+				labels[i] = String.format("%.01f", min + (i * actualLabelMultiplier));
 		SetLabels(labels);
     }
 
     public void GenerateLabels(List<GraphPlot> plots)
     {
     	float max = Float.MIN_VALUE;
+    	float min = Float.MAX_VALUE;
 		for(GraphPlot p : plots)
 		{
-			float num = ArrayMath.GetCeiling(p.Data);
-			if(num > max)
-				max = num;
+			float localMax = ArrayMath.GetCeiling(p.Data);
+			float localMin = (int)ArrayMath.GetMin(p.Data);
+			//Log.i("GraphAxis", String.format("Plot range: %d, %d", localMin, localMax));
+			if(localMax > max)
+				max = localMax;
+			if(localMin < min)
+				min = localMin;
 		}
-		GenerateLabels((int)max, 1, false);
+		GenerateLabels((int) min, (int)max, 1, false);
     }
 	
 	public void Build(GraphRectangle bounds)
@@ -305,6 +317,8 @@ public class GraphAxis implements IGraphElement
 		if(Axis != null)
 			Axis.Draw(canvas, bounds, dataBounds);
 		if(Labels != null)
+		{
+			//Log.i("GraphAxis", String.format("Drawing %d labels for %s", Labels.size(), Edge));
 			for(int i=0; i<Labels.size(); i++)
 			{
 				if(DrawLabels)
@@ -313,6 +327,7 @@ public class GraphAxis implements IGraphElement
 				if(DrawLines)
 					Lines.get(i).Draw(canvas, bounds, dataBounds);
 			}
+		}
 	}
 	
 	public int GetColor()

@@ -10,6 +10,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.Dave.DateStrings.DateStrings;
@@ -110,26 +111,28 @@ public class CoordFile
 				if(parts.length < 8)
 					continue;
 				
-				if(parts[0].equals("Date"))
+				if(parts[0].trim().equals("Date"))
 					continue;
 				
 				Location location = new Location("File");
 				int strength = 0;
 				try
 				{
-					ticks = Long.parseLong(parts[1]);
+					ticks = Long.parseLong(parts[1].trim());
 					location.setTime(ticks);
 				
-					location.setLongitude(Double.parseDouble(parts[2]));
-					location.setLatitude(Double.parseDouble(parts[3]));
-					location.setAltitude(Double.parseDouble(parts[4]));
-					location.setAccuracy(Float.parseFloat(parts[5]));
-					location.setBearing(Float.parseFloat(parts[6]));
-					location.setSpeed(Float.parseFloat(parts[7]));
-					Integer.parseInt(parts[8]);
+					location.setLongitude(Double.parseDouble(parts[2].trim()));
+					location.setLatitude(Double.parseDouble(parts[3].trim()));
+					location.setAltitude(Double.parseDouble(parts[4].trim()));
+					location.setAccuracy(Float.parseFloat(parts[5].trim()));
+					location.setBearing(Float.parseFloat(parts[6].trim()));
+					location.setSpeed(Float.parseFloat(parts[7].trim()));
+					strength = Integer.parseInt(parts[8].trim());
 				}
 				catch(Exception e)
-				{ }
+				{
+					ErrorFile.WriteException(e, mContext);
+				}
 				
 				mStrengths.add(strength);
 				mCoords.add(new GPSCoordinate(location));
