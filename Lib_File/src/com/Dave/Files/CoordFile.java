@@ -10,7 +10,6 @@ import java.util.List;
 
 import android.content.Context;
 import android.location.Location;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.Dave.DateStrings.DateStrings;
@@ -22,7 +21,9 @@ public class CoordFile
 	private FileWriter mWriter = null;
 	private File mFile = null;
 	private List<GPSCoordinate> mCoords = new ArrayList<GPSCoordinate>();
-	private List<Integer> mStrengths = new ArrayList<Integer>();
+	
+	private boolean mWriting = false;
+	private boolean mClosing = false;
 
 	//Creates a new coordinate file and autonames it
 	public CoordFile(Context context)
@@ -63,20 +64,22 @@ public class CoordFile
 		}
 		catch(Exception e)
 		{
-			Toast t = Toast.makeText(mContext, "Failed to create output file", Toast.LENGTH_SHORT);
-			t.show();
+			ErrorFile.WriteException(e, context);
 		}
 
 	}
 	
 	public void WriteEntry(Location location, int strength)
 	{
+		if(mClosing)
+			return;
+		
+		mWriting = true;
 		try
 		{
-			GPSCoordinate coord = new GPSCoordinate(location);
+			GPSCoordinate coord = new GPSCoordinate(location, strength);
 			
 			mCoords.add(coord);
-			mStrengths.add(strength);
 			
 			mWriter.append(coord.ToString() + ", " + strength + "\n");
 			
@@ -85,9 +88,9 @@ public class CoordFile
 		}
 		catch(Exception e)
 		{
-			Toast t = Toast.makeText(mContext, "Failed to write to output file", Toast.LENGTH_SHORT);
-			t.show();
+			ErrorFile.WriteException(e, mContext);
 		}
+		mWriting = false;
 	}
 		
 	private void ReadFile()
@@ -104,7 +107,6 @@ public class CoordFile
 			String[] lines = text.split("\n");
 			
 			mCoords.clear();
-			mStrengths.clear();
 			for(int i=0; i<lines.length; i++)
 			{
 				String[] parts = lines[i].split(",");
@@ -131,32 +133,42 @@ public class CoordFile
 				}
 				catch(Exception e)
 				{
-					ErrorFile.WriteException(e, mContext);
+					ErrorFile.WriteException(e, null);
 				}
 				
-				mStrengths.add(strength);
-				mCoords.add(new GPSCoordinate(location));
+				mCoords.add(new GPSCoordinate(location, strength));
 			}
 		}
 		catch(Exception e)
 		{
-			Toast t = Toast.makeText(mContext, "Failed to read log: " + e.toString() + ", " + ticks, Toast.LENGTH_SHORT);
-			t.show();
+			ErrorFile.WriteException(e, mContext);
 		}
 	}
 	
 	public void Close()
 	{
+		mClosing = true;
 		if(mWriter != null)
 		{
+			for(int i=0; i<10; i++)
+			{
+				if(!mWriting)
+					break;
+				try
+				{
+					Thread.sleep(100);
+				}
+				catch(Exception e)
+				{ }
+			}
+			
 			try
 			{
 				mWriter.close();
 			}
 			catch(Exception e)
 			{
-				Toast t = Toast.makeText(mContext, "Failed to close output file writer", Toast.LENGTH_SHORT);
-				t.show();
+				ErrorFile.WriteException(e, mContext);
 			}
 			mWriter = null;
 		}
@@ -203,7 +215,7 @@ public class CoordFile
 	
 	public int GetStrength(int i)
 	{
-		return mStrengths.get(i);
+		return mCoords.get(i).GetSignalStrength();
 	}
 	
 	

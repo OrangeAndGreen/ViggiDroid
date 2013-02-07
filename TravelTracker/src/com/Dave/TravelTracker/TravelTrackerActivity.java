@@ -36,7 +36,6 @@ import android.os.Environment;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -93,30 +92,26 @@ import android.widget.ToggleButton;
 public class TravelTrackerActivity extends MapActivity
 {
 	//Things to remember when saving/restoring state
-	private int LogInterval = 1000;
-	private GPSUnits mUnits = null;
-	private int mGraphHistory = 5 * 60000;
-	private int mRunningAveragePoints = 60;
-	private float mStoppedThreshold = 1;
-	private boolean mShowSatelliteView = true;
-	private boolean mShowTraffic = false;
-	private String mCurrentPage = null;
-	private String mFilename = null;
-	private boolean mRecording = false;
-	private boolean mStopped = true;	
+	private TravelTrackerSettings mSettings = null;
 	
-	public String LogDirectory = "01Tracks";
+	private Context mContext = null;
 	private CoordFile mFile = null;
+	
+	//GPS Manager and Listener
 	private LocationManager mLocMgr = null;
+	private MyLocationListener mListener = null;
+	
+	//Signal strength Manager and Listener
 	private TelephonyManager mTelephonyManager = null;
 	private PhoneStateListener mSignalListener = null;
-	private int mCurrentSignal = -1;
-	private int mDefaultSignal = -10000;
-	private MyLocationListener mListener = null;
+	private int mDefaultSignal = -1000;
+	private int mCurrentSignal = mDefaultSignal;
+	
+	//Map Controller
 	private MapController mMapController = null;
 	private TrackOverlay mTrack = null;
 	private StopOverlay mStops = null;
-	private Context mContext = null;
+	private int[] mColorTable = null;
 	
 	//GUI Components
 	private TextView mStatusText = null;
@@ -166,54 +161,30 @@ public class TravelTrackerActivity extends MapActivity
         
         mContext = this;
         
-        mUnits = new GPSUnits(GPSUnits.IMPERIAL);
+        mSettings = new TravelTrackerSettings(getPreferences(MODE_PRIVATE), this);
         
-        if(savedInstanceState != null)
-        {
-        	mFilename = savedInstanceState.getString("filename");
-        	mCurrentPage = savedInstanceState.getString("curpage");
-        	mRecording = savedInstanceState.getBoolean("recording");
-
-        	LogInterval = savedInstanceState.getInt("loginterval");
-        	mGraphHistory = savedInstanceState.getInt("graphhistory");
-        	mRunningAveragePoints = savedInstanceState.getInt("runningaverage");
-        	mStoppedThreshold = savedInstanceState.getFloat("stoppedthreshold");
-        	mShowSatelliteView = savedInstanceState.getBoolean("satelliteview");
-        	mShowTraffic = savedInstanceState.getBoolean("traffic");
-        	mStopped = savedInstanceState.getBoolean("stopped");
-	    	
-        	mUnits.UnitSystem = savedInstanceState.getString("");
-        	mUnits.AltitudeUnits = savedInstanceState.getString("");
-        	mUnits.SpeedDistanceUnits = savedInstanceState.getString("");
-        	mUnits.SpeedTimeUnits = savedInstanceState.getString("");
-        	mUnits.AccuracyUnits = savedInstanceState.getString("");
-        	mUnits.DistanceUnits = savedInstanceState.getString("");
-        	
-        }
-        else
-        {
-        	mFilename = null;
-        	mCurrentPage = OVERVIEW.toString();
-        	mRecording = false;
-        }
+        if(mSettings.CurrentPage == null)
+        	mSettings.CurrentPage = OVERVIEW.toString();
+        
+        mColorTable = BuildColorTable();
         
         try
         {
 	        setContentView(R.layout.main);
 	        InitializeInterface();
 	        
-	        if(mRecording)
+	        if(mSettings.IsRecording)
 	        {
-	        	mRecordButton.setChecked(mRecording);
+	        	mRecordButton.setChecked(mSettings.IsRecording);
 	        	
 	        	StartGPS();
 	        }
-	        else if(mFilename != null)
+	        else if(mSettings.Filename != null)
 	        {
-	        	mFile = new CoordFile(mContext, mFilename);
+	        	mFile = new CoordFile(mContext, mSettings.Filename);
 	        }
 	        
-	        LoadPage(null, 0);
+	        LoadPage(null);
         }
         catch(Exception e)
         {
@@ -246,12 +217,12 @@ public class TravelTrackerActivity extends MapActivity
 	        
 	        mMapController = mMapView.getController();
 	        mMapView.setBuiltInZoomControls(true);
-	        mMapView.setSatellite(mShowSatelliteView);
-	        mMapView.setTraffic(mShowTraffic);
+	        mMapView.setSatellite(mSettings.ShowSatellites);
+	        mMapView.setTraffic(mSettings.ShowTraffic);
 	        
 	        mRecordButton.setOnClickListener(new RecordListener());
 	        
-	        mShowSatelliteCheck.setChecked(mShowSatelliteView);
+	        mShowSatelliteCheck.setChecked(mSettings.ShowSatellites);
 	        mShowSatelliteCheck.setOnCheckedChangeListener(new OnCheckedChangeListener()
 	        {
 				@Override
@@ -259,8 +230,8 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mShowSatelliteView = isChecked;
-						mMapView.setSatellite(mShowSatelliteView);
+						mSettings.ShowSatellites = isChecked;
+						mMapView.setSatellite(mSettings.ShowSatellites);
 					}
 			    	catch(Exception e)
 			    	{
@@ -269,7 +240,7 @@ public class TravelTrackerActivity extends MapActivity
 				}
 	        });
 	        
-	        mShowTrafficCheck.setChecked(mShowTraffic);
+	        mShowTrafficCheck.setChecked(mSettings.ShowTraffic);
 	        mShowTrafficCheck.setOnCheckedChangeListener(new OnCheckedChangeListener()
 	        {
 				@Override
@@ -277,8 +248,8 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mShowTraffic = isChecked;
-						mMapView.setTraffic(mShowTraffic);
+						mSettings.ShowTraffic = isChecked;
+						mMapView.setTraffic(mSettings.ShowTraffic);
 					}
 			    	catch(Exception e)
 			    	{
@@ -297,9 +268,9 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mCurrentPage = mPages[mPageSelector.getSelectedItemPosition()].toString();
+						mSettings.CurrentPage = mPages[mPageSelector.getSelectedItemPosition()].toString();
 		        	
-		        		LoadPage(null, 0);
+		        		LoadPage(null);
 					}
 			    	catch(Exception e)
 			    	{
@@ -325,7 +296,7 @@ public class TravelTrackerActivity extends MapActivity
 					{
 						String value = mHistoryLengths[mHistorySelector.getSelectedItemPosition()].toString();
 					
-						mGraphHistory = GetGraphHistory(value);
+						mSettings.HistoryLength = GetGraphHistory(value);
 					}
 			    	catch(Exception e)
 			    	{
@@ -351,7 +322,7 @@ public class TravelTrackerActivity extends MapActivity
 					{
 						String value = mHistoryLengths[mAverageSelector.getSelectedItemPosition()].toString();
 					
-						mRunningAveragePoints = GetGraphHistory(value) / 1000;
+						mSettings.RunningAverageLength = GetGraphHistory(value) / 1000;
 					}
 			    	catch(Exception e)
 			    	{
@@ -375,7 +346,7 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mUnits.AltitudeUnits = mDistanceUnits[mAltitudeSelector.getSelectedItemPosition()].toString();
+						mSettings.Units.AltitudeUnits = mDistanceUnits[mAltitudeSelector.getSelectedItemPosition()].toString();
 					}
 			    	catch(Exception e)
 			    	{
@@ -399,7 +370,7 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mUnits.AccuracyUnits = mDistanceUnits[mAccuracySelector.getSelectedItemPosition()].toString();
+						mSettings.Units.AccuracyUnits = mDistanceUnits[mAccuracySelector.getSelectedItemPosition()].toString();
 					}
 			    	catch(Exception e)
 			    	{
@@ -423,7 +394,7 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mUnits.DistanceUnits = mDistanceUnits[mDistanceSelector.getSelectedItemPosition()].toString();
+						mSettings.Units.DistanceUnits = mDistanceUnits[mDistanceSelector.getSelectedItemPosition()].toString();
 					}
 			    	catch(Exception e)
 			    	{
@@ -447,7 +418,7 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mUnits.SpeedDistanceUnits = mDistanceUnits[mSpeedDistanceSelector.getSelectedItemPosition()].toString();
+						mSettings.Units.SpeedDistanceUnits = mDistanceUnits[mSpeedDistanceSelector.getSelectedItemPosition()].toString();
 					}
 			    	catch(Exception e)
 			    	{
@@ -471,7 +442,7 @@ public class TravelTrackerActivity extends MapActivity
 				{
 					try
 					{
-						mUnits.SpeedTimeUnits = mTimeUnits[mSpeedTimeSelector.getSelectedItemPosition()].toString();
+						mSettings.Units.SpeedTimeUnits = mTimeUnits[mSpeedTimeSelector.getSelectedItemPosition()].toString();
 					}
 			    	catch(Exception e)
 			    	{
@@ -489,38 +460,6 @@ public class TravelTrackerActivity extends MapActivity
     		ErrorFile.WriteException(e, getApplicationContext());
     	}
 		
-    }
-    
-    @Override
-    protected void onSaveInstanceState (Bundle outState)
-    {
-    	try
-    	{
-	    	if(mFilename != null)
-	    		outState.putString("filename", mFilename);
-	    	if(mCurrentPage != null)
-	    		outState.putString("curpage", mCurrentPage);
-	    	outState.putInt("loginterval", LogInterval);
-	    	outState.putInt("graphhistory", mGraphHistory);
-	    	outState.putInt("runningaverage", mRunningAveragePoints);
-	    	outState.putFloat("stoppedthreshold", mStoppedThreshold);
-	    	outState.putBoolean("satelliteview", mShowSatelliteView);
-	    	outState.putBoolean("traffic", mShowTraffic);
-	    	outState.putBoolean("recording", mRecording);
-	    	outState.putBoolean("stopped", mStopped);
-	    	
-	    	outState.putString("", mUnits.UnitSystem);
-	    	outState.putString("", mUnits.AltitudeUnits);
-	    	outState.putString("", mUnits.SpeedDistanceUnits);
-	    	outState.putString("", mUnits.SpeedTimeUnits);
-	    	outState.putString("", mUnits.AccuracyUnits);
-	    	outState.putString("", mUnits.DistanceUnits);
-	    }
-    	catch(Exception e)
-    	{
-    		ErrorFile.WriteException(e, this);
-    	}
-    	super.onSaveInstanceState(outState);
     }
     
     //Main-menu handling
@@ -549,7 +488,7 @@ public class TravelTrackerActivity extends MapActivity
 	        {
 	        case R.id.mainmenu_load:
 	        	//If recording, prompt to stop recording
-	        	if(mRecording)
+	        	if(mSettings.IsRecording)
 	        	{
 	        		//Ask whether to continue previous log or start new?
 	    			AlertDialog.Builder builder =  new AlertDialog.Builder(mContext);
@@ -563,7 +502,7 @@ public class TravelTrackerActivity extends MapActivity
 	    	            	{
 		    	            	StopGPS();
 		    	            	
-		    	            	mRecording = !mRecording;
+		    	            	mSettings.IsRecording = !mSettings.IsRecording;
 		    	            	mRecordButton.setChecked(false);
 		    	            	
 		    	            	Toast t = Toast.makeText(mContext, "Stopped GPS", Toast.LENGTH_SHORT);
@@ -613,8 +552,17 @@ public class TravelTrackerActivity extends MapActivity
     {
     	try
     	{
+    		String rootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + mSettings.LogDirectory + "/";
+        	
+        	File dir = new File(rootDirectory);
+        	if(!dir.exists() && !dir.mkdirs())
+        	{
+        		Toast t = Toast.makeText(getApplicationContext(), "Could not create directory " + rootDirectory, Toast.LENGTH_LONG);
+        		t.show();
+        	}
+    		
 	    	//Find the available log files
-	    	File files[] = Environment.getExternalStorageDirectory().listFiles();
+	    	File files[] = dir.listFiles();
 	    	
 	    	mTravelFiles = new ArrayList<File>();
 	    	for(int i=0; i<files.length; i++)
@@ -645,7 +593,7 @@ public class TravelTrackerActivity extends MapActivity
 		    			}
 		    			
 		    			mFile = new CoordFile(mContext, file.getAbsolutePath());
-		    			mFilename = mFile.Filename;
+		    			mSettings.Filename = mFile.Filename;
 		    			
 		    			List<Overlay> mapOverlays = mMapView.getOverlays();
 		    			mTrack = new TrackOverlay();
@@ -656,9 +604,9 @@ public class TravelTrackerActivity extends MapActivity
 		    				GeoPoint p = new GeoPoint(
 		        					(int) (mFile.GetLatitude(i) * 1E6),
 		        					(int) (mFile.GetLongitude(i) * 1E6));
-		    				mTrack.Add(p);
+		    				mTrack.Add(p, mFile.GetSpeed(i, mSettings.Units));
 		    				
-		    				boolean stoppedNow = mFile.IsStopped(i - 1, i, mStoppedThreshold, mUnits);
+		    				boolean stoppedNow = mFile.IsStopped(i - 1, i, mSettings.StoppedThreshold, mSettings.Units);
 		    				
 		    				if(!stopped && stoppedNow)
 		    				{
@@ -679,7 +627,7 @@ public class TravelTrackerActivity extends MapActivity
 		    			mapOverlays.add(mStops);
 		    					
 		    					
-		    			LoadPage(null, 0);
+		    			LoadPage(null);
 	    			}
 	    	    	catch(Exception e)
 	    	    	{
@@ -703,29 +651,29 @@ public class TravelTrackerActivity extends MapActivity
     }
     private List<File> mTravelFiles = null;
     
-    private void LoadPage(Location location, int strength)
+    private void LoadPage(Location location)
     {
     	try
     	{
-	    	if(mCurrentPage.equals(OVERVIEW))
-	    		LoadOverviewPage(location, strength);
-	    	else if(mCurrentPage.equals(MAP))
+	    	if(mSettings.CurrentPage.equals(OVERVIEW))
+	    		LoadOverviewPage(location);
+	    	else if(mSettings.CurrentPage.equals(MAP))
 	    		LoadMapPage(location);
-	    	else if(mCurrentPage.equals(SPEED_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(SPEED_GRAPH))
 	    		LoadSpeedGraphPage();
-	    	else if(mCurrentPage.equals(ACCELERATION_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(ACCELERATION_GRAPH))
 	    		LoadAccelerationGraphPage();
-	    	else if(mCurrentPage.equals(ALTITUDE_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(ALTITUDE_GRAPH))
 	    		LoadAltitudeGraphPage();
-	    	else if(mCurrentPage.equals(BEARING_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(BEARING_GRAPH))
 	    		LoadBearingGraphPage();
-	    	else if(mCurrentPage.equals(ACCURACY_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(ACCURACY_GRAPH))
 	    		LoadAccuracyGraphPage();
-	    	else if(mCurrentPage.equals(SIGNAL_GRAPH))
+	    	else if(mSettings.CurrentPage.equals(SIGNAL_GRAPH))
 	    		LoadSignalGraphPage();
-	    	else if(mCurrentPage.equals(SUMMARY))
+	    	else if(mSettings.CurrentPage.equals(SUMMARY))
 	    		LoadSummaryPage();
-	    	else if(mCurrentPage.equals(SETTINGS))
+	    	else if(mSettings.CurrentPage.equals(SETTINGS))
 	    		LoadSettingsPage();
     	}
     	catch(Exception e)
@@ -750,7 +698,7 @@ public class TravelTrackerActivity extends MapActivity
     		mMapController.animateTo(p);
     		//mMapController.setZoom(16);
     	}
-    	else if(mFile != null)
+    	else if(mFile != null && mFile.Size() > 0)
     	{
     		GeoPoint p = new GeoPoint(
         			(int) (mFile.GetLatitude(mFile.Size() - 1) * 1E6),
@@ -761,7 +709,7 @@ public class TravelTrackerActivity extends MapActivity
     	mMapView.invalidate();
     }
     
-    private void LoadOverviewPage(Location location, int strength)
+    private void LoadOverviewPage(Location location)
     {
     	mGraph.setVisibility(View.GONE);
     	mMainText.setVisibility(View.VISIBLE);
@@ -781,37 +729,37 @@ public class TravelTrackerActivity extends MapActivity
         
         	status += String.format("Longitude: %f\n", longitude);
         	status += String.format("Latitude: %f\n", latitude);
-        	status += String.format("Altitude: %.02f %s\n", altitude, GPSUnits.GetDistanceAbbreviation(mUnits.AltitudeUnits));
+        	status += String.format("Altitude: %.02f %s\n", altitude, GPSUnits.GetDistanceAbbreviation(mSettings.Units.AltitudeUnits));
         	status += "\n";
         	status += String.format("Bearing: %.02f\n", bearing);
-        	status += String.format("Speed: %.02f %s\n", speed, GPSUnits.GetSpeedAbbreviation(mUnits.SpeedDistanceUnits, mUnits.SpeedTimeUnits));
-        	status += String.format("Accuracy: %.02f %s\n", accuracy, GPSUnits.GetDistanceAbbreviation(mUnits.AccuracyUnits));
+        	status += String.format("Speed: %.02f %s\n", speed, GPSUnits.GetSpeedAbbreviation(mSettings.Units.SpeedDistanceUnits, mSettings.Units.SpeedTimeUnits));
+        	status += String.format("Accuracy: %.02f %s\n", accuracy, GPSUnits.GetDistanceAbbreviation(mSettings.Units.AccuracyUnits));
     	}
     	
-    	if(mFilename != null)
+    	if(mSettings.Filename != null)
     	{
-    		status += String.format("\nFile:%s\n\n", mFilename);
+    		status += String.format("\nFile:%s\n\n", mSettings.Filename);
     	}
     	
     	if(mFile != null)
     	{
-    		float distance = mFile.GetDistanceTravelled(mUnits);
-    		status += String.format("Distance travelled: %.02f %s\n", distance, mUnits.DistanceUnits.toLowerCase());
+    		float distance = mFile.GetDistanceTravelled(mSettings.Units);
+    		status += String.format("Distance travelled: %.02f %s\n", distance, mSettings.Units.DistanceUnits.toLowerCase());
     		
     		status += String.format("Start date: %s\n", DateStrings.GetDateTimeString(mFile.GetStartDate()));
     		status += String.format("End date: %s\n", DateStrings.GetDateTimeString(mFile.GetEndDate()));
     		status += String.format("Elapsed time: %s\n\n", DateStrings.GetElapsedTimeString(mFile.GetRuntime(), 3));
     		
-    		float speed = mFile.GetAverageSpeed(mUnits);
-    		status += String.format("Average speed: %.02f %s\n", speed, GPSUnits.GetSpeedAbbreviation(mUnits.SpeedDistanceUnits, mUnits.SpeedTimeUnits));
-    		status += String.format("Stopped time: %s\n", DateStrings.GetElapsedTimeString(mFile.GetStopTime(mStoppedThreshold, mUnits), 3));
-    		status += String.format("Number of stops: %d\n", mFile.GetNumberOfStops(mStoppedThreshold, mUnits));
+    		float speed = mFile.GetAverageSpeed(mSettings.Units);
+    		status += String.format("Average speed: %.02f %s\n", speed, GPSUnits.GetSpeedAbbreviation(mSettings.Units.SpeedDistanceUnits, mSettings.Units.SpeedTimeUnits));
+    		status += String.format("Stopped time: %s\n", DateStrings.GetElapsedTimeString(mFile.GetStopTime(mSettings.StoppedThreshold, mSettings.Units), 3));
+    		status += String.format("Number of stops: %d\n", mFile.GetNumberOfStops(mSettings.StoppedThreshold, mSettings.Units));
     		
-    		status += String.format("Drive efficiency: %.02f%%\n", mFile.GetEfficiency(mStoppedThreshold, mUnits));
+    		status += String.format("Drive efficiency: %.02f%%\n", mFile.GetEfficiency(mSettings.StoppedThreshold, mSettings.Units));
     	}
     	
-    	if(strength != mDefaultSignal)
-    		status += String.format("\nSignal: %d\n", strength);
+    	if(mCurrentSignal != mDefaultSignal)
+    		status += String.format("\nSignal: %d\n", mCurrentSignal);
     	
         mMainText.setText(status);
     }
@@ -845,15 +793,15 @@ public class TravelTrackerActivity extends MapActivity
 		{
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
-			data[i] = mFile.GetSpeed(i, mUnits);
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			data[i] = mFile.GetSpeed(i, mSettings.Units);
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -865,7 +813,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -896,7 +844,7 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.Plots.get(2).DrawPoints = false;
 		
 		//Setup the title
-		String units = GPSUnits.GetSpeedAbbreviation(mUnits.SpeedDistanceUnits, mUnits.SpeedTimeUnits);
+		String units = GPSUnits.GetSpeedAbbreviation(mSettings.Units.SpeedDistanceUnits, mSettings.Units.SpeedTimeUnits);
 		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
 				SPEED_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));
 		
@@ -938,17 +886,17 @@ public class TravelTrackerActivity extends MapActivity
 		{
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
-			float newVal = mFile.GetSpeed(i, mUnits);
+			float newVal = mFile.GetSpeed(i, mSettings.Units);
 			data[i] = newVal - last;
 			last = newVal;
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -959,7 +907,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -990,7 +938,7 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.Plots.get(2).DrawPoints = false;
 		
 		//Setup the title
-		String units = GPSUnits.GetSpeedAbbreviation(mUnits.SpeedDistanceUnits, mUnits.SpeedTimeUnits) + "/s";
+		String units = GPSUnits.GetSpeedAbbreviation(mSettings.Units.SpeedDistanceUnits, mSettings.Units.SpeedTimeUnits) + "/s";
 		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
 				ACCELERATION_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));
 		
@@ -1031,15 +979,15 @@ public class TravelTrackerActivity extends MapActivity
 		{
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
-			data[i] = (float) mFile.GetAltitude(i, mUnits);
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			data[i] = (float) mFile.GetAltitude(i, mSettings.Units);
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -1050,7 +998,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -1081,7 +1029,7 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.Plots.get(2).DrawPoints = false;
 		
 		//Setup the title
-		String units = GPSUnits.GetDistanceAbbreviation(mUnits.AltitudeUnits);
+		String units = GPSUnits.GetDistanceAbbreviation(mSettings.Units.AltitudeUnits);
 		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
 				ALTITUDE_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));
 		
@@ -1123,14 +1071,14 @@ public class TravelTrackerActivity extends MapActivity
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
 			data[i] = mFile.GetBearing(i);
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -1141,7 +1089,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -1212,15 +1160,15 @@ public class TravelTrackerActivity extends MapActivity
 		{
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
-			data[i] = mFile.GetAccuracy(i, mUnits);
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			data[i] = mFile.GetAccuracy(i, mSettings.Units);
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -1231,7 +1179,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -1262,7 +1210,7 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.Plots.get(2).DrawPoints = false;
 		
 		//Setup the title
-		String units = GPSUnits.GetDistanceAbbreviation(mUnits.AccuracyUnits);
+		String units = GPSUnits.GetDistanceAbbreviation(mSettings.Units.AccuracyUnits);
 		mGraph.Title.Text = String.format("%s (%s)\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
 				ACCURACY_GRAPH.toString(), units, average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));		
 		//Add the weekend shading and start-of-month indicators
@@ -1304,14 +1252,14 @@ public class TravelTrackerActivity extends MapActivity
 			if(i == 0)
 				startDate.setTimeInMillis(mFile.GetTime(i));
 			data[i] = mFile.GetStrength(i);
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				numValues++;
 			}
 		}
 		
 		//Calculate the average curves
-		float[] ave = ArrayMath.GetRunningAverageCurve(data, mRunningAveragePoints);
+		float[] ave = ArrayMath.GetRunningAverageCurve(data, mSettings.RunningAverageLength);
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(data);
 		float average = ArrayMath.GetAverage(data);
 
@@ -1322,7 +1270,7 @@ public class TravelTrackerActivity extends MapActivity
 		int curValue = 0;
 		for(int i=0; i<mFile.Size(); i++)
 		{
-			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mGraphHistory)
+			if(mFile.GetTime(mFile.Size() - 1) - mFile.GetTime(i) < mSettings.HistoryLength)
 			{
 				tempData[curValue] = data[i];
 				tempAve[curValue] = ave[i];
@@ -1353,7 +1301,6 @@ public class TravelTrackerActivity extends MapActivity
 		mGraph.Plots.get(2).DrawPoints = false;
 		
 		//Setup the title
-		String units = GPSUnits.GetDistanceAbbreviation(mUnits.AccuracyUnits);
 		mGraph.Title.Text = String.format("%s\nAverage: %.02f, recent: %.02f\nFirst entry: %s",
 				SIGNAL_GRAPH.toString(), average, ave[ave.length - 1], DateStrings.GetDateTimeString(startDate));		
 		//Add the weekend shading and start-of-month indicators
@@ -1389,12 +1336,12 @@ public class TravelTrackerActivity extends MapActivity
     		
     		status += String.format("%s,%.02f,%s,%.02f,%d,%s,%.02f%%\n",
     				  DateStrings.GetDateTimeString(tempFile.GetStartDate()),
-    				  tempFile.GetDistanceTravelled(mUnits),
+    				  tempFile.GetDistanceTravelled(mSettings.Units),
     				  DateStrings.GetElapsedTimeString(tempFile.GetRuntime(), 3),
-    				  tempFile.GetAverageSpeed(mUnits),
-    				  tempFile.GetNumberOfStops(mStoppedThreshold, mUnits),
-    				  DateStrings.GetElapsedTimeString(tempFile.GetStopTime(mStoppedThreshold, mUnits), 3),
-    				  tempFile.GetEfficiency(mStoppedThreshold, mUnits)
+    				  tempFile.GetAverageSpeed(mSettings.Units),
+    				  tempFile.GetNumberOfStops(mSettings.StoppedThreshold, mSettings.Units),
+    				  DateStrings.GetElapsedTimeString(tempFile.GetStopTime(mSettings.StoppedThreshold, mSettings.Units), 3),
+    				  tempFile.GetEfficiency(mSettings.StoppedThreshold, mSettings.Units)
     				  );
     		tempFile.Close();
     	}
@@ -1413,7 +1360,6 @@ public class TravelTrackerActivity extends MapActivity
     
     private class MyLocationListener implements LocationListener
     {
-
         @Override
         public void onLocationChanged(Location location)
         {
@@ -1421,19 +1367,26 @@ public class TravelTrackerActivity extends MapActivity
         	{
 	        	mStatusText.setText(ACQUIRING);
 	        	
+	        	if(mFile == null)
+	        		return;
+	        	
 	        	mFile.WriteEntry(location, mCurrentSignal);
 	            
-	        	mTrack.Add(new GeoPoint((int)(location.getLatitude() * 1E6), (int)(location.getLongitude() * 1E6)));
+	        	int latitude = (int)(location.getLatitude() * 1E6);
+	        	int longitude = (int)(location.getLongitude() * 1E6);
 	        	
-	        	boolean stoppedNow = mFile.IsStopped(mStoppedThreshold, mUnits);
+	        	if(mTrack != null)
+	        		mTrack.Add(new GeoPoint(latitude, longitude), location.getSpeed());
 	        	
-	        	if(!mStopped && stoppedNow)
+	        	boolean stoppedNow = mFile.IsStopped(mSettings.StoppedThreshold, mSettings.Units);
+	        	
+	        	if(!mSettings.IsStationary && stoppedNow)
 	        	{
-	        		mStops.Add(new GeoPoint((int)(location.getLatitude() * 1E6), (int)(location.getLongitude() * 1E6)));
+	        		mStops.Add(new GeoPoint(latitude, longitude));
 	        	}
-	        	mStopped = stoppedNow;
+	        	mSettings.IsStationary = stoppedNow;
 	        	
-	            LoadPage(location, mCurrentSignal);
+	            LoadPage(location);
         	}
         	catch(Exception e)
         	{
@@ -1469,73 +1422,52 @@ public class TravelTrackerActivity extends MapActivity
     	{
     		try
     		{
-    			if(mRecording)
+    			if(mSettings.IsRecording)
     			{
     				StopGPS();
     				
-    				mRecording = !mRecording;
+    				mSettings.IsRecording = !mSettings.IsRecording;
     				
     				Toast t = Toast.makeText(mContext, "Stopped GPS", Toast.LENGTH_SHORT);
     				t.show();
     			}
     			else
     			{
-    				//Ask whether to continue previous log or start new?
-        			AlertDialog.Builder builder =  new AlertDialog.Builder(mContext);
-        	    	builder.setMessage("Continue last file or start new?");
-        	    	builder.setPositiveButton("Continue", new DialogInterface.OnClickListener()
-        	    	{
-        	            @Override
-        	            public void onClick(DialogInterface dialog, int which)
-        	            {
-        	            	if(mFilename == null)
-        	            	{
-        	            		//Search for the most recent log
-        	            	}
-        	            	StartGPS();
-        	            	
-        	            	mRecording = !mRecording;
-        	            	
-        	            	Toast t = Toast.makeText(mContext, "Started GPS", Toast.LENGTH_SHORT);
-        	        		t.show();
-        	            }
-        	        });
-        	    	builder.setNegativeButton("New", new DialogInterface.OnClickListener()
-        	    	{
-        	            @Override
-        	            public void onClick(DialogInterface dialog, int which)
-        	            {
-        	            	mTrack = new TrackOverlay();
-        	            	mStops = new StopOverlay();
-        	            	
-        	            	String rootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + LogDirectory + "/";
-        	            	
-        	            	File dir = new File(rootDirectory);
-        	            	if(!dir.exists() && !dir.mkdirs())
-        	            	{
-        	            		Toast t = Toast.makeText(getApplicationContext(), "Could not create directory " + rootDirectory, Toast.LENGTH_LONG);
-        	            		t.show();
-        	            	}
-        	            	
-        	            	//Create a new file
-        	            	mFilename = String.format(rootDirectory + "TravelLog_%s.txt", DateStrings.GetDateTimeString(Calendar.getInstance()));
-        	            	StartGPS();
-        	            	
-        	            	mRecording = !mRecording;
-        	            	
-        	            	Toast t = Toast.makeText(mContext, "Started GPS", Toast.LENGTH_SHORT);
-        	        		t.show();
-        	            }
-        	        });
-        	    	builder.setOnCancelListener(new OnCancelListener()
-        	    	{
-						@Override
-						public void onCancel(DialogInterface dialog)
-						{
-							mRecordButton.setChecked(false);
-						}
-        	    	});
-        	    	builder.show();
+    				if(mSettings.Filename != null)
+    				{
+	    				//Ask whether to continue previous log or start new?
+	        			AlertDialog.Builder builder =  new AlertDialog.Builder(mContext);
+	        	    	builder.setMessage("Continue last file or start new?");
+	        	    	builder.setPositiveButton("Continue", new DialogInterface.OnClickListener()
+	        	    	{
+	        	            @Override
+	        	            public void onClick(DialogInterface dialog, int which)
+	        	            {
+	        	            	ContinueFile();
+	        	            }
+	        	        });
+	        	    	builder.setNegativeButton("New", new DialogInterface.OnClickListener()
+	        	    	{
+	        	            @Override
+	        	            public void onClick(DialogInterface dialog, int which)
+	        	            {
+	        	            	StartNewFile();
+	        	            }
+	        	        });
+	        	    	builder.setOnCancelListener(new OnCancelListener()
+	        	    	{
+							@Override
+							public void onCancel(DialogInterface dialog)
+							{
+								mRecordButton.setChecked(false);
+							}
+	        	    	});
+	        	    	builder.show();
+    				}
+    				else
+    				{
+    					StartNewFile();
+    				}
     			}
     		}
         	catch(Exception e)
@@ -1545,16 +1477,70 @@ public class TravelTrackerActivity extends MapActivity
     	}
     }
     
+    private class SignalListener extends PhoneStateListener
+    {
+    	@Override
+    	public void onSignalStrengthsChanged(SignalStrength signalStrength)
+    	{
+    		//An excellent dBm value would be -60, very poor (call-dropping) would be -112
+    		mCurrentSignal = signalStrength.getCdmaDbm();
+    		//String strengths = String.format("%d, %d, %d, %d", signalStrength.getCdmaDbm(), signalStrength.getEvdoDbm(), signalStrength.getEvdoSnr(), signalStrength.getGsmSignalStrength());
+    		//ErrorFile.Write("TravelTracker", String.format("Signal strength: %s", strengths), getApplicationContext());
+    	}
+    }
+    
+    private void StartNewFile()
+    {
+    	try
+    	{
+    		mTrack = new TrackOverlay();
+        	mStops = new StopOverlay();
+        	
+        	String rootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + mSettings.LogDirectory + "/";
+        	
+        	File dir = new File(rootDirectory);
+        	if(!dir.exists() && !dir.mkdirs())
+        	{
+        		Toast t = Toast.makeText(getApplicationContext(), "Could not create directory " + rootDirectory, Toast.LENGTH_LONG);
+        		t.show();
+        	}
+        	
+        	//Create a new file
+        	mSettings.Filename = String.format(rootDirectory + "TravelLog_%s.txt", DateStrings.GetDateTimeString(Calendar.getInstance()));
+        	StartGPS();
+        	
+        	mSettings.IsRecording = !mSettings.IsRecording;
+        	
+        	Toast t = Toast.makeText(mContext, "Started GPS", Toast.LENGTH_SHORT);
+    		t.show();
+    	}
+    	catch(Exception e)
+    	{
+    		ErrorFile.WriteException(e, mContext);
+    	}
+    }
+    
+    private void ContinueFile()
+    {
+    	StartGPS();
+    	
+    	mSettings.IsRecording = !mSettings.IsRecording;
+    	
+    	Toast t = Toast.makeText(mContext, "Started GPS", Toast.LENGTH_SHORT);
+		t.show();
+    }
+    
     private void StartGPS()
     {
     	try
     	{
-	    	if(mFile != null && mFile.Filename != mFilename)
+	    	if(mFile != null && mFile.Filename != mSettings.Filename)
 	    	{
 	    		//Close the current file if we're starting a different one
 	    		CloseFile();
 	    		mFile = null;
 	    	}
+	    	
 	    	if(mFile == null)
 	    	{
 	    		//Setup new overlays if we're starting a new file
@@ -1566,8 +1552,8 @@ public class TravelTrackerActivity extends MapActivity
 	    		mapOverlays.add(mStops);
 	    	}
 	    	
-	    	mFile = new CoordFile(this, mFilename);
-	    	mFilename = mFile.Filename;
+	    	mFile = new CoordFile(this, mSettings.Filename);
+	    	mSettings.Filename = mFile.Filename;
 	    	
 	    	mLocMgr = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 	        
@@ -1585,18 +1571,9 @@ public class TravelTrackerActivity extends MapActivity
 	        //LocationProvider provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
 	        
 	        mListener = new MyLocationListener();
-	        mLocMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, LogInterval, 0, mListener);
+	        mLocMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, mSettings.LogInterval, 0, mListener);
 	        
-	        mSignalListener = new PhoneStateListener()
-	        {
-	        	@Override
-	        	public void onSignalStrengthsChanged(SignalStrength signalStrength)
-	        	{
-	        		mCurrentSignal = Math.abs(signalStrength.getCdmaDbm());
-	        		//String strengths = String.format("%d, %d, %d, %d", signalStrength.getCdmaDbm(), signalStrength.getEvdoDbm(), signalStrength.getEvdoSnr(), signalStrength.getGsmSignalStrength());
-	        		//ErrorFile.Write("TravelTracker", String.format("Signal strength: %s", strengths), getApplicationContext());
-	        	}
-	        };
+	        mSignalListener = new SignalListener();
 	        
 	        TelephonyManager mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
 	        mTelephonyManager.listen(mSignalListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
@@ -1625,6 +1602,7 @@ public class TravelTrackerActivity extends MapActivity
     	{
     		ErrorFile.WriteException(e, getApplicationContext());
     	}
+    	
     	try
     	{
 	    	if(mTelephonyManager != null && mSignalListener != null)
@@ -1639,6 +1617,8 @@ public class TravelTrackerActivity extends MapActivity
     	{
     		ErrorFile.WriteException(e, getApplicationContext());
     	}
+    	
+    	CloseFile();
     	
     	mStatusText.setText(IDLE);
     }
@@ -1657,6 +1637,9 @@ public class TravelTrackerActivity extends MapActivity
     public void onDestroy()
     {
     	StopGPS();
+    	
+    	mSettings.Save(getPreferences(MODE_PRIVATE), this);
+    	
         super.onDestroy();
     }
 
@@ -1679,6 +1662,30 @@ public class TravelTrackerActivity extends MapActivity
     	return ret;
     }
 
+    private int[] BuildColorTable()
+    {
+    	int[] colors = new int[256];
+    	
+    	int[] inputs = { Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE };
+    	
+    	for(int i=0; i<256; i++)
+    	{
+    		float colorIndex = (float)i / 256 * (inputs.length - 1);
+    		int color1 = inputs[(int)colorIndex];
+    		int color2 = inputs[(int)colorIndex + 1];
+    		
+    		colorIndex = colorIndex % 1;
+    		
+    		int red = (int)((Color.red(color2) * colorIndex) + (Color.red(color1) * (1 - colorIndex)));
+    		int green = (int)((Color.green(color2) * colorIndex) + (Color.green(color1) * (1 - colorIndex)));
+    		int blue = (int)((Color.blue(color2) * colorIndex) + (Color.blue(color1) * (1 - colorIndex)));
+    		
+    		colors[i] = Color.rgb(red, green, blue);
+    	}
+    	
+    	return colors;
+    }
+    
 	@Override
 	protected boolean isRouteDisplayed()
 	{
@@ -1688,14 +1695,16 @@ public class TravelTrackerActivity extends MapActivity
 	public class TrackOverlay extends Overlay
 	{
 		private ArrayList<GeoPoint> mPoints = new ArrayList<GeoPoint>();
+		private ArrayList<Float> mValues = new ArrayList<Float>();
 		
 		public TrackOverlay()
 		{
 		}
 		
-		public void Add(GeoPoint geoPoint)
+		public void Add(GeoPoint geoPoint, float value)
 		{
 			mPoints.add(geoPoint);
+			mValues.add(value);
 		}
 		
 		@Override
@@ -1703,14 +1712,43 @@ public class TravelTrackerActivity extends MapActivity
 		{
 			try
 			{
+				float minValue = 1000;
+				float maxValue = -1000;
+				for(int i=0; i<mValues.size(); i++)
+				{
+					float curValue = mValues.get(i);
+					if(curValue > maxValue)
+						maxValue = curValue;
+					if(curValue < minValue)
+						minValue = curValue;
+				}
+				float valueRange = maxValue - minValue;
+				
 				Projection projection = mMapView.getProjection();
 				Paint paint = new Paint();
-				paint.setARGB(255, 0, 0, 255);
-				paint.setStrokeWidth(2);
-				
+				//paint.setARGB(255, 0, 0, 255);
+				paint.setStrokeWidth(3);
 				Point lastPoint = null;
 				for(int i=0; i<mPoints.size(); i++)
 				{
+					//Set color based on value
+					float percentage = (mValues.get(i) - minValue) / valueRange;
+					
+					//if(percentage < 0.10)
+					//	paint.setARGB(255, 255, 0, 0); //red
+					//else if(percentage < 0.25)
+					//	paint.setARGB(255, 255, 128, 0); //orange
+					//else if(percentage < 0.50)
+					//	paint.setARGB(255, 255, 255, 0); //yellow
+					//else if(percentage < 0.75)
+					//	paint.setARGB(255, 0, 255, 0); //green
+					//else
+					//	paint.setARGB(255, 0, 0, 255); //blue
+					
+					int shade = (int)(percentage * 255);
+					paint.setColor(mColorTable[shade]);
+					//paint.setARGB(255, 0, 0, shade);
+					
 					Point curPoint = new Point();
 					projection.toPixels(mPoints.get(i), curPoint);
 					if(lastPoint != null)

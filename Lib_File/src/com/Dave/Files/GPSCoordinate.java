@@ -26,13 +26,14 @@ public class GPSCoordinate
 	private static GPSUnits mFileUnits = null;
 	
 	private Location mLocation = null;
+	private int mSignalStrength = 0;
 	
 	public GPSCoordinate()
 	{
-		this(new Location(""));
+		this(new Location(""), 0);
 	}
 	
-	public GPSCoordinate(Location location)
+	public GPSCoordinate(Location location, int signalStrength)
 	{
 		if(mFileUnits == null)
 		{
@@ -46,6 +47,7 @@ public class GPSCoordinate
 		}
 		
 		mLocation = new Location(location);
+		mSignalStrength = signalStrength;
 	}
 	
 	public static GPSCoordinate FromString(String input)
@@ -103,6 +105,11 @@ public class GPSCoordinate
 		float speed = mLocation.getSpeed();
 		return GPSUnits.ConvertSpeed(mFileUnits.SpeedDistanceUnits, mFileUnits.SpeedTimeUnits, speed,
 									 units.SpeedDistanceUnits, units.SpeedTimeUnits);
+	}
+	
+	public int GetSignalStrength()
+	{
+		return mSignalStrength;
 	}
 
 	
