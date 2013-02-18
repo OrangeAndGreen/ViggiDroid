@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Sudoku Game</string>
+    <string name="app_name">Sudoku</string>
+    
+    <string name="title">Welcome to Dave\'s Sudoku!</string>
+    <string name="easy">Easy</string>
+    <string name="hard">Hard</string>
+    <string name="twoplayer">2 Player</string>
+    
+    <string name="select_number">Select number:</string>
+    <string name="number_one">1</string>
+    <string name="number_two">2</string>
+    <string name="number_three">3</string>
+    <string name="number_four">4</string>
+    <string name="number_five">5</string>
+    <string name="number_six">6</string>
+    <string name="number_seven">7</string>
+    <string name="number_eight">8</string>
+    <string name="number_nine">9</string>
+    <string name="cancel">Cancel</string>
+    <string name="blank"> </string>
+
+</resources>
