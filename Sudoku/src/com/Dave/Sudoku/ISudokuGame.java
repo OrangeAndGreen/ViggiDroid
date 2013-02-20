@@ -9,6 +9,10 @@ public interface ISudokuGame
 {
 	int GetNumberOfPlayers();
 	
+	int GetPlayer1Color();
+	
+	int GetPlayer2Color();
+	
 	int GetCurrentPlayer();
 	
 	void StartGame(SudokuView view, String difficulty, String player1Name, String player2Name);
@@ -16,6 +20,10 @@ public interface ISudokuGame
 	int[][] GetFullBoard();
 	
 	boolean HandleClick(Point point);
+	
+	boolean GetConfirmCommit();
+	
+	boolean ShowMove(SudokuView view, Point point, int number);
 	
 	AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number);
 	

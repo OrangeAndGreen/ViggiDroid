@@ -103,6 +103,17 @@ public class SudokuLogic
         return output;
 	}
 	
+	public static int[][] CreateBoard(int[][] boardToClone)
+	{
+		int[][] output = CreateBoard(0);
+		
+		for(int x = 0; x < BoardSize; x++)
+			for(int y = 0; y < BoardSize; y++)
+				output[x][y] = boardToClone[x][y];
+		
+		return output;
+	}
+	
 	public static int GetPlayerTerritory(Point point)
 	{
 		int numSquares = (int)Math.sqrt(SudokuLogic.BoardSize);
@@ -288,6 +299,7 @@ public class SudokuLogic
     public static boolean CheckSquare(int[][] fullBoard, int squareX, int squareY)
     {
     	boolean[] values = new boolean[BoardSize];
+    	boolean foundInvalid = false;
     	
     	int numSquares = (int)Math.sqrt(BoardSize);
     	
@@ -295,12 +307,20 @@ public class SudokuLogic
     		for(int y=0; y<numSquares; y++)
     		{
     			int curValue = fullBoard[squareX * numSquares + x][squareY * numSquares + y];
-    			if(curValue == 0)
-    				return false;
-    			if(curValue > 0)
+    			if(curValue < 0)
+    				foundInvalid = true;
+    			else if(curValue > 0)
     				values[curValue - 1] = true;
+    			else
+    				return false; //found a blank cell
     		}
     	
+    	//Invalid cells only happen in two-player mode
+    	//If there are no blank cells and we found an invalid, call the square good
+    	if(foundInvalid)
+    		return true;
+    	
+    	//Make sure we saw all the digits 1-9
     	for(int i=0; i<BoardSize; i++)
     		if(!values[i])
     			return false;

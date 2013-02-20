@@ -27,11 +27,29 @@
 		android:layout_alignParentLeft="true"
         android:text="" />
     
+    <Button
+        android:id="@+id/buttonConfirm"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/buttonQuit"
+  		android:layout_alignParentRight="true"
+  		android:text="Accept"
+        />
+
+    <Button
+        android:id="@+id/buttonClear"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/buttonQuit"
+  		android:layout_toLeftOf="@+id/buttonConfirm"
+  		android:text="Clear"
+        />
+    
     <com.Dave.Sudoku.SudokuView
         android:id="@+id/sudoku"
         android:layout_width="fill_parent"
   		android:layout_height="fill_parent"
-  		android:layout_below="@+id/gameScore"
+  		android:layout_below="@+id/buttonConfirm"
   		android:layout_centerInParent="true"
         />
     

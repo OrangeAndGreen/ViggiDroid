@@ -3,6 +3,7 @@ package com.Dave.Sudoku;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.widget.TextView;
 
@@ -18,6 +19,16 @@ public class SudokuGameOnePlayer implements ISudokuGame
 	public int GetNumberOfPlayers()
 	{
 		return mNumberOfPlayers;
+	}
+	
+	public int GetPlayer1Color()
+	{
+		return Color.BLACK;
+	}
+	
+	public int GetPlayer2Color()
+	{
+		return Color.BLACK;
 	}
 	
 	public int GetCurrentPlayer()
@@ -45,7 +56,7 @@ public class SudokuGameOnePlayer implements ISudokuGame
         //PlayerBoard[3][5] = 2;
         //PlayerBoard[7][2] = 8;
         
-        view.InitializeBoard(InitialBoard, false);
+        view.InitializeBoard(InitialBoard, null, null);
         //mSudoku.UpdateBoard(PlayerBoard);
 	}
 	
@@ -63,6 +74,16 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return false;
 	}
 
+	public boolean GetConfirmCommit()
+	{
+		return false;
+	}
+	
+	public boolean ShowMove(SudokuView view, Point point, int number)
+	{
+		return true;
+	}
+	
 	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number)
 	{
 		PlayerBoard[point.x][point.y] = number;

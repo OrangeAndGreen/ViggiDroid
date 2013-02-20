@@ -19,6 +19,8 @@ public class SudokuView extends View
 	private int mTotalHeight = 0;
 	
 	private boolean mTwoPlayer = false;
+	private Integer mPlayer1Color = null;
+	private Integer mPlayer2Color = null;
 
 	private int[][] mOriginalValues = null;
 	private int[][] mValues;
@@ -29,10 +31,12 @@ public class SudokuView extends View
 		super(context, attrs);
 	}
 	
-	public void InitializeBoard(int[][] values, boolean twoPlayer)
+	public void InitializeBoard(int[][] values, Integer player1Color, Integer player2Color)
 	{
 		mOriginalValues = values;
-		mTwoPlayer = twoPlayer;
+		mPlayer1Color = player1Color;
+		mPlayer2Color = player2Color;
+		mTwoPlayer = player2Color != null;
 		this.invalidate();
 	}
 	
@@ -77,6 +81,7 @@ public class SudokuView extends View
 				mTotalHeight = mTotalWidth;
 			
 			DrawBoard(canvas);
+			
 			int initialColor = Color.WHITE;
 			int player1Color = Color.GREEN;
 			if(mTwoPlayer)
@@ -117,7 +122,7 @@ public class SudokuView extends View
     		int yEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
     		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
     		
-    		paint.setColor(Color.rgb(79, 129, 189));
+    		paint.setColor(mPlayer1Color);
     		
     		//(0,0)
     		xStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
@@ -147,7 +152,7 @@ public class SudokuView extends View
     		yEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
     		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
     		
-    		paint.setColor(Color.rgb(149, 55, 53));
+    		paint.setColor(mPlayer2Color);
     		
     		//(2,0)
     		xStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);

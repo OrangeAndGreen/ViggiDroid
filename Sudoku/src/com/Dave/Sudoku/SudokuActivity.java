@@ -35,9 +35,6 @@ import android.widget.TextView;
  * -Start learning about how to connect in advertisements
  * 
  * Next:
- * -Allow 2-player to see move before committing it
- * -Allow 1-player to clear a cell
- * 
  * 
  */
 
@@ -49,7 +46,10 @@ public class SudokuActivity extends Activity
 	private TextView mGameText = null;
 	private TextView mGameScore = null;
 	private SudokuView mSudoku = null;
+	private Button mClearButton = null;
+	private Button mConfirmButton = null;
 	private Point mCurrentPoint = null;
+	private int mCurrentValue = 0;
 	private boolean[] mCellOptions = null;
 	private NumberPrompt mPrompt = null;
 	
@@ -67,7 +67,7 @@ public class SudokuActivity extends Activity
     @Override
     protected Dialog onCreateDialog(int id)
     {
-    	mPrompt = new NumberPrompt(this, mCommentSetListener, mCellOptions);
+    	mPrompt = new NumberPrompt(this, mNumberSetListener, mCellOptions);
     	return mPrompt;
     }
     
@@ -104,47 +104,99 @@ public class SudokuActivity extends Activity
 			}
 		});
         
+        mClearButton = (Button) findViewById(R.id.buttonClear);
+        mClearButton.setOnClickListener(new OnClickListener()
+        {
+			public void onClick(View v)
+			{
+				mGame.ShowMove(mSudoku, mCurrentPoint, 0);
+				mClearButton.setEnabled(false);
+				mConfirmButton.setEnabled(false);
+			}
+		});
+        
+        mConfirmButton = (Button) findViewById(R.id.buttonConfirm);
+        mConfirmButton.setOnClickListener(new OnClickListener()
+        {
+			public void onClick(View v)
+			{
+				MakeMove();
+				//mGame.MakeMove(mContext, mSudoku, mCurrentPoint, mCurrentValue);
+				mClearButton.setEnabled(false);
+				mConfirmButton.setEnabled(false);
+			}
+		});
+        
         if(difficulty == null || !difficulty.equals("TwoPlayer"))
         	mGame = new SudokuGameOnePlayer();
         else
         {
         	mGame = new SudokuGameTwoPlayer();
-        	mGameText.setText("Player 1 turn");
+        	mGameText.setText("Battle Sudoku!");
         	mGame.UpdateScore(mGameScore);
+        }
+        
+        if(!mGame.GetConfirmCommit())
+        {
+        	mClearButton.setVisibility(Button.INVISIBLE);
+        	mConfirmButton.setVisibility(Button.INVISIBLE);
+        }
+        else
+        {
+        	mClearButton.setVisibility(Button.VISIBLE);
+        	mConfirmButton.setVisibility(Button.VISIBLE);
+        	mClearButton.setEnabled(false);
+        	mConfirmButton.setEnabled(false);
         }
         
         mGame.StartGame(mSudoku, difficulty, "Player1", "Player2");
     }
     
-    private NumberPrompt.OnNumberSetListener mCommentSetListener = new NumberPrompt.OnNumberSetListener()
+    private void MakeMove()
+    {
+    	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mCurrentPoint, mCurrentValue);
+    	if(builder != null)
+    	{
+    		builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
+    		{
+    			public void onClick(DialogInterface dialog,int id)
+    			{
+    				dialog.cancel();
+    				LoadMainMenu();
+    			}
+    		  });
+    		
+    		builder.create().show();
+    	}
+    	
+    	//if(mGame.GetNumberOfPlayers() > 1)
+    	//	mGameText.setText(String.format("Player %d turn", mGame.GetCurrentPlayer() + 1));
+    	
+    	mGame.UpdateScore(mGameScore);
+    }
+    
+    private NumberPrompt.OnNumberSetListener mNumberSetListener = new NumberPrompt.OnNumberSetListener()
 	{
         public void onNumberSet(NumberPrompt view, int number)
         {
-        	if(number <= 0)
+        	if(number < 0)
         		return;
         	
-        	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mCurrentPoint, number);
-        	if(builder != null)
+        	if(mGame.GetNumberOfPlayers() > 1 && number == 0)
+        		return;
+
+        	mCurrentValue = number;
+        	
+        	if(mGame.GetConfirmCommit())
         	{
-        		builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
-        		{
-        			public void onClick(DialogInterface dialog,int id)
-        			{
-        				// if this button is clicked, close
-        				// current activity
-        				//MainActivity.this.finish();
-        				dialog.cancel();
-        				LoadMainMenu();
-        			}
-        		  });
-        		
-        		builder.create().show();
+        		mGame.ShowMove(mSudoku, mCurrentPoint, number);
+        		mClearButton.setEnabled(true);
+				mConfirmButton.setEnabled(true);
         	}
-        	
-        	if(mGame.GetNumberOfPlayers() > 1)
-        		mGameText.setText(String.format("Player %d turn", mGame.GetCurrentPlayer() + 1));
-        	
-        	mGame.UpdateScore(mGameScore);
+        	else
+        	{
+	        	MakeMove();
+        	}
         }
 	};
     

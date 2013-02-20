@@ -65,7 +65,7 @@ public class NumberPrompt extends Dialog
 		mButtonNine.setOnClickListener(new NumberButtonListener(9));
 		
 		mButtonCancel = (Button) findViewById(R.id.numberCancel);
-		mButtonCancel.setOnClickListener(new NumberButtonListener(-1));
+		mButtonCancel.setOnClickListener(new NumberButtonListener(0));
 		
 		SetOptions(Options);
 	}

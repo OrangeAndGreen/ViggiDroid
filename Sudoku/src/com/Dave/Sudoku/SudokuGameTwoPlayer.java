@@ -3,7 +3,10 @@ package com.Dave.Sudoku;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.Point;
+import android.text.Spannable;
+import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -29,6 +32,16 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return mNumberOfPlayers;
 	}
 	
+	public int GetPlayer1Color()
+	{
+		return Color.rgb(79, 129, 189);
+	}
+	
+	public int GetPlayer2Color()
+	{
+		return Color.rgb(149, 55, 53);
+	}
+	
 	public int GetCurrentPlayer()
 	{
 		return PlayerTurn;
@@ -45,7 +58,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		
 		//InitialBoard[4][4] = 9;
 		
-		view.InitializeBoard(InitialBoard, true);
+		view.InitializeBoard(InitialBoard, GetPlayer1Color(), GetPlayer2Color());
 	}
 	
 	public int[][] GetFullBoard()
@@ -110,51 +123,36 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return true;
 	}
 
+	public boolean GetConfirmCommit()
+	{
+		return true;
+	}
+	
+	public boolean ShowMove(SudokuView view, Point point, int number)
+	{
+		UpdateBoard(view, point, number, true);
+		
+		return false;
+	}
+	
 	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number)
 	{
-		//Update the current player's board and score
-		if(PlayerTurn == 0)
+		UpdateBoard(view, point, number, false);
+		
+		//Update the current player's score
+		if(GamePhase == 1)
 		{
-			Player1Board[point.x][point.y] = number;
-			if(GamePhase == 1)
+			if(PlayerTurn == 0)
 				Player1Score += number;
-		}
-		else
-		{
-			Player2Board[point.x][point.y] = number;
-			if(GamePhase == 1)
+			else
 				Player2Score += number;
 		}
-		
-		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
-		
-		//boolean[] options = SudokuLogic.GetOptions(fullBoard, new Point(0, 3));
-		//int numOptions = 0;
-		//for(int i=0; i<options.length; i++)
-		//	if(options[i])
-		//		numOptions++;
-		//Log.i("", String.format("%d options", numOptions));
-		
-		//Set invalid cells
-		for(int x=0; x<SudokuLogic.BoardSize; x++)
-			for(int y=0; y<SudokuLogic.BoardSize; y++)
-				if(fullBoard[x][y] == 0 && !SudokuLogic.IsSquareValid(fullBoard, new Point(x, y)))
-				{
-					Log.i("SudokuGameTwoPlayer", String.format("Setting cell (%d, %d) invalid", x, y));
-					if(SudokuLogic.GetPlayerTerritory(new Point(x, y)) == 0)
-						Player1Board[x][y] = -1;
-					else
-						Player2Board[x][y] = -1;
-				}
-		
-		//Draw the updated board
-		view.UpdateBoard(Player1Board, Player2Board);
 		
 		//Make it the other player's turn
 		PlayerTurn = 1 - PlayerTurn;
 		
 		//Make sure the other player can move
-		fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
+		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
 		if(!CanPlayerMove(fullBoard, PlayerTurn))
 		{
 			//Go back to the current player's turn
@@ -174,6 +172,52 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		}
 		
 		return null;
+	}
+	
+	private void UpdateBoard(SudokuView view, Point point, int number, boolean justShow)
+	{
+		int[][] tempPlayer1Board = Player1Board;
+		int[][] tempPlayer2Board = Player2Board;
+		
+		if(justShow)
+		{
+			tempPlayer1Board = SudokuLogic.CreateBoard(Player1Board);
+			tempPlayer2Board = SudokuLogic.CreateBoard(Player2Board);
+		}
+		
+		//Update the current player's board and score
+		if(PlayerTurn == 0)
+		{
+			tempPlayer1Board[point.x][point.y] = number;
+		}
+		else
+		{
+			tempPlayer2Board[point.x][point.y] = number;
+		}
+				
+		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, tempPlayer1Board, tempPlayer2Board);
+				
+		//boolean[] options = SudokuLogic.GetOptions(fullBoard, new Point(0, 3));
+		//int numOptions = 0;
+		//for(int i=0; i<options.length; i++)
+		//	if(options[i])
+		//		numOptions++;
+		//Log.i("", String.format("%d options", numOptions));
+				
+		//Set invalid cells
+		for(int x=0; x<SudokuLogic.BoardSize; x++)
+			for(int y=0; y<SudokuLogic.BoardSize; y++)
+				if(fullBoard[x][y] == 0 && !SudokuLogic.IsSquareValid(fullBoard, new Point(x, y)))
+				{
+					Log.i("SudokuGameTwoPlayer", String.format("Setting cell (%d, %d) invalid", x, y));
+					if(SudokuLogic.GetPlayerTerritory(new Point(x, y)) == 0)
+						tempPlayer1Board[x][y] = -1;
+					else
+						tempPlayer2Board[x][y] = -1;
+				}
+				
+		//Draw the updated board
+		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board);
 	}
 	
 	private boolean CanPlayerMove(int[][] fullBoard, int player)
@@ -252,8 +296,31 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	public void UpdateScore(TextView view)
 	{
-		String text = String.format("Player 1: %d\nPlayer 2: %d", Player1Score, Player2Score);
-		view.setText(text);
+		String player1String = String.format("Player 1: %d", Player1Score);
+		String player2String = String.format("\nPlayer 2: %d", Player2Score);
+		
+		int player1Background = Color.TRANSPARENT;
+		int player2Background = Color.TRANSPARENT;
+		
+		if(GetCurrentPlayer() == 0)
+		{
+			player1Background = GetPlayer1Color();
+			player1String += " (your turn)";
+		}
+		else
+		{
+			player2Background = GetPlayer2Color();
+			player2String += " (your turn)";
+		}
+		
+		CharSequence text = player1String + player2String;
+		view.setText("");
+		view.append(text);
+		
+		//CharSequence charText = view.getText();
+		Spannable spannableText = (Spannable) view.getText();
+        spannableText.setSpan(new BackgroundColorSpan(player1Background), 0, player1String.length(), 0);
+        spannableText.setSpan(new BackgroundColorSpan(player2Background), player1String.length(), player1String.length() + player2String.length(), 0);
 	}
 
 }
