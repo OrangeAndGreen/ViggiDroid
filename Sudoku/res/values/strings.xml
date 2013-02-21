@@ -7,6 +7,7 @@
     <string name="title">Welcome to Dave\'s Sudoku!</string>
     <string name="easy">Easy</string>
     <string name="hard">Hard</string>
+    <string name="x">X</string>
     <string name="twoplayer">2 Player</string>
     
     <string name="select_number">Select number:</string>
@@ -20,6 +21,8 @@
     <string name="number_eight">8</string>
     <string name="number_nine">9</string>
     <string name="cancel">Cancel</string>
+    <string name="accept">Accept</string>
+    <string name="clear">Clear</string>
     <string name="blank"> </string>
 
 </resources>

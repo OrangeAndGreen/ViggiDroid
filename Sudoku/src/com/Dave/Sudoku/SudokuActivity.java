@@ -35,12 +35,17 @@ import android.widget.TextView;
  * -Start learning about how to connect in advertisements
  * 
  * Next:
+ * -Highlight all cells affected by a move during preview
+ * -Apply multiplier when player gets to "go again"
+ * -Implement board overlay to show possible values for each square
+ * -Implement game options menu: number to fill, Scoring system
  * 
  */
 
 public class SudokuActivity extends Activity
 {
 	private ISudokuGame mGame = null;
+	private IScoring mScoring = null;
 	
 	private Context mContext = null;
 	private TextView mGameText = null;
@@ -109,7 +114,8 @@ public class SudokuActivity extends Activity
         {
 			public void onClick(View v)
 			{
-				mGame.ShowMove(mSudoku, mCurrentPoint, 0);
+				mGame.ShowMove(mSudoku, mCurrentPoint, 0, mScoring);
+				mGame.UpdateScore(mGameScore);
 				mClearButton.setEnabled(false);
 				mConfirmButton.setEnabled(false);
 			}
@@ -128,10 +134,14 @@ public class SudokuActivity extends Activity
 		});
         
         if(difficulty == null || !difficulty.equals("TwoPlayer"))
+        {
         	mGame = new SudokuGameOnePlayer();
+        	mScoring = null;
+        }
         else
         {
         	mGame = new SudokuGameTwoPlayer();
+        	mScoring = new ScoringConcept1();
         	mGameText.setText("Battle Sudoku!");
         	mGame.UpdateScore(mGameScore);
         }
@@ -154,7 +164,7 @@ public class SudokuActivity extends Activity
     
     private void MakeMove()
     {
-    	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mCurrentPoint, mCurrentValue);
+    	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mCurrentPoint, mCurrentValue, mScoring);
     	if(builder != null)
     	{
     		builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
@@ -189,7 +199,8 @@ public class SudokuActivity extends Activity
         	
         	if(mGame.GetConfirmCommit())
         	{
-        		mGame.ShowMove(mSudoku, mCurrentPoint, number);
+        		mGame.ShowMove(mSudoku, mCurrentPoint, number, mScoring);
+        		mGame.UpdateScore(mGameScore);
         		mClearButton.setEnabled(true);
 				mConfirmButton.setEnabled(true);
         	}
@@ -221,16 +232,17 @@ public class SudokuActivity extends Activity
 		public boolean onTouch(View arg0, MotionEvent arg1)
 		{
 			//Determine which cell was clicked
-			mCurrentPoint = mSudoku.GetCell(arg1.getX(), arg1.getY());
-			Log.i("SudokuActivity", String.format("Clicked box (%d, %d)", mCurrentPoint.x, mCurrentPoint.y));
+			Point currentPoint = mSudoku.GetCell(arg1.getX(), arg1.getY());
+			Log.i("SudokuActivity", String.format("Clicked box (%d, %d)", currentPoint.x, currentPoint.y));
 			
 			//Make sure we got a legal cell value
-			if(mCurrentPoint.x < 0 || mCurrentPoint.x >= SudokuLogic.BoardSize || mCurrentPoint.y < 0 || mCurrentPoint.y >= SudokuLogic.BoardSize)
+			if(currentPoint.x < 0 || currentPoint.x >= SudokuLogic.BoardSize || currentPoint.y < 0 || currentPoint.y >= SudokuLogic.BoardSize)
 				return false;
 			
 			//Show the number prompt if the cell clicked is valid in the current game
 			if(mGame.HandleClick(mCurrentPoint))
 			{
+				mCurrentPoint = currentPoint;
 				mCellOptions = SudokuLogic.GetOptions(mGame.GetFullBoard(), mCurrentPoint);
 				if(mPrompt != null)
 					mPrompt.SetOptions(mCellOptions);

@@ -114,6 +114,28 @@ public class SudokuLogic
 		return output;
 	}
 	
+	public static Point[] GetPlayerSquares(int player)
+	{
+		Point[] ret = new Point[4];
+		
+		if(player == 0)
+		{
+			ret[0] = new Point(0, 0);
+    		ret[1] = new Point(1, 0);
+    		ret[2] = new Point(2, 1);
+    		ret[3] = new Point(0, 2);
+		}
+		else
+		{
+			ret[0] = new Point(2, 0);
+			ret[1] = new Point(0, 1);
+    		ret[2] = new Point(1, 2);
+    		ret[3] = new Point(2, 2);
+		}
+		
+		return ret;
+	}
+	
 	public static int GetPlayerTerritory(Point point)
 	{
 		int numSquares = (int)Math.sqrt(SudokuLogic.BoardSize);
@@ -182,15 +204,17 @@ public class SudokuLogic
     	for(int i=1; i<BoardSize + 1; i++)
     		options[i] = true;
     	
+    	//Search the row for existing values
     	for(int x = 0; x<BoardSize; x++)
     		if(x != point.x && fullBoard[x][point.y] > 0)
     			options[fullBoard[x][point.y]] = false;
     	
+    	//Search the column for existing values
     	for(int y = 0; y<BoardSize; y++)
     		if(y != point.y && fullBoard[point.x][y] > 0)
     			options[fullBoard[point.x][y]] = false;
     	
-    	
+    	//Search the square for existing values
     	int numSquares = (int)Math.sqrt(BoardSize);
     	int squareX = point.x / numSquares;
     	int squareY = point.y / numSquares;
@@ -203,6 +227,34 @@ public class SudokuLogic
     			if(point.x != xValue && point.y != yValue && curValue > 0)
     				options[curValue] = false;
     		}
+    	
+    	return options;
+    }
+    
+    public static boolean[] GetSquareOptions(int[][] fullBoard, Point square)
+    {
+    	//For each cell in the square, find the options
+    	//Combine the options together for all squares
+    	
+    	boolean[] options = new boolean[BoardSize + 1];
+    	
+    	int numSquares = (int)Math.sqrt(BoardSize);
+    	for(int x = 0; x<numSquares; x++)
+    		for(int y=0; y<numSquares; y++)
+    		{
+    			int xValue = square.x * numSquares + x;
+    			int yValue = square.y * numSquares + y;
+    			int curValue = fullBoard[xValue][yValue];
+    			if(curValue > 0)
+    				options[curValue] = false;
+    			else
+    			{
+    				boolean[] tempOptions = GetOptions(fullBoard, new Point(xValue, yValue));
+    				for(int i=0; i < options.length; i++)
+    					options[i] |= tempOptions[i];
+    			}
+    		}
+
     	
     	return options;
     }

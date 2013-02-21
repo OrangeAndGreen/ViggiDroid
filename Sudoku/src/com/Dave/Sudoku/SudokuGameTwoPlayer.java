@@ -20,6 +20,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	public int Player1Score = 0;
 	public int Player2Score = 0;
+	private int mProposedScore = 0;
 	
 	public String Player1Name = null;
 	public String Player2Name = null;
@@ -128,35 +129,45 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return true;
 	}
 	
-	public boolean ShowMove(SudokuView view, Point point, int number)
+	public void ShowMove(SudokuView view, Point point, int number, IScoring scoring)
 	{
-		UpdateBoard(view, point, number, true);
+		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
+		if(GamePhase == 1)
+			mProposedScore = scoring.ScoreMove(fullBoard, point, number, 1);
 		
-		return false;
+		UpdateBoard(view, point, number, true);
 	}
 	
-	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number)
+	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring)
 	{
 		UpdateBoard(view, point, number, false);
+		
+		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
 		
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
+			int score = scoring.ScoreMove(fullBoard, point, number, 1);
 			if(PlayerTurn == 0)
-				Player1Score += number;
+				Player1Score += score;
 			else
-				Player2Score += number;
+				Player2Score += score;
+			mProposedScore = 0;
 		}
 		
-		//Make it the other player's turn
-		PlayerTurn = 1 - PlayerTurn;
-		
-		//Make sure the other player can move
-		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
-		if(!CanPlayerMove(fullBoard, PlayerTurn))
+		int multiplier = scoring.GetNextMultiplier(fullBoard, point, number);
+		if(multiplier <= 0)
 		{
-			//Go back to the current player's turn
+			//Make it the other player's turn
 			PlayerTurn = 1 - PlayerTurn;
+			
+			//Make sure the other player can move
+			
+			if(!CanPlayerMove(fullBoard, PlayerTurn))
+			{
+				//Go back to the current player's turn
+				PlayerTurn = 1 - PlayerTurn;
+			}
 		}
 		
 		//See if we need to move from the intro phase to the main phase
@@ -217,7 +228,10 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 				}
 				
 		//Draw the updated board
-		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board);
+		Point highlightPoint = null;
+		if(justShow)
+			highlightPoint = point;
+		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board, highlightPoint);
 	}
 	
 	private boolean CanPlayerMove(int[][] fullBoard, int player)
@@ -296,21 +310,24 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	public void UpdateScore(TextView view)
 	{
-		String player1String = String.format("Player 1: %d", Player1Score);
-		String player2String = String.format("\nPlayer 2: %d", Player2Score);
+		String player1String = String.format("%s: %d", Player1Name, Player1Score);
+		String player2String = String.format("\n%s: %d", Player2Name, Player2Score);
 		
 		int player1Background = Color.TRANSPARENT;
 		int player2Background = Color.TRANSPARENT;
 		
+		String proposedScore = " (your turn)";
+		if(mProposedScore != 0)
+			proposedScore = String.format(" (+%d)", mProposedScore);
 		if(GetCurrentPlayer() == 0)
 		{
 			player1Background = GetPlayer1Color();
-			player1String += " (your turn)";
+			player1String += proposedScore;
 		}
 		else
 		{
 			player2Background = GetPlayer2Color();
-			player2String += " (your turn)";
+			player2String += proposedScore;
 		}
 		
 		CharSequence text = player1String + player2String;

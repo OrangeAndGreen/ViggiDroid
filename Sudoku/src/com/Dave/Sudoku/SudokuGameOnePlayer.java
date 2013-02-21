@@ -79,12 +79,12 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return false;
 	}
 	
-	public boolean ShowMove(SudokuView view, Point point, int number)
+	public void ShowMove(SudokuView view, Point point, int number, IScoring scoring)
 	{
-		return true;
+		//Do nothing
 	}
 	
-	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number)
+	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring)
 	{
 		PlayerBoard[point.x][point.y] = number;
 		view.UpdateBoard(PlayerBoard);

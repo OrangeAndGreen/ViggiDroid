@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
 		android:layout_alignParentRight="true"
-		android:text="X" />
+		android:text="@string/x" />
 
     <TextView
         android:id="@+id/gameScore"
@@ -33,7 +33,7 @@
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/buttonQuit"
   		android:layout_alignParentRight="true"
-  		android:text="Accept"
+  		android:text="@string/accept"
         />
 
     <Button
@@ -42,7 +42,7 @@
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/buttonQuit"
   		android:layout_toLeftOf="@+id/buttonConfirm"
-  		android:text="Clear"
+  		android:text="@string/clear"
         />
     
     <com.Dave.Sudoku.SudokuView

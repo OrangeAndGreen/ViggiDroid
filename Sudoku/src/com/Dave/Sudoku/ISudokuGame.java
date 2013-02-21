@@ -23,9 +23,9 @@ public interface ISudokuGame
 	
 	boolean GetConfirmCommit();
 	
-	boolean ShowMove(SudokuView view, Point point, int number);
+	void ShowMove(SudokuView view, Point point, int number, IScoring scoring);
 	
-	AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number);
+	AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring);
 	
 	void UpdateScore(TextView view);
 }

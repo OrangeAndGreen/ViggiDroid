@@ -25,6 +25,7 @@ public class SudokuView extends View
 	private int[][] mOriginalValues = null;
 	private int[][] mValues;
 	private int[][] mValues2;
+	private Point mHighlightPoint = null;
 	
 	public SudokuView(Context context, AttributeSet attrs)
 	{
@@ -46,10 +47,11 @@ public class SudokuView extends View
 		this.invalidate();
 	}
 	
-	public void UpdateBoard(int[][] values, int[][] values2)
+	public void UpdateBoard(int[][] values, int[][] values2, Point highlightPoint)
 	{
 		mValues = values;
 		mValues2 = values2;
+		mHighlightPoint = highlightPoint;
 		this.invalidate();
 	}
 
@@ -108,6 +110,8 @@ public class SudokuView extends View
     	int usableHeight = mTotalHeight - (2 * mMargin);
     	int usableWidth = mTotalWidth - (2 * mMargin);
     	
+    	int squareSize = (int)Math.sqrt(SudokuLogic.BoardSize);
+    	
     	if(mTwoPlayer)
     	{
     		//Shade the squares for each player
@@ -115,72 +119,39 @@ public class SudokuView extends View
     		
     		paint.setColor(Color.rgb(166, 166, 166));
     		
+    		Point centerSquare = new Point(1, 1);
     		//(1,1)
-    		int xStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		int xEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		int yStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		int yEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
+    		int xStartOffset = (int)((float)centerSquare.x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    		int xEndOffset = (int)((float)(centerSquare.x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    		int yStartOffset = (int)((float)centerSquare.y * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    		int yEndOffset = (int)((float)(centerSquare.y + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
     		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+
+    		Point[] player1Squares = SudokuLogic.GetPlayerSquares(0);
     		
     		paint.setColor(mPlayer1Color);
     		
-    		//(0,0)
-    		xStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+    		for(int i=0; i<player1Squares.length; i++)
+    		{
+    			xStartOffset = (int)((float)player1Squares[i].x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			xEndOffset = (int)((float)(player1Squares[i].x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			yStartOffset = (int)((float)player1Squares[i].y * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			yEndOffset = (int)((float)(player1Squares[i].y + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+    		}
     		
-    		//(1,0)
-    		xStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
-    		
-    		//(2,1)
-    		xStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
-    		
-    		//(0,2)
-    		xStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+    		Point[] player2Squares = SudokuLogic.GetPlayerSquares(1);
     		
     		paint.setColor(mPlayer2Color);
     		
-    		//(2,0)
-    		xStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
-    		
-    		//(0,1)
-    		xStartOffset = (int)((float)0 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
-    		
-    		//(1,2)
-    		xStartOffset = (int)((float)3 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
-    		
-    		//(2,2)
-    		xStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		xEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		yStartOffset = (int)((float)6 / 9 * usableWidth + mMargin);
-    		yEndOffset = (int)((float)9 / 9 * usableWidth + mMargin);
-    		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+    		for(int i=0; i<player2Squares.length; i++)
+    		{
+    			xStartOffset = (int)((float)player2Squares[i].x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			xEndOffset = (int)((float)(player2Squares[i].x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			yStartOffset = (int)((float)player2Squares[i].y * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			yEndOffset = (int)((float)(player2Squares[i].y + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
+    			canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
+    		}
     	}
     	
     	paint.setColor(Color.WHITE);
@@ -188,18 +159,18 @@ public class SudokuView extends View
     	paint.setStrokeWidth(1);
     	
     	//Draw the minor vertical lines
-    	for(int x =0; x<10; x++)
+    	for(int x =0; x<SudokuLogic.BoardSize + 1; x++)
     	{
-    		int offset = (int)((float)x / 9 * usableWidth + mMargin);
+    		int offset = (int)((float)x / SudokuLogic.BoardSize * usableWidth + mMargin);
     		Point start = new Point (offset, mMargin);
     		Point end = new Point (offset, mTotalHeight - mMargin);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
     	
     	//Draw the minor horizontal lines
-    	for(int y =0; y<10; y++)
+    	for(int y =0; y<SudokuLogic.BoardSize + 1; y++)
     	{
-    		int offset = (int)((float)y / 9 * usableHeight + mMargin);
+    		int offset = (int)((float)y / SudokuLogic.BoardSize * usableHeight + mMargin);
     		Point start = new Point (mMargin, offset);
     		Point end = new Point (mTotalWidth - mMargin, offset);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
@@ -210,18 +181,18 @@ public class SudokuView extends View
     	paint.setStrokeWidth(5);
     	
     	//Draw the major vertical lines
-    	for(int x = 1; x < 3; x++)
+    	for(int x = 1; x < squareSize; x++)
     	{
-    		int offset = (int)((float)x / 3 * usableWidth + mMargin);
+    		int offset = (int)((float)x / squareSize * usableWidth + mMargin);
     		Point start = new Point (offset, mMargin);
     		Point end = new Point (offset, mTotalHeight - mMargin);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
     	
     	//Draw the major horizontal lines
-    	for(int y = 1; y < 3; y++)
+    	for(int y = 1; y < squareSize; y++)
     	{
-    		int offset = (int)((float)y / 3 * usableHeight + mMargin);
+    		int offset = (int)((float)y / squareSize * usableHeight + mMargin);
     		Point start = new Point (mMargin, offset);
     		Point end = new Point (mTotalWidth - mMargin, offset);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
@@ -236,18 +207,22 @@ public class SudokuView extends View
 		int usableHeight = mTotalHeight - (2 * mMargin);
     	int usableWidth = mTotalWidth - (2 * mMargin);
 		
-    	int boxSize = usableHeight / 9;
+    	int boxSize = usableHeight / SudokuLogic.BoardSize;
     	
     	Paint paint = new Paint();
-		paint.setColor(color);
 		paint.setTextSize(boxSize);
 		paint.setTextAlign(Align.CENTER);
     	
-		for(int x = 0; x < 9; x++)
-			for(int y=0; y < 9; y++)
+		for(int x = 0; x < SudokuLogic.BoardSize; x++)
+			for(int y=0; y < SudokuLogic.BoardSize; y++)
 			{
-				int xOffset = (int)((float)x / 9 * usableWidth + mMargin + boxSize / 2);
-				int yOffset = (int)((float)y / 9 * usableHeight + boxSize);
+				if(mHighlightPoint != null && mHighlightPoint.x == x && mHighlightPoint.y == y)
+					paint.setColor(Color.GREEN);
+				else
+					paint.setColor(color);
+				
+				int xOffset = (int)((float)x / SudokuLogic.BoardSize * usableWidth + mMargin + boxSize / 2);
+				int yOffset = (int)((float)y / SudokuLogic.BoardSize * usableHeight + boxSize);
 				int value = values[x][y]; 
 				if(value > 0)
 				{
