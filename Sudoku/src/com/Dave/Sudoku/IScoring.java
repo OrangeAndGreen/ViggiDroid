@@ -4,7 +4,7 @@ import android.graphics.Point;
 
 public interface IScoring
 {
-	int ScoreMove(int[][] fullBoard, Point point, int number, int multiplier);
+	int ScoreMove(byte[][] fullBoard, Point point, byte number, int multiplier);
 	
-	int GetNextMultiplier(int[][] fullBoard, Point point, int number);
+	int GetNextMultiplier(byte[][] fullBoard, Point point, byte number);
 }

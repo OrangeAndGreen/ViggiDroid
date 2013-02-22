@@ -11,11 +11,30 @@ public class SudokuGameOnePlayer implements ISudokuGame
 {
 	private static final int mNumberOfPlayers = 1;
 	
-	String Player1Name = null;
+	public byte[][] InitialBoard = null;
+	public byte[][] PlayerBoard = null;
 	
-	public int[][] InitialBoard = null;
-	public int[][] PlayerBoard = null;
 
+	public SudokuGameOnePlayer(SudokuView view, String difficulty)
+	{
+		//Create the starting board
+        if(difficulty == null || difficulty.equals("Hard"))
+        	InitialBoard = SudokuLogic.CreateBoard(20);
+        else
+        	InitialBoard = SudokuLogic.CreateBoard(40);
+        
+        //Allocate the player board
+        PlayerBoard = SudokuLogic.CreateBoard(0);
+        
+        //Fill in a couple entries (for testing)
+        //PlayerBoard[2][0] = 1;
+        //PlayerBoard[3][5] = 2;
+        //PlayerBoard[7][2] = 8;
+        
+        view.InitializeBoard(InitialBoard, null, null);
+        //mSudoku.UpdateBoard(PlayerBoard);
+	}
+	
 	public int GetNumberOfPlayers()
 	{
 		return mNumberOfPlayers;
@@ -36,31 +55,7 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return 0;
 	}
 	
-	public void StartGame(SudokuView view, String difficulty, String player1Name, String player2Name)
-	{
-		Player1Name = player1Name;
-		
-		//Create the starting board
-        if(difficulty == null || difficulty.equals("Hard"))
-        	InitialBoard = SudokuLogic.CreateBoard(20);
-        else
-        	InitialBoard = SudokuLogic.CreateBoard(40);
-        
-        //Allocate the player board
-        PlayerBoard = new int[SudokuLogic.BoardSize][];
-        for(int i=0; i<SudokuLogic.BoardSize; i++)
-        	PlayerBoard[i] = new int[SudokuLogic.BoardSize];
-        
-        //Fill in a couple entries (for testing)
-        //PlayerBoard[2][0] = 1;
-        //PlayerBoard[3][5] = 2;
-        //PlayerBoard[7][2] = 8;
-        
-        view.InitializeBoard(InitialBoard, null, null);
-        //mSudoku.UpdateBoard(PlayerBoard);
-	}
-	
-	public int[][] GetFullBoard()
+	public byte[][] GetFullBoard()
 	{
 		return SudokuLogic.GetFullBoard(InitialBoard, PlayerBoard, null);
 	}
@@ -79,12 +74,12 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return false;
 	}
 	
-	public void ShowMove(SudokuView view, Point point, int number, IScoring scoring)
+	public void ShowMove(SudokuView view, Point point, byte number, IScoring scoring)
 	{
 		//Do nothing
 	}
 	
-	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring)
+	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring)
 	{
 		PlayerBoard[point.x][point.y] = number;
 		view.UpdateBoard(PlayerBoard);

@@ -15,17 +15,15 @@ public interface ISudokuGame
 	
 	int GetCurrentPlayer();
 	
-	void StartGame(SudokuView view, String difficulty, String player1Name, String player2Name);
-	
-	int[][] GetFullBoard();
+	byte[][] GetFullBoard();
 	
 	boolean HandleClick(Point point);
 	
 	boolean GetConfirmCommit();
 	
-	void ShowMove(SudokuView view, Point point, int number, IScoring scoring);
+	void ShowMove(SudokuView view, Point point, byte number, IScoring scoring);
 	
-	AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring);
+	AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring);
 	
 	void UpdateScore(TextView view);
 }

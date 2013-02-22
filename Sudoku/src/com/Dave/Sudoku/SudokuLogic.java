@@ -7,7 +7,7 @@ public class SudokuLogic
 {
 	public static final int BoardSize = 9;
 	
-	public static final int[][] BlankBoard =   {{0, 0, 0, 0, 0, 0, 0, 0, 0},
+	public static final byte[][] BlankBoard =   {{0, 0, 0, 0, 0, 0, 0, 0, 0},
 												{0, 0, 0, 0, 0, 0, 0, 0, 0},
 												{0, 0, 0, 0, 0, 0, 0, 0, 0},
 												{0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -19,7 +19,7 @@ public class SudokuLogic
 											   };
 
 	/*
-	public static final int[][] DefaultBoard = {{5, 3, 0, 0, 7, 0, 0, 0, 0},
+	public static final byte[][] DefaultBoard = {{5, 3, 0, 0, 7, 0, 0, 0, 0},
 											    {6, 0, 0, 1, 9, 5, 0, 0, 0},
 											    {0, 9, 8, 0, 0, 0, 0, 6, 0},
 											    {8, 0, 0, 0, 6, 0, 0, 0, 3},
@@ -30,7 +30,7 @@ public class SudokuLogic
 											    {0, 0, 0, 0, 8, 0, 0, 7, 9}
 											   };
 
-	public static final int[][] NearlyCompleteBoard =  {{5, 3, 4, 6, 7, 8, 9, 1, 2},
+	public static final byte[][] NearlyCompleteBoard =  {{5, 3, 4, 6, 7, 8, 9, 1, 2},
 													    {6, 7, 2, 1, 9, 5, 3, 4, 8},
 													    {0, 9, 8, 3, 4, 2, 5, 6, 7},
 													    {8, 5, 9, 7, 6, 1, 4, 2, 3},
@@ -42,24 +42,24 @@ public class SudokuLogic
 													   };
 	 */
 	
-	public static int[][] CreateBoard(int numberToFill)
+	public static byte[][] CreateBoard(int numberToFill)
 	{
 		return CreateBoard(numberToFill, false);
 	}
 	
-	public static int[][] CreateBoard(int numberToFill, boolean makeFairForTwoPlayer)
+	public static byte[][] CreateBoard(int numberToFill, boolean makeFairForTwoPlayer)
 	{
-		int[][] output = new int[BoardSize][];
+		byte[][] output = new byte[BoardSize][];
         for(int i=0; i<BoardSize; i++)
-        	output[i] = new int[BoardSize];
+        	output[i] = new byte[BoardSize];
         
         int numPlayers = 1;
-        int[] player1Choices = null;
+        byte[] player1Choices = null;
         if(makeFairForTwoPlayer)
         {
         	numPlayers = 2;
-        	player1Choices = new int[numberToFill];
-        	output[4][4] = Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1;
+        	player1Choices = new byte[numberToFill];
+        	output[4][4] = (byte)(Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1);
         }
         for(int player=0; player < numPlayers; player++)
 	        for(int fillIndex=0; fillIndex<numberToFill; fillIndex++)
@@ -68,7 +68,7 @@ public class SudokuLogic
 	        	//First: Choose the value to fill in
 	        	
 	        	//Generate a value randomly
-	        	int value = Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1;
+	        	byte value = (byte)(Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1);
 	        	if(makeFairForTwoPlayer)
 	        	{
 	        		if(player == 0) //save the choice
@@ -103,9 +103,9 @@ public class SudokuLogic
         return output;
 	}
 	
-	public static int[][] CreateBoard(int[][] boardToClone)
+	public static byte[][] CreateBoard(byte[][] boardToClone)
 	{
-		int[][] output = CreateBoard(0);
+		byte[][] output = CreateBoard(0);
 		
 		for(int x = 0; x < BoardSize; x++)
 			for(int y = 0; y < BoardSize; y++)
@@ -157,9 +157,9 @@ public class SudokuLogic
 	/*
      * Helper method so boards can be defined intuitively and indexed intuitively
      */
-    public static int[][] TransposeBoard(int[][] board)
+    public static byte[][] TransposeBoard(byte[][] board)
     {
-    	int[][] output = CreateBoard(0);
+    	byte[][] output = CreateBoard(0);
         
         for(int x = 0; x<BoardSize; x++)
         	for(int y=0; y<BoardSize; y++)
@@ -182,9 +182,9 @@ public class SudokuLogic
     	return square;
     }
     
-    public static int[][] GetFullBoard(int[][] initialBoard, int[][] player1Board, int[][] player2Board)
+    public static byte[][] GetFullBoard(byte[][] initialBoard, byte[][] player1Board, byte[][] player2Board)
     {
-    	int[][] fullBoard = CreateBoard(0);
+    	byte[][] fullBoard = CreateBoard(0);
     	
     	for(int x = 0; x < BoardSize; x++)
     		for(int y = 0; y < BoardSize; y++)
@@ -198,7 +198,7 @@ public class SudokuLogic
     	return fullBoard;
     }
     
-    public static boolean[] GetOptions(int[][] fullBoard, Point point)
+    public static boolean[] GetOptions(byte[][] fullBoard, Point point)
     {
     	boolean[] options = new boolean[BoardSize + 1];
     	for(int i=1; i<BoardSize + 1; i++)
@@ -231,7 +231,7 @@ public class SudokuLogic
     	return options;
     }
     
-    public static boolean[] GetSquareOptions(int[][] fullBoard, Point square)
+    public static boolean[] GetSquareOptions(byte[][] fullBoard, Point square)
     {
     	//For each cell in the square, find the options
     	//Combine the options together for all squares
@@ -259,7 +259,7 @@ public class SudokuLogic
     	return options;
     }
     
-    public static boolean IsSquareValid(int[][] fullBoard, Point point)
+    public static boolean IsSquareValid(byte[][] fullBoard, Point point)
     {
     	boolean[] options = GetOptions(fullBoard, point);
     	
@@ -270,9 +270,9 @@ public class SudokuLogic
     	return false;
     }
     
-    public static boolean CheckBoard(int[][] initialBoard, int[][] player1Board, int[][] player2Board, boolean requireCorrect)
+    public static boolean CheckBoard(byte[][] initialBoard, byte[][] player1Board, byte[][] player2Board, boolean requireCorrect)
     {
-    	int[][] fullBoard = GetFullBoard(initialBoard, player1Board, player2Board);
+    	byte[][] fullBoard = GetFullBoard(initialBoard, player1Board, player2Board);
     	
     	for(int x = 0; x < BoardSize; x++)
     		for(int y = 0; y < BoardSize; y++)
@@ -308,7 +308,7 @@ public class SudokuLogic
     	return true;
     }
     
-    public static boolean CheckRow(int[][] fullBoard, int rowId)
+    public static boolean CheckRow(byte[][] fullBoard, int rowId)
     {
     	boolean[] values = new boolean[BoardSize];
     	
@@ -328,7 +328,7 @@ public class SudokuLogic
     	return true;
     }
     
-    public static boolean CheckColumn(int[][] fullBoard, int columnId)
+    public static boolean CheckColumn(byte[][] fullBoard, int columnId)
     {
     	boolean[] values = new boolean[BoardSize];
     	
@@ -348,7 +348,7 @@ public class SudokuLogic
     	return true;
     }
     
-    public static boolean CheckSquare(int[][] fullBoard, int squareX, int squareY)
+    public static boolean CheckSquare(byte[][] fullBoard, int squareX, int squareY)
     {
     	boolean[] values = new boolean[BoardSize];
     	boolean foundInvalid = false;

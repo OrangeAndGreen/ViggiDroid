@@ -1,14 +1,13 @@
 package com.Dave.Sudoku;
 
 import android.graphics.Point;
-import android.util.Log;
 
 /*
  * This scoring system awards points when a number is made invalid in an opponent's square
  */
 public class ScoringConcept1 implements IScoring
 {
-	public int ScoreMove(int[][] fullBoard, Point point, int number, int multiplier)
+	public int ScoreMove(byte[][] fullBoard, Point point, byte number, int multiplier)
 	{
 		if(number <= 0)
 			return 0;
@@ -35,7 +34,7 @@ public class ScoringConcept1 implements IScoring
 			for(int n = 1; n < initialSquareOptions.length; n++)
 				if(initialSquareOptions[n] && !finalSquareOptions[n])
 				{
-					Log.i("ScoringConcept1", String.format("Adding %d to score", n));
+					//Log.i("ScoringConcept1", String.format("Adding %d to score", n));
 					score += n;
 				}
 			
@@ -45,7 +44,7 @@ public class ScoringConcept1 implements IScoring
 		return score;
 	}
 
-	public int GetNextMultiplier(int[][] fullBoard, Point point, int number)
+	public int GetNextMultiplier(byte[][] fullBoard, Point point, byte number)
 	{
 		return 0;
 	}

@@ -14,9 +14,9 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 {
 	private static final int mNumberOfPlayers = 2;
 	
-	public int[][] InitialBoard = null;
-	public int[][] Player1Board = null;
-	public int[][] Player2Board = null;
+	public byte[][] InitialBoard = null;
+	public byte[][] Player1Board = null;
+	public byte[][] Player2Board = null;
 	
 	public int Player1Score = 0;
 	public int Player2Score = 0;
@@ -27,6 +27,18 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	public int GamePhase = 0;
 	public int PlayerTurn = 0;
+	
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill)
+	{
+		Player1Name = player1Name;
+		Player2Name = player2Name;
+		
+		InitialBoard = SudokuLogic.CreateBoard(cellsToFill, true);
+		Player1Board = SudokuLogic.CreateBoard(0);
+		Player2Board = SudokuLogic.CreateBoard(0);
+		
+		view.InitializeBoard(InitialBoard, GetPlayer1Color(), GetPlayer2Color());
+	}
 
 	public int GetNumberOfPlayers()
 	{
@@ -48,21 +60,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return PlayerTurn;
 	}
 	
-	public void StartGame(SudokuView view, String difficulty, String player1Name, String player2Name)
-	{
-		Player1Name = player1Name;
-		Player2Name = player2Name;
-		
-		InitialBoard = SudokuLogic.CreateBoard(10, true);
-		Player1Board = SudokuLogic.CreateBoard(0);
-		Player2Board = SudokuLogic.CreateBoard(0);
-		
-		//InitialBoard[4][4] = 9;
-		
-		view.InitializeBoard(InitialBoard, GetPlayer1Color(), GetPlayer2Color());
-	}
-	
-	public int[][] GetFullBoard()
+	public byte[][] GetFullBoard()
 	{
 		return SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
 	}
@@ -129,20 +127,20 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return true;
 	}
 	
-	public void ShowMove(SudokuView view, Point point, int number, IScoring scoring)
+	public void ShowMove(SudokuView view, Point point, byte number, IScoring scoring)
 	{
-		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
-		if(GamePhase == 1)
+		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
+		if(GamePhase == 1 && point != null)
 			mProposedScore = scoring.ScoreMove(fullBoard, point, number, 1);
 		
 		UpdateBoard(view, point, number, true);
 	}
 	
-	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, int number, IScoring scoring)
+	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring)
 	{
 		UpdateBoard(view, point, number, false);
 		
-		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
+		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
 		
 		//Update the current player's score
 		if(GamePhase == 1)
@@ -185,10 +183,10 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return null;
 	}
 	
-	private void UpdateBoard(SudokuView view, Point point, int number, boolean justShow)
+	private void UpdateBoard(SudokuView view, Point point, byte number, boolean justShow)
 	{
-		int[][] tempPlayer1Board = Player1Board;
-		int[][] tempPlayer2Board = Player2Board;
+		byte[][] tempPlayer1Board = Player1Board;
+		byte[][] tempPlayer2Board = Player2Board;
 		
 		if(justShow)
 		{
@@ -196,24 +194,20 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 			tempPlayer2Board = SudokuLogic.CreateBoard(Player2Board);
 		}
 		
-		//Update the current player's board and score
-		if(PlayerTurn == 0)
+		if(point != null)
 		{
-			tempPlayer1Board[point.x][point.y] = number;
-		}
-		else
-		{
-			tempPlayer2Board[point.x][point.y] = number;
+			//Update the current player's board
+			if(PlayerTurn == 0)
+			{
+				tempPlayer1Board[point.x][point.y] = number;
+			}
+			else
+			{
+				tempPlayer2Board[point.x][point.y] = number;
+			}
 		}
 				
-		int[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, tempPlayer1Board, tempPlayer2Board);
-				
-		//boolean[] options = SudokuLogic.GetOptions(fullBoard, new Point(0, 3));
-		//int numOptions = 0;
-		//for(int i=0; i<options.length; i++)
-		//	if(options[i])
-		//		numOptions++;
-		//Log.i("", String.format("%d options", numOptions));
+		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, tempPlayer1Board, tempPlayer2Board);
 				
 		//Set invalid cells
 		for(int x=0; x<SudokuLogic.BoardSize; x++)
@@ -228,13 +222,16 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 				}
 				
 		//Draw the updated board
-		Point highlightPoint = null;
-		if(justShow)
-			highlightPoint = point;
-		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board, highlightPoint);
+		//Point[] highlightPoints = null;
+		//if(justShow)
+		//{
+		//	highlightPoints = new Point[1];
+		//	highlightPoints[0] = new Point(point.x, point.y);
+		//}
+		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board, point);
 	}
 	
-	private boolean CanPlayerMove(int[][] fullBoard, int player)
+	private boolean CanPlayerMove(byte[][] fullBoard, int player)
 	{
 		Point[] playerSquares = new Point[4];
 		
