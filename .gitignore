@@ -1,5 +1,7 @@
 .metadata/
 */gen/
 */bin/
+
 *.properties
+
 *.suo
