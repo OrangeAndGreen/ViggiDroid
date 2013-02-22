@@ -6,17 +6,6 @@ import android.util.Log;
 public class SudokuLogic
 {
 	public static final int BoardSize = 9;
-	
-	public static final byte[][] BlankBoard =   {{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0},
-												{0, 0, 0, 0, 0, 0, 0, 0, 0}
-											   };
 
 	/*
 	public static final byte[][] DefaultBoard = {{5, 3, 0, 0, 7, 0, 0, 0, 0},
