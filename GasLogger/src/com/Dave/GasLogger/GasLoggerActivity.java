@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -54,8 +55,14 @@ public class GasLoggerActivity extends Activity
 	public static String[] ViewTypes = { "All entries", "Recent info" , "Mileage Graph", "Cost Graph", "Gallons Graph" };
 	public static String[] Octanes = { "87", "89", "91", "93" };
 	public static String[] Indicators = { "< Empty", "Empty", "> Empty", "< 1/4", "1/4", "> 1/4", "< 1/2", "1/2", "> 1/2", "< 3/4", "3/4", "> 3/4", "< Full", "Full" };
-	public static String[] Stations = { "Shell", "Citgo", "Chevron", "BP" };
-	
+	public static String[] Stations = { "BP", "Chevron", "Citgo", "Exxon", "Hess", "Mobil", "Pilot", "RaceTrac/Raceway", "Shell", "7-11", "Speedway", "Sunoco", "Valero" };
+	public static String[] States = { "AK – Alaska", "AL – Alabama", "AR – Arkansas", "AZ – Arizona", "CA – California", "CO – Colorado", "CT – Connecticut", "DE – Delaware", 
+		                              "DC – District of Columbia", "FL – Florida", "GA – Georgia", "HI – Hawaii", "IA – Iowa", "ID – Idaho", "IL – Illinois", "IN – Indiana", 
+		                              "KS – Kansas", "KY – Kentucky", "LA – Louisiana", "MA – Massachusetts", "MD – Maryland", "ME – Maine", "MI – Michigan", "MN – Minnesota",
+		                              "MS – Mississippi", "MO – Missouri", "MT – Montana", "NC – North Carolina", "ND – North Dakota", "NE – Nebraska", "NH – New Hampshire",
+		                              "NJ – New Jersey", "NM – New Mexico", "NV – Nevada", "NY – New York", "OH – Ohio", "OK – Oklahoma", "OR – Oregon", "PA – Pennsylvania",
+		                              "RI – Rhode Island", "SC – South Carolina", "SD – South Dakota", "TN – Tennessee", "TX – Texas", "UT – Utah", "VA – Virginia", "VT – Vermont",
+		                              "WA – Washington", "WI – Wisconsin", "WV – West Virginia", "WY – Wyoming"}; 
 	private String mCurrentPage = null;
 	
 	//Select screen GUI controls
@@ -82,7 +89,11 @@ public class GasLoggerActivity extends Activity
 	private EditText mCostPerGallonText = null;
 	private Spinner mIndicatorSpinner = null;
 	private Spinner mStationSpinner = null;
+	private EditText mCarText = null;
+	private Spinner mStateSpinner = null;
 	private EditText mLocationText = null;
+	private EditText mMilesToEmpty = null;
+	private CheckBox mReceipt = null;
 	private EditText mLowMileageText = null;
 	private EditText mLowDaysText = null;
 	
@@ -259,8 +270,17 @@ public class GasLoggerActivity extends Activity
     		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, Stations);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			mStationSpinner.setAdapter(adapter);
+			
+			mCarText = (EditText) findViewById(R.id.car);
+			
+			mStateSpinner = (Spinner) findViewById(R.id.state);
+    		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, States);
+			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+			mStateSpinner.setAdapter(adapter);						
     		
     		mLocationText = (EditText) findViewById(R.id.location);
+    		mMilesToEmpty = (EditText) findViewById(R.id.mte);
+    		mReceipt = (CheckBox) findViewById(R.id.receipt);
     		mLowMileageText = (EditText) findViewById(R.id.lowmileage);
     		mLowDaysText = (EditText) findViewById(R.id.lowdays);
     		

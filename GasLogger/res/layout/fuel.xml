@@ -57,6 +57,7 @@
     				android:text="Date"
     				/>
     		</TableRow>
+    		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
     	    	>
@@ -87,6 +88,7 @@
     				/>
 
     		</TableRow>
+    		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
     	    	>
@@ -124,6 +126,7 @@
     				/>
 
     		</TableRow>
+    		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
     	    	>
@@ -160,6 +163,7 @@
     				android:text="Station"
     				/>
     		</TableRow>
+    		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
     	    	>
@@ -176,6 +180,44 @@
     				android:layout_weight="1"
     				/>
     		</TableRow>
+
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_car"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Car"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_state"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="State"
+    				/>
+
+    		</TableRow>    		
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/car"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<Spinner
+    				android:id="@+id/state"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+
+    		</TableRow>	
     		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
@@ -188,6 +230,7 @@
     				android:text="Location"
     				/>
     		</TableRow>
+    		
     		<TableRow
     	    	android:layout_marginBottom="0dip"
     	    	>
@@ -198,6 +241,44 @@
     				android:layout_weight="1"
     				/>
     		</TableRow>
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<TextView
+    				android:id="@+id/label_mte"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Miles To Empty"
+    				/>
+    	    	<TextView
+    				android:id="@+id/label_receipt"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				android:text="Receipt"
+    				/>
+
+    		</TableRow>      		
+    		
+    		<TableRow
+    	    	android:layout_marginBottom="0dip"
+    	    	>
+    	    	<EditText
+    				android:id="@+id/mte"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+    	    	<CheckBox
+    				android:id="@+id/receipt"
+    				android:layout_width="fill_parent"
+    				android:layout_height="wrap_content"
+    				android:layout_weight="1"
+    				/>
+
+    		</TableRow>	    		
     	
     		<include layout="@layout/divider"/>
     	

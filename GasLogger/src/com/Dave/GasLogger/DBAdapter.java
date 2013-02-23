@@ -50,7 +50,7 @@ public class DBAdapter
     
     private static final String TAG = "DBAdapter";
     
-    private static final String DB_NAME = "fuel";
+    private static final String DB_NAME = "fuel.db";
     private static String DB_TABLE_FILLUPS = "fillups";
     private static String DB_TABLE_RECENT = "recent";
     private static String DB_TABLE_ERRORS = "errors";
