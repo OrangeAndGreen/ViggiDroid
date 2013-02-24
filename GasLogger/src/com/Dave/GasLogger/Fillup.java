@@ -14,7 +14,11 @@ public class Fillup
 	public float CostPerGallon = 0;
 	public String Indicator = null;
 	public String Station = null;
+	public String Car = null;
+	public String State = null;
 	public String Location = null;
+	public int Mte = 0;
+	public int Receipt = 0;	
 	
 	public int LowMileage = -1;
 	public float LowDays = -1;
@@ -31,9 +35,13 @@ public class Fillup
 		ret.CostPerGallon = cursor.getFloat(5);
 		ret.Indicator = cursor.getString(6);
 		ret.Station = cursor.getString(7);
-		ret.Location = cursor.getString(8);
-		ret.LowMileage = cursor.getInt(9);
-		ret.LowDays = cursor.getFloat(10);
+		ret.Car = cursor.getString(8);
+		ret.State = cursor.getString(9);
+		ret.Location = cursor.getString(10);
+		ret.Mte = cursor.getInt(11);
+		ret.Receipt = cursor.getInt(12);
+		ret.LowMileage = cursor.getInt(13);
+		ret.LowDays = cursor.getFloat(14);
 
 		return ret;
 	}

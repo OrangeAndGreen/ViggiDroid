@@ -629,10 +629,36 @@ public class GasLoggerActivity extends Activity
     			
     			try
     			{
+    				fillup.Car = "";
+    				fillup.Car = mCarText.getText().toString();
+    			}
+    			catch(Exception e) {}    			
+    			
+    			try
+    			{
+    				fillup.State = "";
+    				fillup.State = States[mStateSpinner.getSelectedItemPosition()];
+    			}
+    			catch(Exception e) {}    			
+    			
+    			try
+    			{
     				fillup.Location = "";
     				fillup.Location = mLocationText.getText().toString();
     			}
     			catch(Exception e) {}
+
+    			try
+    			{
+    				fillup.Mte = Integer.parseInt(mMilesToEmpty.getText().toString());
+    			}
+    			catch(Exception e) {}    			
+    			
+    			try
+    			{
+    				fillup.Receipt = Integer.parseInt(mReceipt.getText().toString());
+    			}
+    			catch(Exception e) {}    			
     			
     			try
     			{
