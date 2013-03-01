@@ -7,29 +7,36 @@ import android.graphics.Point;
  */
 public class ScoringConcept1 implements IScoring
 {
-	public int ScoreMove(byte[][] fullBoard, Point point, byte number, int multiplier)
+	public String GetName()
+	{
+		return "System 1";
+	}
+	
+	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier)
 	{
 		if(number <= 0)
 			return 0;
 		
-		int score = number * multiplier;
+		int score = number;
+		if(multiplier > 0)
+			score *= multiplier;
 		
 		//For each of the opponent's squares:
 			//Find what values are possible in the square
 			//Apply the move, see if any values are no longer possible
 			//Add that number to the score if so
 		
-		int playerTurn = SudokuLogic.GetPlayerTerritory(point);
+		int playerTurn = SudokuBoard.GetPlayerTerritory(point);
 		
-		Point[] enemySquares = SudokuLogic.GetPlayerSquares(1 - playerTurn);
+		Point[] enemySquares = SudokuBoard.GetPlayerSquares(1 - playerTurn);
 		
 		for(int i=0; i<enemySquares.length; i++)
 		{
-			boolean[] initialSquareOptions = SudokuLogic.GetSquareOptions(fullBoard, enemySquares[i]);
+			boolean[] initialSquareOptions = board.GetSquareOptions(enemySquares[i], true);
 			
-			fullBoard[point.x][point.y] = number;
+			board.SetCell(point, number, playerTurn, false);
 			
-			boolean[] finalSquareOptions = SudokuLogic.GetSquareOptions(fullBoard, enemySquares[i]);
+			boolean[] finalSquareOptions = board.GetSquareOptions(enemySquares[i], true);
 			
 			for(int n = 1; n < initialSquareOptions.length; n++)
 				if(initialSquareOptions[n] && !finalSquareOptions[n])
@@ -37,14 +44,12 @@ public class ScoringConcept1 implements IScoring
 					//Log.i("ScoringConcept1", String.format("Adding %d to score", n));
 					score += n;
 				}
-			
-			fullBoard[point.x][point.y]= 0; 
 		}
 		
 		return score;
 	}
 
-	public int GetNextMultiplier(byte[][] fullBoard, Point point, byte number)
+	public int GetNextMultiplier(SudokuBoard board, Point point, byte number, int currentMultiplier)
 	{
 		return 0;
 	}

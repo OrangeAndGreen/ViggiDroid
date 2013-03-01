@@ -23,39 +23,25 @@ public class SudokuView extends View
 	private Integer mPlayer2Color = null;
 
 	//These are just for transferring the data to onDraw(), not for permanent storage
-	private byte[][] mInitialValues = null;
-	private byte[][] mPlayer1Values;
-	private byte[][] mPlayer2Values;
-	
-	private Point mHighlightPoint = null;
+	private SudokuBoard mBoard = null;
 	
 	public SudokuView(Context context, AttributeSet attrs)
 	{
 		super(context, attrs);
 	}
 	
-	public void InitializeBoard(byte[][] values, Integer player1Color, Integer player2Color)
+	public void InitializeBoard(SudokuBoard board, Integer player1Color, Integer player2Color)
 	{
-		mInitialValues = values;
+		mBoard = board;
 		mPlayer1Color = player1Color;
 		mPlayer2Color = player2Color;
 		mTwoPlayer = player2Color != null;
 		this.invalidate();
 	}
 	
-	public void UpdateBoard(byte[][] values)
+	public void UpdateBoard()
 	{
 		mShowSquareOptions = false;
-		mPlayer1Values = values;
-		this.invalidate();
-	}
-	
-	public void UpdateBoard(byte[][] values, byte[][] values2, Point highlightPoint)
-	{
-		mShowSquareOptions = false;
-		mPlayer1Values = values;
-		mPlayer2Values = values2;
-		mHighlightPoint = highlightPoint;
 		this.invalidate();
 	}
 
@@ -100,47 +86,71 @@ public class SudokuView extends View
 	{
 		int usableWidth = mTotalWidth - (2 * mMargin);
     	int usableHeight = mTotalHeight - (2 * mMargin);
-    	int squareSize = (int)Math.sqrt(SudokuLogic.BoardSize);
     	
-    	int textSize = usableHeight / SudokuLogic.BoardSize / 2;
+    	int textSize = usableHeight / SudokuBoard.BoardSize / 2;
     	
     	Paint numberPaint = new Paint();
     	numberPaint.setTextSize(textSize);
     	numberPaint.setTextAlign(Align.CENTER);
+    	numberPaint.setColor(Color.BLACK);
     	
-    	//Paint exPaint = new Paint();
-    	//exPaint.setTextSize(textSize);
-    	//exPaint.setTextAlign(Align.CENTER);
-    	//exPaint.setColor(Color.RED);
+    	Paint oldExPaint = new Paint();
+    	oldExPaint.setTextSize(textSize);
+    	oldExPaint.setTextAlign(Align.CENTER);
+    	oldExPaint.setColor(Color.RED);
     	
-		int squareWidth = usableWidth / squareSize;
+    	Paint newExPaint = new Paint();
+    	newExPaint.setTextSize(textSize);
+    	newExPaint.setTextAlign(Align.CENTER);
+    	newExPaint.setColor(Color.GREEN);
+    	
+		int squareWidth = usableWidth / SudokuBoard.SquareSize;
     	
 		DrawTwoPlayerBackground(canvas);
 		DrawMajorGridLines(canvas);
 		
-		byte[][] fullBoard = SudokuLogic.GetFullBoard(mInitialValues, mPlayer1Values, mPlayer2Values);
-		for(int x = 0; x < squareSize; x++)
-			for(int y=0; y<squareSize; y++)
+		for(int x = 0; x < SudokuBoard.SquareSize; x++)
+			for(int y=0; y<SudokuBoard.SquareSize; y++)
 			{
+				
 				Point square = new Point(x, y);
 				//Find the available options
-				boolean[] options = SudokuLogic.GetSquareOptions(fullBoard, square);
+				boolean[] oldOptions = mBoard.GetSquareOptions(square, false);
+				boolean[] newOptions = mBoard.GetSquareOptions(square, true);
+				
+				/*
+				String oldOptionString = "";
+				for(int i=0; i < oldOptions.length; i++)
+					oldOptionString += String.format("%s,", oldOptions[i]);
+				Log.i("SudokuView", String.format("Square [%d,%d] old options: %s", x, y, oldOptionString));
+				String newOptionString = "";
+				for(int i=0; i < newOptions.length; i++)
+					newOptionString += String.format("%s,", newOptions[i]);
+				Log.i("SudokuView", String.format("Square [%d,%d] new options: %s", x, y, newOptionString));
+				*/
 				
 				//Draw the options in a circle within the square
 				float xCenter = ((float)square.x + 0.5f) * squareWidth + mMargin;
 				float yCenter = ((float)square.y + 0.5f) * squareWidth + mMargin + textSize / 2;
 				int radius = squareWidth / 3;
 				
-				for(int i=1; i<options.length; i++)
+				for(int i=1; i<newOptions.length; i++)
 				{
-					float theta = (float)(i - 1) * 360 / SudokuLogic.BoardSize - 90;
+					float theta = (float)(i - 1) * 360 / SudokuBoard.BoardSize - 90;
 					
 					int xPixel = (int)(xCenter + radius * Math.cos(theta / 180 * Math.PI));
 					int yPixel = (int)(yCenter + radius * Math.sin(theta / 180 * Math.PI));
 					
 					canvas.drawText(String.format("%d", i), xPixel, yPixel, numberPaint);
-					if(!options[i])
-						canvas.drawText("X", xPixel, yPixel, numberPaint);
+					if(!newOptions[i])
+					{
+						Paint curPaint = null;
+						if(!oldOptions[i])
+							curPaint = oldExPaint;
+						else
+							curPaint = newExPaint;
+						canvas.drawText("X", xPixel, yPixel, curPaint);
+					}
 				}
 			}
 	}
@@ -156,10 +166,13 @@ public class SudokuView extends View
 			initialColor = Color.BLACK;
 			player1Color = Color.WHITE;
 		}
-		DrawValues(canvas, mInitialValues, initialColor);
-		DrawValues(canvas, mPlayer1Values, player1Color);
+		DrawValues(canvas, mBoard.GetSubBoard(-1), initialColor);
+		DrawValues(canvas, mBoard.GetSubBoard(0), player1Color);
 		if(mTwoPlayer)
-			DrawValues(canvas, mPlayer2Values, Color.WHITE);
+		{
+			DrawValues(canvas, mBoard.GetSubBoard(1), Color.WHITE);
+			DrawValues(canvas, mBoard.GetPendingMoves(), Color.GREEN);
+		}
 	}
 	
 	private void DrawBoard(Canvas canvas)
@@ -180,8 +193,6 @@ public class SudokuView extends View
     	
     	int usableWidth = mTotalWidth - (2 * mMargin);
     	int usableHeight = mTotalHeight - (2 * mMargin);
-    	
-    	int squareSize = (int)Math.sqrt(SudokuLogic.BoardSize);
 		
 		//Shade the squares for each player
 		paint.setStyle(Style.FILL);
@@ -190,35 +201,35 @@ public class SudokuView extends View
 		
 		Point centerSquare = new Point(1, 1);
 		//(1,1)
-		int xStartOffset = (int)((float)centerSquare.x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-		int xEndOffset = (int)((float)(centerSquare.x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-		int yStartOffset = (int)((float)centerSquare.y * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
-		int yEndOffset = (int)((float)(centerSquare.y + 1) * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
+		int xStartOffset = (int)((float)centerSquare.x * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+		int xEndOffset = (int)((float)(centerSquare.x + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+		int yStartOffset = (int)((float)centerSquare.y * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
+		int yEndOffset = (int)((float)(centerSquare.y + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
 		canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
 
-		Point[] player1Squares = SudokuLogic.GetPlayerSquares(0);
+		Point[] player1Squares = SudokuBoard.GetPlayerSquares(0);
 		
 		paint.setColor(mPlayer1Color);
 		
 		for(int i=0; i<player1Squares.length; i++)
 		{
-			xStartOffset = (int)((float)player1Squares[i].x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-			xEndOffset = (int)((float)(player1Squares[i].x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-			yStartOffset = (int)((float)player1Squares[i].y * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
-			yEndOffset = (int)((float)(player1Squares[i].y + 1) * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
+			xStartOffset = (int)((float)player1Squares[i].x * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+			xEndOffset = (int)((float)(player1Squares[i].x + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+			yStartOffset = (int)((float)player1Squares[i].y * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
+			yEndOffset = (int)((float)(player1Squares[i].y + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
 			canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
 		}
 		
-		Point[] player2Squares = SudokuLogic.GetPlayerSquares(1);
+		Point[] player2Squares = SudokuBoard.GetPlayerSquares(1);
 		
 		paint.setColor(mPlayer2Color);
 		
 		for(int i=0; i<player2Squares.length; i++)
 		{
-			xStartOffset = (int)((float)player2Squares[i].x * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-			xEndOffset = (int)((float)(player2Squares[i].x + 1) * squareSize / SudokuLogic.BoardSize * usableWidth + mMargin);
-			yStartOffset = (int)((float)player2Squares[i].y * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
-			yEndOffset = (int)((float)(player2Squares[i].y + 1) * squareSize / SudokuLogic.BoardSize * usableHeight + mMargin);
+			xStartOffset = (int)((float)player2Squares[i].x * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+			xEndOffset = (int)((float)(player2Squares[i].x + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableWidth + mMargin);
+			yStartOffset = (int)((float)player2Squares[i].y * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
+			yEndOffset = (int)((float)(player2Squares[i].y + 1) * SudokuBoard.SquareSize / SudokuBoard.BoardSize * usableHeight + mMargin);
 			canvas.drawRect(xStartOffset, yStartOffset, xEndOffset, yEndOffset, paint);
 		}
 	}
@@ -230,25 +241,23 @@ public class SudokuView extends View
     	int usableHeight = mTotalHeight - (2 * mMargin);
     	int usableWidth = mTotalWidth - (2 * mMargin);
     	
-    	int squareSize = (int)Math.sqrt(SudokuLogic.BoardSize);
-    	
 		paint.setColor(Color.WHITE);
 		paint.setStyle(Style.STROKE);
     	paint.setStrokeWidth(5);
     	
     	//Draw the major vertical lines
-    	for(int x = 1; x < squareSize; x++)
+    	for(int x = 1; x < SudokuBoard.SquareSize; x++)
     	{
-    		int offset = (int)((float)x / squareSize * usableWidth + mMargin);
+    		int offset = (int)((float)x / SudokuBoard.SquareSize * usableWidth + mMargin);
     		Point start = new Point (offset, mMargin);
     		Point end = new Point (offset, mTotalHeight - mMargin);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
     	
     	//Draw the major horizontal lines
-    	for(int y = 1; y < squareSize; y++)
+    	for(int y = 1; y < SudokuBoard.SquareSize; y++)
     	{
-    		int offset = (int)((float)y / squareSize * usableHeight + mMargin);
+    		int offset = (int)((float)y / SudokuBoard.SquareSize * usableHeight + mMargin);
     		Point start = new Point (mMargin, offset);
     		Point end = new Point (mTotalWidth - mMargin, offset);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
@@ -267,18 +276,18 @@ public class SudokuView extends View
     	paint.setStrokeWidth(1);
     	
     	//Draw the minor vertical lines
-    	for(int x =0; x<SudokuLogic.BoardSize + 1; x++)
+    	for(int x =0; x<SudokuBoard.BoardSize + 1; x++)
     	{
-    		int offset = (int)((float)x / SudokuLogic.BoardSize * usableWidth + mMargin);
+    		int offset = (int)((float)x / SudokuBoard.BoardSize * usableWidth + mMargin);
     		Point start = new Point (offset, mMargin);
     		Point end = new Point (offset, mTotalHeight - mMargin);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
     	
     	//Draw the minor horizontal lines
-    	for(int y =0; y<SudokuLogic.BoardSize + 1; y++)
+    	for(int y =0; y<SudokuBoard.BoardSize + 1; y++)
     	{
-    		int offset = (int)((float)y / SudokuLogic.BoardSize * usableHeight + mMargin);
+    		int offset = (int)((float)y / SudokuBoard.BoardSize * usableHeight + mMargin);
     		Point start = new Point (mMargin, offset);
     		Point end = new Point (mTotalWidth - mMargin, offset);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
@@ -293,28 +302,19 @@ public class SudokuView extends View
 		int usableHeight = mTotalHeight - (2 * mMargin);
     	int usableWidth = mTotalWidth - (2 * mMargin);
 		
-    	int boxSize = usableHeight / SudokuLogic.BoardSize;
+    	int boxSize = usableHeight / SudokuBoard.BoardSize;
     	
     	Paint paint = new Paint();
 		paint.setTextSize(boxSize);
 		paint.setTextAlign(Align.CENTER);
     	
-		for(int x = 0; x < SudokuLogic.BoardSize; x++)
-			for(int y=0; y < SudokuLogic.BoardSize; y++)
+		for(int x = 0; x < SudokuBoard.BoardSize; x++)
+			for(int y=0; y < SudokuBoard.BoardSize; y++)
 			{
 				paint.setColor(color);
 				
-				//See if this cell should be highlighted
-				if(mHighlightPoint != null)
-					//for(int i=0; i<mHighlightPoints.length; i++)
-						if(mHighlightPoint.x == x && mHighlightPoint.y == y)
-						{
-							paint.setColor(Color.GREEN);
-							//break;
-						}
-				
-				int xOffset = (int)((float)x / SudokuLogic.BoardSize * usableWidth + mMargin + boxSize / 2);
-				int yOffset = (int)((float)y / SudokuLogic.BoardSize * usableHeight + boxSize);
+				int xOffset = (int)((float)x / SudokuBoard.BoardSize * usableWidth + mMargin + boxSize / 2);
+				int yOffset = (int)((float)y / SudokuBoard.BoardSize * usableHeight + boxSize);
 				int value = values[x][y]; 
 				if(value > 0)
 				{

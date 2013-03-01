@@ -1,6 +1,8 @@
 package com.Dave.Sudoku;
 
 
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -48,13 +50,14 @@ public class SudokuActivity extends Activity
 {
 	private ISudokuGame mGame = null;
 	private IScoring mScoring = null;
+	private IHand mHand = null;
 	
 	private EditText mPlayer1Text = null;
 	private EditText mPlayer2Text = null;
 	private Spinner mCellsToFillSpinner = null;
-	private CharSequence[] mFillOptions = {"0", "5", "10"};
+	private CharSequence[] mFillOptions = { "0", "5", "10" };
 	private Spinner mScoringSystemSpinner = null;
-	private CharSequence[] mScoringOptions = {"Vanilla", "System 1"};
+	private CharSequence[] mScoringOptions = { "Vanilla", "System 1", "System 2" };
 	
 	private Context mContext = null;
 	private TextView mGameText = null;
@@ -63,10 +66,13 @@ public class SudokuActivity extends Activity
 	private Button mClearButton = null;
 	private Button mConfirmButton = null;
 	private Button mShowButton = null;
+	private TextView mHandText = null;
+	private TextView mDebugText = null;
 	
 	private boolean mShowingPossibilities = false;
 	private Point mCurrentPoint = null;
-	private byte mCurrentValue = 0;
+	private Point mPendingPoint = null;
+	private byte mPendingValue = 0;
 	private boolean[] mCellOptions = null;
 	private NumberPrompt mPrompt = null;
 	
@@ -122,7 +128,7 @@ public class SudokuActivity extends Activity
 		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mScoringOptions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mScoringSystemSpinner.setAdapter(adapter);
-		mScoringSystemSpinner.setSelection(1);
+		mScoringSystemSpinner.setSelection(2);
 		
 		Button startButton = (Button) findViewById(R.id.buttonStart);
 		startButton.setOnClickListener(new OnClickListener()
@@ -152,6 +158,7 @@ public class SudokuActivity extends Activity
         //Start one player game
         mGame = new SudokuGameOnePlayer(mSudoku, difficulty);
         mScoring = null;
+        mHand = null;
         mGameText.setText("One player Sudoku!");
         
         mClearButton.setVisibility(Button.INVISIBLE);
@@ -165,14 +172,37 @@ public class SudokuActivity extends Activity
     	
     	//Start two player game
     	mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, cellsToFill);
+    	String cellsFilled = String.format("Fill %d", cellsToFill);
     	
+    	String handType = "no hand";
+    	//handType = "Hand Vanilla";
+    	//mHand = new HandVanilla();
+    	//mHand.SetHandSize(9);
+    	
+    	String scoringType = null;
     	if(scoringSystem != null && scoringSystem == "System 1")
+    	{
+    		scoringType = "Scoring 1";
     		mScoring = new ScoringConcept1();
+    	}
+    	else if(scoringSystem != null && scoringSystem == "System 2")
+    	{
+    		scoringType = "Scoring 2";
+    		mScoring = new ScoringConcept2();
+    	}
     	else
+    	{
+    		scoringType = "Scoring Vanilla";
     		mScoring = new ScoringVanilla();
+    	}
+    	
+    	String gameOptions = String.format("Game: %s, %s, %s", cellsFilled, scoringType, handType);
+    	mDebugText.setText(gameOptions);
     	
     	mGameText.setText("Battle Sudoku!");
     	mGame.UpdateScore(mGameScore);
+    	
+    	DrawHand();
     	
     	mClearButton.setVisibility(Button.VISIBLE);
     	mConfirmButton.setVisibility(Button.VISIBLE);
@@ -190,7 +220,9 @@ public class SudokuActivity extends Activity
         mSudoku.setOnTouchListener(new SudokuTouchListener());
         
         mGameText = (TextView) findViewById(R.id.gameIntro);
+        
         mGameScore = (TextView) findViewById(R.id.gameScore);
+        mGameScore.setText("");
         
         Button quitButton = (Button) findViewById(R.id.buttonQuit);
         quitButton.setOnClickListener(new OnClickListener()
@@ -209,13 +241,19 @@ public class SudokuActivity extends Activity
         
         mShowButton = (Button) findViewById(R.id.buttonShow);
         mShowButton.setOnClickListener(new ShowButtonListener());
+        
+        mHandText = (TextView) findViewById(R.id.handText);
+        mHandText.setText("");
+        
+        mDebugText = (TextView) findViewById(R.id.debugText);
+        mDebugText.setText("");
 
         mShowingPossibilities = false;
     }
     
     private void MakeMove()
     {
-    	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mCurrentPoint, mCurrentValue, mScoring);
+    	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mPendingPoint, mPendingValue, mScoring);
     	if(builder != null)
     	{
     		builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
@@ -231,23 +269,39 @@ public class SudokuActivity extends Activity
     	}
     	
     	mCurrentPoint = null;
+    	mPendingPoint = null;
+    	mPendingValue = 0;
     	
     	UpdateBoard();
     }
     
     private void UpdateBoard()
     {
+    	//Always calling ShowMove() to update (possibly erase) a pending move within the game
+    	mGame.ShowMove(mSudoku, mPendingPoint, mPendingValue, mScoring);
+		mGame.UpdateScore(mGameScore);
     	if(mShowingPossibilities)
 		{
-    		//Calling ShowMove() to update (possibly erase) a pending move within the game
-    		mGame.ShowMove(mSudoku, mCurrentPoint, mCurrentValue, mScoring);
     		mSudoku.ShowSquareOptions();
 		}
-		else
-		{
-			mGame.ShowMove(mSudoku, mCurrentPoint, mCurrentValue, mScoring);
-			mGame.UpdateScore(mGameScore);
-		}
+    }
+    
+    private void DrawHand()
+    {
+    	if(mHand != null && mGame != null)
+    	{
+    		List<Byte> hand = mHand.GetHand(mGame.GetBoard(), mGame.GetCurrentPlayer());
+    		
+    		String handText = "Hand: ";
+    		for(int i=0; i<hand.size(); i++)
+    		{
+    			if(i>0)
+    				handText += ", ";
+    			handText += String.format("%d", hand.get(i));
+    		}
+    		
+    		mHandText.setText(handText);
+    	}
     }
     
     private void EnablePendingButtons()
@@ -273,7 +327,8 @@ public class SudokuActivity extends Activity
         	if(mGame.GetNumberOfPlayers() > 1 && number == 0)
         		return;
 
-        	mCurrentValue = (byte)number;
+        	mPendingPoint = mCurrentPoint;
+        	mPendingValue = (byte)number;
         	
         	if(mGame.GetConfirmCommit())
         	{
@@ -307,7 +362,6 @@ public class SudokuActivity extends Activity
 			else
 				StartOnePlayerGame(mDifficulty);
 		}
-		
 	}
 
 	//This class responds when the user clicks the Sudoku board
@@ -323,14 +377,14 @@ public class SudokuActivity extends Activity
 			Log.i("SudokuActivity", String.format("Clicked box (%d, %d)", currentPoint.x, currentPoint.y));
 			
 			//Make sure we got a legal cell value
-			if(currentPoint.x < 0 || currentPoint.x >= SudokuLogic.BoardSize || currentPoint.y < 0 || currentPoint.y >= SudokuLogic.BoardSize)
+			if(currentPoint.x < 0 || currentPoint.x >= SudokuBoard.BoardSize || currentPoint.y < 0 || currentPoint.y >= SudokuBoard.BoardSize)
 				return false;
 			
 			//Show the number prompt if the cell clicked is valid in the current game
 			if(mGame.HandleClick(currentPoint))
 			{
 				mCurrentPoint = currentPoint;
-				mCellOptions = SudokuLogic.GetOptions(mGame.GetFullBoard(), mCurrentPoint);
+				mCellOptions = mGame.GetBoard().GetCellOptions(mCurrentPoint, false);
 				if(mPrompt != null)
 					mPrompt.SetOptions(mCellOptions);
 				showDialog(0);
@@ -346,7 +400,8 @@ public class SudokuActivity extends Activity
 		public void onClick(View v)
 		{
 			mCurrentPoint = null;
-			mCurrentValue = 0;
+			mPendingPoint = null;
+			mPendingValue = 0;
 			
 			UpdateBoard();
 			

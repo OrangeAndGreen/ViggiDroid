@@ -4,12 +4,17 @@ import android.graphics.Point;
 
 public class ScoringVanilla implements IScoring
 {
-	public int ScoreMove(byte[][] fullBoard, Point point, byte number, int multiplier)
+	public String GetName()
+	{
+		return "Vanilla";
+	}
+	
+	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier)
 	{
 		return number;
 	}
 	
-	public int GetNextMultiplier(byte[][] fullBoard, Point point, byte number)
+	public int GetNextMultiplier(SudokuBoard board, Point point, byte number, int currentMultiplier)
 	{
 		return 0;
 	}
