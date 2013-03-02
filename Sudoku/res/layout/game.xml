@@ -62,4 +62,22 @@
   		android:text="@string/clear"
         />
     
+    <TextView
+        android:id="@+id/handText"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/buttonShow"
+  		android:layout_alignParentLeft="true"
+  		android:text=""
+        />
+    
+    <TextView
+        android:id="@+id/debugText"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_alignParentBottom="true"
+  		android:layout_alignParentLeft="true"
+  		android:text=""
+        />
+    
 </RelativeLayout>

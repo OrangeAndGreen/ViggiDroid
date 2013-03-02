@@ -11,27 +11,22 @@ public class SudokuGameOnePlayer implements ISudokuGame
 {
 	private static final int mNumberOfPlayers = 1;
 	
-	public byte[][] InitialBoard = null;
-	public byte[][] PlayerBoard = null;
+	private SudokuBoard mBoard = null;
 	
-
 	public SudokuGameOnePlayer(SudokuView view, String difficulty)
 	{
 		//Create the starting board
         if(difficulty == null || difficulty.equals("Hard"))
-        	InitialBoard = SudokuLogic.CreateBoard(20);
+        	mBoard = SudokuBoard.Create(20, false);
         else
-        	InitialBoard = SudokuLogic.CreateBoard(40);
-        
-        //Allocate the player board
-        PlayerBoard = SudokuLogic.CreateBoard(0);
+        	mBoard = SudokuBoard.Create(40, false);
         
         //Fill in a couple entries (for testing)
         //PlayerBoard[2][0] = 1;
         //PlayerBoard[3][5] = 2;
         //PlayerBoard[7][2] = 8;
         
-        view.InitializeBoard(InitialBoard, null, null);
+        view.InitializeBoard(mBoard, null, null);
         //mSudoku.UpdateBoard(PlayerBoard);
 	}
 	
@@ -55,15 +50,20 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return 0;
 	}
 	
+	public SudokuBoard GetBoard()
+	{
+		return mBoard;
+	}
+	
 	public byte[][] GetFullBoard()
 	{
-		return SudokuLogic.GetFullBoard(InitialBoard, PlayerBoard, null);
+		return mBoard.GetFullBoard(true);
 	}
 
 	public boolean HandleClick(Point point)
 	{
 		//Don't show the dialog if the user clicked in a tile with an initial value
-		if(InitialBoard[point.x][point.y] <= 0)
+		if(mBoard.GetSubBoard(-1)[point.x][point.y] <= 0)
 			return true;
 		
 		return false;
@@ -81,10 +81,10 @@ public class SudokuGameOnePlayer implements ISudokuGame
 	
 	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring)
 	{
-		PlayerBoard[point.x][point.y] = number;
-		view.UpdateBoard(PlayerBoard);
+		mBoard.SetCell(point, number, 0, true);
+		view.UpdateBoard();
 		
-		if(SudokuLogic.CheckBoard(InitialBoard, PlayerBoard, null, true))
+		if(mBoard.CheckBoard(true))
 		{
 			return CreateEnding(context);
 		}

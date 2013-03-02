@@ -14,13 +14,13 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 {
 	private static final int mNumberOfPlayers = 2;
 	
-	public byte[][] InitialBoard = null;
-	public byte[][] Player1Board = null;
-	public byte[][] Player2Board = null;
+	public SudokuBoard Board = null;
 	
 	public int Player1Score = 0;
 	public int Player2Score = 0;
 	private int mProposedScore = 0;
+	private int mProposedMultiplier = 0;
+	private int mCurrentMultiplier = 0;
 	
 	public String Player1Name = null;
 	public String Player2Name = null;
@@ -33,11 +33,9 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		Player1Name = player1Name;
 		Player2Name = player2Name;
 		
-		InitialBoard = SudokuLogic.CreateBoard(cellsToFill, true);
-		Player1Board = SudokuLogic.CreateBoard(0);
-		Player2Board = SudokuLogic.CreateBoard(0);
+		Board = SudokuBoard.Create(cellsToFill, true);
 		
-		view.InitializeBoard(InitialBoard, GetPlayer1Color(), GetPlayer2Color());
+		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
 
 	public int GetNumberOfPlayers()
@@ -60,22 +58,23 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return PlayerTurn;
 	}
 	
+	public SudokuBoard GetBoard()
+	{
+		return Board;
+	}
+	
 	public byte[][] GetFullBoard()
 	{
-		return SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
+		return Board.GetFullBoard(true);
 	}
 
 	public boolean HandleClick(Point cell)
 	{
 		//The cell must be blank
-		if(InitialBoard[cell.x][cell.y] != 0)
-			return false;
-		if(Player1Board[cell.x][cell.y] != 0)
-			return false;
-		if(Player2Board[cell.x][cell.y] != 0)
+		if(Board.GetCell(cell, false) != 0)
 			return false;
 		
-		Point square = SudokuLogic.GetSquare(cell);
+		Point square = SudokuBoard.GetSquare(cell);
 		
 		if(GamePhase == 0)
 		{
@@ -129,53 +128,58 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	public void ShowMove(SudokuView view, Point point, byte number, IScoring scoring)
 	{
-		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
-		if(GamePhase == 1 && point != null)
-			mProposedScore = scoring.ScoreMove(fullBoard, point, number, 1);
+		if(GamePhase == 1)
+		{
+			mProposedScore = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
+			mProposedMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
+		}
 		
 		UpdateBoard(view, point, number, true);
 	}
 	
 	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring)
 	{
-		UpdateBoard(view, point, number, false);
-		
-		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, Player1Board, Player2Board);
-		
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
-			int score = scoring.ScoreMove(fullBoard, point, number, 1);
+			int score = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
 			if(PlayerTurn == 0)
 				Player1Score += score;
 			else
 				Player2Score += score;
-			mProposedScore = 0;
 		}
 		
-		int multiplier = scoring.GetNextMultiplier(fullBoard, point, number);
-		if(multiplier <= 0)
+		int oldMultiplier = mCurrentMultiplier;
+		mCurrentMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
+		Log.i("SudokuGameTwoPlayer", String.format("Turn multiplier: %d", mCurrentMultiplier));
+		//TODO: Need a better way to tell when the turn is over. The multiplier should be able to stay the same for multiple turns.
+		if(mCurrentMultiplier == 0 || mCurrentMultiplier <= oldMultiplier)
 		{
 			//Make it the other player's turn
 			PlayerTurn = 1 - PlayerTurn;
+			mCurrentMultiplier = 0;
 			
 			//Make sure the other player can move
 			
-			if(!CanPlayerMove(fullBoard, PlayerTurn))
+			if(!CanPlayerMove(Board.GetFullBoard(true), PlayerTurn))
 			{
 				//Go back to the current player's turn
 				PlayerTurn = 1 - PlayerTurn;
 			}
 		}
 		
+		mProposedScore = 0;
+		mProposedMultiplier = 0;
+		UpdateBoard(view, point, number, false);
+		
 		//See if we need to move from the intro phase to the main phase
-		if(GamePhase == 0 && SudokuLogic.CheckSquare(fullBoard, 1, 1))
+		if(GamePhase == 0 && Board.CheckSquare(new Point(1, 1)))
 		{
 			GamePhase = 1;
 		}
 		
 		//See if the game is over
-		if(SudokuLogic.CheckBoard(InitialBoard, Player1Board, Player2Board, false))
+		if(Board.CheckBoard(false))
 		{
 			return CreateEnding(context);
 		}
@@ -185,42 +189,8 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	
 	private void UpdateBoard(SudokuView view, Point point, byte number, boolean justShow)
 	{
-		byte[][] tempPlayer1Board = Player1Board;
-		byte[][] tempPlayer2Board = Player2Board;
+		Board.SetCell(point, number, PlayerTurn, !justShow);
 		
-		if(justShow)
-		{
-			tempPlayer1Board = SudokuLogic.CreateBoard(Player1Board);
-			tempPlayer2Board = SudokuLogic.CreateBoard(Player2Board);
-		}
-		
-		if(point != null)
-		{
-			//Update the current player's board
-			if(PlayerTurn == 0)
-			{
-				tempPlayer1Board[point.x][point.y] = number;
-			}
-			else
-			{
-				tempPlayer2Board[point.x][point.y] = number;
-			}
-		}
-				
-		byte[][] fullBoard = SudokuLogic.GetFullBoard(InitialBoard, tempPlayer1Board, tempPlayer2Board);
-				
-		//Set invalid cells
-		for(int x=0; x<SudokuLogic.BoardSize; x++)
-			for(int y=0; y<SudokuLogic.BoardSize; y++)
-				if(fullBoard[x][y] == 0 && !SudokuLogic.IsSquareValid(fullBoard, new Point(x, y)))
-				{
-					Log.i("SudokuGameTwoPlayer", String.format("Setting cell (%d, %d) invalid", x, y));
-					if(SudokuLogic.GetPlayerTerritory(new Point(x, y)) == 0)
-						tempPlayer1Board[x][y] = -1;
-					else
-						tempPlayer2Board[x][y] = -1;
-				}
-				
 		//Draw the updated board
 		//Point[] highlightPoints = null;
 		//if(justShow)
@@ -228,7 +198,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		//	highlightPoints = new Point[1];
 		//	highlightPoints[0] = new Point(point.x, point.y);
 		//}
-		view.UpdateBoard(tempPlayer1Board, tempPlayer2Board, point);
+		view.UpdateBoard();
 	}
 	
 	private boolean CanPlayerMove(byte[][] fullBoard, int player)
@@ -313,9 +283,17 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		int player1Background = Color.TRANSPARENT;
 		int player2Background = Color.TRANSPARENT;
 		
-		String proposedScore = " (your turn)";
+		String proposedScore = " (your turn";
+		if(mCurrentMultiplier > 1)
+			proposedScore += String.format(" with %dx bonus", mCurrentMultiplier);
+		proposedScore += ")";
 		if(mProposedScore != 0)
-			proposedScore = String.format(" (+%d)", mProposedScore);
+		{
+			proposedScore = String.format(" (+%d", mProposedScore);
+			if(mProposedMultiplier > mCurrentMultiplier)
+				proposedScore += String.format(" and %dx bonus turn", mProposedMultiplier);
+			proposedScore += ")";
+		}
 		if(GetCurrentPlayer() == 0)
 		{
 			player1Background = GetPlayer1Color();

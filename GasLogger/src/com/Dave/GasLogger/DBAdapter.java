@@ -33,11 +33,16 @@ public class DBAdapter
 	public static final String KEY_COSTPERGALLON = "costpergallon";
 	public static final String KEY_INDICATOR = "indicator";
 	public static final String KEY_STATION = "station";
+	public static final String KEY_CAR = "car";
+	public static final String KEY_STATE = "state";	
 	public static final String KEY_LOCATION = "location";
+	public static final String KEY_MTE = "mte";
+	public static final String KEY_RECEIPT = "receipt";
 	public static final String KEY_LOWMILEAGE = "lowmileage";
 	public static final String KEY_LOWDAYS = "lowdays";
 	public static final String[] FillupsColumnNames = { KEY_ROWID, KEY_DATE, KEY_MILEAGE, KEY_OCTANE, KEY_GALLONS, KEY_COSTPERGALLON,
-														KEY_INDICATOR, KEY_STATION, KEY_LOCATION, KEY_LOWMILEAGE, KEY_LOWDAYS };
+														KEY_INDICATOR, KEY_STATION, KEY_CAR, KEY_STATE, KEY_LOCATION, KEY_MTE, KEY_RECEIPT, 
+														KEY_LOWMILEAGE,	KEY_LOWDAYS };
 	
 	public static final String KEY_NAME = "_name";
 	public static final String KEY_VALUE = "_value";
@@ -50,7 +55,7 @@ public class DBAdapter
     
     private static final String TAG = "DBAdapter";
     
-    private static final String DB_NAME = "fuel";
+    private static final String DB_NAME = "fuel.db";
     private static String DB_TABLE_FILLUPS = "fillups";
     private static String DB_TABLE_RECENT = "recent";
     private static String DB_TABLE_ERRORS = "errors";
@@ -90,7 +95,11 @@ public class DBAdapter
                 + KEY_COSTPERGALLON + " real not null, "
                 + KEY_INDICATOR + " text not null, "
                 + KEY_STATION + " text not null, "
+                + KEY_CAR + " text not null, "
+                + KEY_STATE + " text not null, "
                 + KEY_LOCATION + " text not null, "
+                + KEY_MTE + " real not null, "
+                + KEY_RECEIPT + " interger, "
                 + KEY_LOWMILEAGE + " real not null, "
                 + KEY_LOWDAYS + " real not null" + ");";
         	
@@ -319,7 +328,11 @@ public class DBAdapter
     	values.put(KEY_COSTPERGALLON, fillup.CostPerGallon);
     	values.put(KEY_INDICATOR, fillup.Indicator);
     	values.put(KEY_STATION, fillup.Station);
+    	values.put(KEY_CAR, fillup.Car);
+    	values.put(KEY_STATE, fillup.State);
     	values.put(KEY_LOCATION, fillup.Location);
+    	values.put(KEY_MTE, fillup.Mte);
+    	values.put(KEY_RECEIPT, fillup.Receipt);    	
     	values.put(KEY_LOWMILEAGE, fillup.LowMileage);
     	values.put(KEY_LOWDAYS, fillup.LowDays);
     }
