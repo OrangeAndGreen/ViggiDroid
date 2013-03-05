@@ -78,7 +78,7 @@ public class ScoringConcept2 implements IScoring
 					
 					//Log.i("ScoringConcept1", String.format("Incrementing multiplier to %d", multiplier + 1));
 					incrementMultiplier = true;
-					multiplier++;
+					break;
 				}
 			
 			if(incrementMultiplier)

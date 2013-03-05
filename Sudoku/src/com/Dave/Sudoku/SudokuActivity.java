@@ -91,6 +91,9 @@ public class SudokuActivity extends Activity
     protected Dialog onCreateDialog(int id)
     {
     	mPrompt = new NumberPrompt(this, mNumberSetListener, mCellOptions);
+    	
+    	PreparePrompt();
+    	
     	return mPrompt;
     }
     
@@ -175,9 +178,9 @@ public class SudokuActivity extends Activity
     	String cellsFilled = String.format("Fill %d", cellsToFill);
     	
     	String handType = "no hand";
-    	//handType = "Hand Vanilla";
-    	//mHand = new HandVanilla();
-    	//mHand.SetHandSize(9);
+    	handType = "Hand Concept 1";
+    	mHand = new HandConcept1();
+    	mHand.SetHandSize(9);
     	
     	String scoringType = null;
     	if(scoringSystem != null && scoringSystem == "System 1")
@@ -201,8 +204,6 @@ public class SudokuActivity extends Activity
     	
     	mGameText.setText("Battle Sudoku!");
     	mGame.UpdateScore(mGameScore);
-    	
-    	DrawHand();
     	
     	mClearButton.setVisibility(Button.VISIBLE);
     	mConfirmButton.setVisibility(Button.VISIBLE);
@@ -253,6 +254,11 @@ public class SudokuActivity extends Activity
     
     private void MakeMove()
     {
+    	if(mHand != null && mGame.GetGamePhase() > 0)
+    	{
+    		mHand.TakeNumber(mGame.GetBoard(), mGame.GetCurrentPlayer(), mPendingValue);
+    	}
+    	
     	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mPendingPoint, mPendingValue, mScoring);
     	if(builder != null)
     	{
@@ -267,6 +273,9 @@ public class SudokuActivity extends Activity
     		
     		builder.create().show();
     	}
+    	
+    	if(mHand != null && mGame.GetGamePhase() > 0)
+    		DrawHand();
     	
     	mCurrentPoint = null;
     	mPendingPoint = null;
@@ -314,6 +323,29 @@ public class SudokuActivity extends Activity
     {
     	mClearButton.setEnabled(false);
 		mConfirmButton.setEnabled(false);
+    }
+    
+    private void PreparePrompt()
+    {
+    	mCellOptions = mGame.GetBoard().GetCellOptions(mCurrentPoint, false);
+    	
+    	if(mHand != null && mGame.GetGamePhase() > 0)
+    	{
+    		//Disable any options that aren't present in the player's hand
+    		List<Byte> hand = mHand.GetHand(mGame.GetBoard(), mGame.GetCurrentPlayer());
+    		
+    		Log.i("SudokuActivity", String.format("Hand: %s", mHand.ToString()));
+    		
+    		for(int i=1; i<mCellOptions.length; i++)
+    			if(mCellOptions[i] && !hand.contains((byte)i))
+    			{
+    				Log.i("SudokuActivity", String.format("Disabling %d", i));
+    				mCellOptions[i] = false;
+    			}
+    	}
+    	
+		if(mPrompt != null)
+			mPrompt.SetOptions(mCellOptions);
     }
     
     private NumberPrompt.OnNumberSetListener mNumberSetListener = new NumberPrompt.OnNumberSetListener()
@@ -384,9 +416,9 @@ public class SudokuActivity extends Activity
 			if(mGame.HandleClick(currentPoint))
 			{
 				mCurrentPoint = currentPoint;
-				mCellOptions = mGame.GetBoard().GetCellOptions(mCurrentPoint, false);
-				if(mPrompt != null)
-					mPrompt.SetOptions(mCellOptions);
+				
+				PreparePrompt();
+				
 				showDialog(0);
 			}
 			

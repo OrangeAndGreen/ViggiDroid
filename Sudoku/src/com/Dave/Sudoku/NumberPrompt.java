@@ -3,6 +3,7 @@ package com.Dave.Sudoku;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -79,6 +80,9 @@ public class NumberPrompt extends Dialog
 	public void SetOptions(boolean[] options)
 	{
 		Options = options;
+		
+		if(mButtonOne == null)
+			return;
 		
 		mButtonOne.setEnabled(Options[1]);
 		mButtonTwo.setEnabled(Options[2]);

@@ -7,6 +7,11 @@ public class HandVanilla implements IHand
 {
 	private int mHandSize = 5;
 	
+	public String GetName()
+	{
+		return "Hand Vanilla";
+	}
+	
 	public void SetHandSize(int size)
 	{
 		mHandSize = size;
@@ -30,5 +35,10 @@ public class HandVanilla implements IHand
 	public void TakeNumber(SudokuBoard board, int playerTurn, byte number)
 	{
 		//Do nothing
+	}
+	
+	public String ToString()
+	{
+		return "";
 	}
 }

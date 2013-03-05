@@ -50,6 +50,11 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return 0;
 	}
 	
+	public int GetGamePhase()
+	{
+		return 1;
+	}
+	
 	public SudokuBoard GetBoard()
 	{
 		return mBoard;

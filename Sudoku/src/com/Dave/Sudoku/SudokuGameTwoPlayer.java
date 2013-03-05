@@ -67,6 +67,11 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	{
 		return Board.GetFullBoard(true);
 	}
+	
+	public int GetGamePhase()
+	{
+		return GamePhase;
+	}
 
 	public boolean HandleClick(Point cell)
 	{
