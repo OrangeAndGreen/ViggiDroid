@@ -38,10 +38,13 @@ public class ScoringConcept2 implements IScoring
 			for(int n = 1; n < initialSquareOptions.length; n++)
 				if(initialSquareOptions[n] && !finalSquareOptions[n])
 				{
+					DebugLog.Write(String.format("%d invalidated in square (%d, %d)", n, enemySquares[i].x, enemySquares[i].y), null);
 					//Log.i("ScoringConcept1", String.format("Adding %d to score", n));
 					score += n;
 				}
 		}
+		
+		DebugLog.Write("Score: " + score, null);
 		
 		return score;
 	}
@@ -84,6 +87,9 @@ public class ScoringConcept2 implements IScoring
 			if(incrementMultiplier)
 			{
 				multiplier++;
+				
+				DebugLog.Write("Increasing multiplier to " + multiplier, null);
+				
 				break;
 			}
 		}

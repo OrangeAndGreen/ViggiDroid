@@ -22,7 +22,7 @@ public class SudokuView extends View
 	private Integer mPlayer1Color = null;
 	private Integer mPlayer2Color = null;
 
-	//These are just for transferring the data to onDraw(), not for permanent storage
+	//This is just for transferring the data to onDraw(), not for permanent storage
 	private SudokuBoard mBoard = null;
 	
 	public SudokuView(Context context, AttributeSet attrs)

@@ -59,11 +59,6 @@ public class SudokuGameOnePlayer implements ISudokuGame
 	{
 		return mBoard;
 	}
-	
-	public byte[][] GetFullBoard()
-	{
-		return mBoard.GetFullBoard(true);
-	}
 
 	public boolean HandleClick(Point point)
 	{

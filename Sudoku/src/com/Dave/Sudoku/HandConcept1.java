@@ -15,7 +15,7 @@ public class HandConcept1 implements IHand
 	
 	public String GetName()
 	{
-		return "Hand Concept 1";
+		return "Concept 1";
 	}
 	
 	public void SetHandSize(int size)
@@ -108,8 +108,9 @@ public class HandConcept1 implements IHand
 				mCurrentHand.remove(i);
 		}
 	}
-	
-	public String ToString()
+
+	@Override
+    public String toString()
 	{
 		String ret = "";
 		for(int i=0; i < mCurrentHand.size(); i++)

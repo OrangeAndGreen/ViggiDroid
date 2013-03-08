@@ -3,30 +3,17 @@ package com.Dave.Sudoku;
 import android.graphics.Point;
 import android.util.Log;
 
-/*
- * Things to do here:
-		
-		Hold pending moves in another byte[][]
-			Second method after SetCell(): Commit().
-		
-		Hold fullBoard privately
-			Provide GetFullBoard() method
-			Set fullBoard = null when it needs to be recalculated
-		
- */
-
 public class SudokuBoard
 {
 	public static final int BoardSize = 9;
 	public static final int SquareSize = (int)Math.sqrt(BoardSize);
 	
-	protected byte[][] mInitialBoard = null;
-	protected byte[][] mPlayer1Board = null;
-	protected byte[][] mPlayer2Board = null;
+	private byte[][] mInitialBoard = null;
+	private byte[][] mPlayer1Board = null;
+	private byte[][] mPlayer2Board = null;
 	
-	protected byte[][] mPendingMove = null;
-	protected Point mPendingCell = null;
-	protected int mPendingPlayerTurn = 0;
+	private byte[][] mPendingMove = null;
+	private int mPendingPlayerTurn = 0;
 	
 	/*
 	public static final byte[][] DefaultBoard = {{5, 3, 0, 0, 7, 0, 0, 0, 0},
@@ -260,9 +247,9 @@ public class SudokuBoard
 	    		for(int y=0; y<BoardSize; y++)
 	    			if(GetFullBoard(true)[x][y] == 0 && !IsCellValid(new Point(x, y)))
 	    				{
+	    					DebugLog.Write(String.format("Cetting cell (%d, %d) invalid", x, y), null);
 	    					Log.i("SudokuBoard", String.format("Setting cell (%d, %d) invalid", x, y));
 	    					mPendingPlayerTurn = playerTurn;
-	    					mPendingCell = cell;
 	    					mPendingMove[x][y] = -1;
 	    				}
     	}
@@ -535,5 +522,26 @@ public class SudokuBoard
     			return false;
     	
     	return true;
+    }
+    
+    @Override
+    public String toString()
+    {
+    	String ret = "";
+    	byte[][] fullBoard = GetFullBoard(true);
+    	
+    	for(int y = 0; y < BoardSize; y++)
+    	{
+    		if(y > 0)
+    			ret += "\n";
+    		for(int x= 0; x < BoardSize; x++)
+    		{
+    			if (x > 0)
+    				ret +=",";
+    			ret += fullBoard[x][y];
+    		}
+    	}
+    	
+    	return ret;
     }
 }

@@ -33,16 +33,9 @@ import android.widget.TextView;
  * 		-Reset board
  * 		-Export image
  * 		-Save game
- * -2 Player mode:
- * 		-Get player names
- * 		-Show summary above or below the actual game
  * 
  * -Link button prompt to numeric keys
  * -Start learning about how to connect in advertisements
- * 
- * Next:
- * -Highlight all cells affected by a move during preview
- * -Apply multiplier when player gets to "go again"
  * 
  */
 
@@ -58,6 +51,8 @@ public class SudokuActivity extends Activity
 	private CharSequence[] mFillOptions = { "0", "5", "10" };
 	private Spinner mScoringSystemSpinner = null;
 	private CharSequence[] mScoringOptions = { "Vanilla", "System 1", "System 2" };
+	private Spinner mHandSystemSpinner = null;
+	private CharSequence[] mHandOptions = { "Vanilla", "Concept 1" };
 	
 	private Context mContext = null;
 	private TextView mGameText = null;
@@ -120,14 +115,21 @@ public class SudokuActivity extends Activity
     	
     	mCellsToFillSpinner = (Spinner) findViewById(R.id.spinnerCellsToFill);
     	mScoringSystemSpinner = (Spinner) findViewById(R.id.spinnerScoringSystem);
+    	mHandSystemSpinner = (Spinner) findViewById(R.id.spinnerHandSystem);
 		
-		//Setup the graph types Spinner
+		//Setup the Cell-to-fill Spinner
 		ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mFillOptions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mCellsToFillSpinner.setAdapter(adapter);
 		mCellsToFillSpinner.setSelection(1);
 		
-		//Setup the graph times Spinner
+		//Setup the Hand system Spinner
+		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mHandOptions);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		mHandSystemSpinner.setAdapter(adapter);
+		mHandSystemSpinner.setSelection(1);
+		
+		//Setup the Scoring system Spinner
 		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mScoringOptions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mScoringSystemSpinner.setAdapter(adapter);
@@ -147,15 +149,18 @@ public class SudokuActivity extends Activity
 				
 				int cellsToFill = Integer.parseInt(mFillOptions[mCellsToFillSpinner.getSelectedItemPosition()].toString());
 				
+				String handSystem = mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
+				
 				String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
 				
-				StartTwoPlayerGame(player1Name, player2Name, cellsToFill, scoringSystem);
+				StartTwoPlayerGame(player1Name, player2Name, cellsToFill, handSystem, scoringSystem);
 			}
 		});
     }
     
     private void StartOnePlayerGame(String difficulty)
     {
+    	DebugLog.Write("Starting one player game", null);
     	PrepareGame();
         
         //Start one player game
@@ -169,37 +174,40 @@ public class SudokuActivity extends Activity
         mShowButton.setVisibility(Button.INVISIBLE);
     }
     
-    private void StartTwoPlayerGame(String player1Name, String player2Name, int cellsToFill, String scoringSystem)
+    private void StartTwoPlayerGame(String player1Name, String player2Name, int cellsToFill, String handSystem, String scoringSystem)
     {
+    	DebugLog.Write("Starting two player game", null);
+    	
     	PrepareGame();
     	
     	//Start two player game
     	mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, cellsToFill);
     	String cellsFilled = String.format("Fill %d", cellsToFill);
+    	DebugLog.Write("Initial board:\n" + mGame.GetBoard().toString(), null);
     	
-    	String handType = "no hand";
-    	handType = "Hand Concept 1";
-    	mHand = new HandConcept1();
+    	if(handSystem != null && handSystem == "Concept 1")
+    		mHand = new HandConcept1();
+    	else
+    		mHand = new HandVanilla();
+    	
     	mHand.SetHandSize(9);
+    	DebugLog.Write("Hand: " + mHand.GetName(), null);
     	
-    	String scoringType = null;
     	if(scoringSystem != null && scoringSystem == "System 1")
     	{
-    		scoringType = "Scoring 1";
     		mScoring = new ScoringConcept1();
     	}
     	else if(scoringSystem != null && scoringSystem == "System 2")
     	{
-    		scoringType = "Scoring 2";
     		mScoring = new ScoringConcept2();
     	}
     	else
     	{
-    		scoringType = "Scoring Vanilla";
     		mScoring = new ScoringVanilla();
     	}
+    	DebugLog.Write("Scoring: " + mScoring.GetName(), null);
     	
-    	String gameOptions = String.format("Game: %s, %s, %s", cellsFilled, scoringType, handType);
+    	String gameOptions = String.format("Game: %s, %s, %s", cellsFilled, mHand.GetName(), mScoring.GetName());
     	mDebugText.setText(gameOptions);
     	
     	mGameText.setText("Battle Sudoku!");
@@ -230,6 +238,9 @@ public class SudokuActivity extends Activity
         {
 			public void onClick(View v)
 			{
+				if(mGame != null)
+					DebugLog.Write("Aborted board:\n" + mGame.GetBoard().toString(), null);
+				
 				LoadMainMenu();
 			}
 		});
@@ -259,6 +270,8 @@ public class SudokuActivity extends Activity
     		mHand.TakeNumber(mGame.GetBoard(), mGame.GetCurrentPlayer(), mPendingValue);
     	}
     	
+    	DebugLog.Write(String.format("Committing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
+    	
     	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mPendingPoint, mPendingValue, mScoring);
     	if(builder != null)
     	{
@@ -270,6 +283,8 @@ public class SudokuActivity extends Activity
     				LoadMainMenu();
     			}
     		  });
+    		
+    		DebugLog.Write("Final board:\n" + mGame.GetBoard().toString(), null);
     		
     		builder.create().show();
     	}
@@ -300,6 +315,8 @@ public class SudokuActivity extends Activity
     	if(mHand != null && mGame != null)
     	{
     		List<Byte> hand = mHand.GetHand(mGame.GetBoard(), mGame.GetCurrentPlayer());
+    		
+    		DebugLog.Write("Drawing hand: " + mHand.toString(), null);
     		
     		String handText = "Hand: ";
     		for(int i=0; i<hand.size(); i++)
@@ -334,7 +351,7 @@ public class SudokuActivity extends Activity
     		//Disable any options that aren't present in the player's hand
     		List<Byte> hand = mHand.GetHand(mGame.GetBoard(), mGame.GetCurrentPlayer());
     		
-    		Log.i("SudokuActivity", String.format("Hand: %s", mHand.ToString()));
+    		Log.i("SudokuActivity", String.format("Hand: %s", mHand.toString()));
     		
     		for(int i=1; i<mCellOptions.length; i++)
     			if(mCellOptions[i] && !hand.contains((byte)i))
@@ -364,6 +381,8 @@ public class SudokuActivity extends Activity
         	
         	if(mGame.GetConfirmCommit())
         	{
+        		DebugLog.Write(String.format("Showing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
+        		
         		UpdateBoard();
         		
         		EnablePendingButtons();
@@ -431,6 +450,7 @@ public class SudokuActivity extends Activity
     {
 		public void onClick(View v)
 		{
+			DebugLog.Write("Clearing move", null);
 			mCurrentPoint = null;
 			mPendingPoint = null;
 			mPendingValue = 0;
@@ -458,6 +478,11 @@ public class SudokuActivity extends Activity
 		public void onClick(View v)
 		{
 			mShowingPossibilities = !mShowingPossibilities;
+			
+			if(mShowingPossibilities)
+				DebugLog.Write("Showing possibilities", null);
+			else
+				DebugLog.Write("Showing main board", null);
 			
 			UpdateBoard();
 		}

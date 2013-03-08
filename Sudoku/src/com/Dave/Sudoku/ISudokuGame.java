@@ -19,8 +19,6 @@ public interface ISudokuGame
 	
 	SudokuBoard GetBoard();
 	
-	byte[][] GetFullBoard();
-	
 	boolean HandleClick(Point point);
 	
 	boolean GetConfirmCommit();

@@ -11,7 +11,7 @@ import com.Dave.DateStrings.DateStrings;
 
 public class DebugFile
 {
-public static String Filename = "Debug.txt";
+	public static String Filename = "Debug.txt";
 	
 	public static void Write(String directory, String tag, String message, Context context)
 	{

@@ -86,10 +86,27 @@
   		/>
     
     <TextView
-        android:id="@+id/textScoringSystem"
+        android:id="@+id/textHandSystem"
         android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/spinnerCellsToFill"
+        android:layout_alignParentLeft="true"
+        android:text="@string/handsystem"
+        />
+    <Spinner
+  		android:id="@+id/spinnerHandSystem"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/textHandSystem"
+        android:layout_alignParentLeft="true"
+  		android:text=""
+  		/>
+    
+    <TextView
+        android:id="@+id/textScoringSystem"
+        android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/spinnerHandSystem"
         android:layout_alignParentLeft="true"
         android:text="@string/scoringsystem"
         />
