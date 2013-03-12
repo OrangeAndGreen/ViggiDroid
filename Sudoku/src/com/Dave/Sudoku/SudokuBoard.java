@@ -1,5 +1,8 @@
 package com.Dave.Sudoku;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.graphics.Point;
 import android.util.Log;
 
@@ -11,6 +14,8 @@ public class SudokuBoard
 	private byte[][] mInitialBoard = null;
 	private byte[][] mPlayer1Board = null;
 	private byte[][] mPlayer2Board = null;
+	
+	private byte[][] mCellMultipliers = null;
 	
 	private byte[][] mPendingMove = null;
 	private int mPendingPlayerTurn = 0;
@@ -44,6 +49,12 @@ public class SudokuBoard
 		mInitialBoard = CreateBoard();
 		mPlayer1Board = CreateBoard();
 		mPlayer2Board = CreateBoard();
+		
+		mCellMultipliers = CreateBoard();
+		for(int x=0; x<BoardSize; x++)
+			for(int y=0; y<BoardSize; y++)
+				mCellMultipliers[x][y] = 1;
+			
 	}
 	
 	private static byte[][] CreateBoard()
@@ -55,84 +66,118 @@ public class SudokuBoard
         return output;
 	}
 	
-	public static SudokuBoard Create(int numberToFill, boolean makeFairForTwoPlayer)
+	public static SudokuBoard Create(int numberToFill, boolean makeFairForTwoPlayer, int bonusCells)
 	{
-		SudokuBoard ret = new SudokuBoard();
-        
-        int numPlayers = 1;
-        byte[] player1Choices = null;
-        if(makeFairForTwoPlayer)
-        {
-        	numPlayers = 2;
-        	player1Choices = new byte[numberToFill];
-        	ret.mInitialBoard[4][4] = (byte)(Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1);
-        }
-        for(int player=0; player < numPlayers; player++)
-	        for(int fillIndex=0; fillIndex<numberToFill; fillIndex++)
+		SudokuBoard ret = null;
+		if(numberToFill < 0)
+			ret = Create();
+		else
+		{
+			ret = new SudokuBoard();
+	        
+	        int numPlayers = 1;
+	        byte[] player1Choices = null;
+	        if(makeFairForTwoPlayer)
 	        {
-	        	//Randomly set some cells without breaking the rules
-	        	//First: Choose the value to fill in
-	        	
-	        	//Generate a value randomly
-	        	byte value = (byte)(Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0) + 1);
-	        	if(makeFairForTwoPlayer)
-	        	{
-	        		if(player == 0) //save the choice
-	        			player1Choices[fillIndex] = value;
-	        		else	//do what player1 did
-	        			value = player1Choices[fillIndex];
-	        	}
-	        	
-	        	for(int attempt = 0; attempt < 1000; attempt++)
-	        	{
-	        		//Randomly pick a cell
-	        		int x = Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0);
-	        		int y = Math.max(Math.min((int)Math.round(Math.random() * BoardSize - .5), BoardSize - 1), 0);
-	        		Point cell = new Point(x, y);
-	        		
-	        		//Log.i("SudokuBoard", String.format("Trying to set cell (%d, %d) to %d", x, y, value));
-	        		
-	        		//Make sure the cell is empty
-	        		//For two-player, make sure we are in the right territory
-	        		//Make sure the cell is legal based on other already filled values
-	        		if(ret.mInitialBoard[x][y] > 0
-	        				|| (makeFairForTwoPlayer && GetPlayerTerritory(cell) != player)
-	        				|| !ret.GetCellOptions(cell, true)[value])
-	        		{
-	        			continue;
-	        		}
-	        		
-	        		//Set the cell in the map
-	        		ret.mInitialBoard[x][y] = value;
-	        		
-	        		//Make sure all remaining blank cells are still valid
-	        		boolean keepLooking = false;
-	        		for(int xCheck=0; xCheck<BoardSize; xCheck++)
-	        			for(int yCheck=0; yCheck<BoardSize; yCheck++)
-	        			{
-	        				Point checkCell = new Point(xCheck, yCheck);
-	        				if(ret.GetCell(checkCell, true) == 0 && !ret.IsCellValid(checkCell))
-	        				{
-	        					ret.mInitialBoard[x][y] = 0;
-	        					keepLooking = true;
-	        				}
-	        			}
-	        		if(keepLooking)
-	        			continue;
-	        		
-	        		//Make sure every square can still be completed
-	        		
-	        		
-	        		break;
-	        	}
+	        	numPlayers = 2;
+	        	player1Choices = new byte[numberToFill];
+	        	ret.mInitialBoard[4][4] = (byte)MyRandom.Get(1, BoardSize);
 	        }
+	        for(int player=0; player < numPlayers; player++)
+		        for(int fillIndex=0; fillIndex<numberToFill; fillIndex++)
+		        {
+		        	//Randomly set some cells without breaking the rules
+		        	//First: Choose the value to fill in
+		        	
+		        	//Generate a value randomly
+		        	byte value = (byte)MyRandom.Get(1, BoardSize);
+		        	if(makeFairForTwoPlayer)
+		        	{
+		        		if(player == 0) //save the choice
+		        			player1Choices[fillIndex] = value;
+		        		else	//do what player1 did
+		        			value = player1Choices[fillIndex];
+		        	}
+		        	
+		        	for(int attempt = 0; attempt < 1000; attempt++)
+		        	{
+		        		//Randomly pick a cell
+		        		int x = MyRandom.Get(0, BoardSize - 1);
+		        		int y = MyRandom.Get(0, BoardSize - 1);
+		        		Point cell = new Point(x, y);
+		        		
+		        		//Log.i("SudokuBoard", String.format("Trying to set cell (%d, %d) to %d", x, y, value));
+		        		
+		        		//Make sure the cell is empty
+		        		//For two-player, make sure we are in the right territory
+		        		//Make sure the cell is legal based on other already filled values
+		        		if(ret.mInitialBoard[x][y] > 0
+		        				|| (makeFairForTwoPlayer && GetPlayerTerritory(cell) != player)
+		        				|| !ret.GetCellOptions(cell, true).contains(value))
+		        		{
+		        			continue;
+		        		}
+		        		
+		        		//Set the cell in the map
+		        		ret.mInitialBoard[x][y] = value;
+		        		
+		        		//Make sure all remaining blank cells are still valid
+		        		boolean keepLooking = false;
+		        		for(int xCheck=0; xCheck<BoardSize; xCheck++)
+		        			for(int yCheck=0; yCheck<BoardSize; yCheck++)
+		        			{
+		        				Point checkCell = new Point(xCheck, yCheck);
+		        				if(ret.GetCell(checkCell, true) == 0 && !ret.IsCellValid(checkCell))
+		        				{
+		        					ret.mInitialBoard[x][y] = 0;
+		        					keepLooking = true;
+		        				}
+		        			}
+		        		if(keepLooking)
+		        			continue;
+		        		
+		        		//Make sure every square can still be completed
+		        		
+		        		
+		        		break;
+		        	}
+		        }
+		}
+		
+        ret.CreateCellMultipliers(bonusCells);
         
         return ret;
 	}
 	
+	public static SudokuBoard Create()
+	{
+		//Fills one cell in each square
+		SudokuBoard ret = new SudokuBoard();
+		
+		for(int squareX = 0; squareX < SquareSize; squareX++)
+			for(int squareY = 0; squareY < SquareSize; squareY++)
+			{
+				while(true)
+				{
+					byte value = (byte)MyRandom.Get(1, BoardSize);
+					int x = squareX * SquareSize + MyRandom.Get(0, SquareSize - 1);
+					int y = squareY * SquareSize + MyRandom.Get(0, SquareSize - 1);
+					
+					Point cell = new Point(x, y);
+					if(ret.GetCellOptions(cell, true).contains(value))
+					{
+						ret.SetCell(cell, value, 0, true);
+						break;
+					}
+				}
+			}
+		
+		return ret;
+	}
+	
 	public static SudokuBoard Clone(SudokuBoard boardToClone)
 	{
-		SudokuBoard output = Create(0, false);
+		SudokuBoard output = Create(0, false, 0);
 		
 		for(int x = 0; x < BoardSize; x++)
 			for(int y = 0; y < BoardSize; y++)
@@ -145,23 +190,23 @@ public class SudokuBoard
 		return output;
 	}
 	
-	public static Point[] GetPlayerSquares(int player)
+	public static List<Point> GetPlayerSquares(int player)
 	{
-		Point[] ret = new Point[4];
+		List<Point> ret = new ArrayList<Point>();
 		
 		if(player == 0)
 		{
-			ret[0] = new Point(0, 0);
-    		ret[1] = new Point(1, 0);
-    		ret[2] = new Point(2, 1);
-    		ret[3] = new Point(0, 2);
+			ret.add(new Point(0, 0));
+			ret.add(new Point(1, 0));
+			ret.add(new Point(2, 1));
+			ret.add(new Point(0, 2));
 		}
 		else
 		{
-			ret[0] = new Point(2, 0);
-			ret[1] = new Point(0, 1);
-    		ret[2] = new Point(1, 2);
-    		ret[3] = new Point(2, 2);
+			ret.add(new Point(2, 0));
+			ret.add(new Point(0, 1));
+			ret.add(new Point(1, 2));
+			ret.add(new Point(2, 2));
 		}
 		
 		return ret;
@@ -213,6 +258,36 @@ public class SudokuBoard
     	return square;
     }
     
+    public void CreateCellMultipliers(int numberOfMultipliers)
+    {
+    	for(int player = 0; player < 2; player++)
+    	{
+    		List<Point> squares = GetPlayerSquares(player);
+    		
+    		for(int i=0; i<numberOfMultipliers; i++)
+    		{
+    			while(true)
+    			{
+    				//Select a square and cell at random
+    				int square = MyRandom.Get(0, squares.size() - 1);
+    				int cellX = MyRandom.Get(0,  SudokuBoard.SquareSize - 1);
+    				int cellY = MyRandom.Get(0,  SudokuBoard.SquareSize - 1);
+    				int x = squares.get(square).x * SquareSize + cellX;
+					int y = squares.get(square).y * SquareSize + cellY;
+    				Point cell = new Point(x, y);
+    				
+    				if(GetCell(cell, true) <= 0 && mCellMultipliers[x][y] <= 1)
+    				{
+    					DebugLog.Write(String.format("Setting multiplier in cell (%d,%d)", x, y), null);
+    					mCellMultipliers[x][y] = 2;
+    					squares.remove(square);
+    					break;
+    				}
+    			}
+    		}
+    	}
+    }
+    
     public byte[][] GetSubBoard(int player)
     {
     	if(player == 0)
@@ -226,6 +301,11 @@ public class SudokuBoard
     public byte[][] GetPendingMoves()
     {
     	return mPendingMove;
+    }
+    
+    public byte GetCellMultiplier(Point cell)
+    {
+    	return mCellMultipliers[cell.x][cell.y];
     }
     
     public byte GetCell(Point cell, boolean includePending)
@@ -302,7 +382,7 @@ public class SudokuBoard
     	return fullBoard;
     }
     
-    public boolean[] GetCellOptions(Point cell, boolean includePending)
+    public List<Byte> GetCellOptions(Point cell, boolean includePending)
     {
     	byte[][] fullBoard = GetFullBoard(includePending);
     	
@@ -334,17 +414,23 @@ public class SudokuBoard
     				options[curValue] = false;
     		}
     	
-    	return options;
+    	List<Byte> ret = new ArrayList<Byte>();
+    	
+    	for(int i=1; i<BoardSize + 1; i++)
+    		if(options[i])
+    			ret.add((byte)i);
+    	
+    	return ret;
     }
     
-    public boolean[] GetSquareOptions(Point square, boolean includePending)
+    public List<Byte> GetSquareOptions(Point square, boolean includePending)
     {
     	byte[][] fullBoard = GetFullBoard(includePending);
     	
     	//For each cell in the square, find the options
     	//Combine the options together for all squares
     	
-    	boolean[] options = new boolean[BoardSize + 1];
+    	List<Byte> options = new ArrayList<Byte>();
     	
     	for(int x = 0; x<SquareSize; x++)
     		for(int y=0; y<SquareSize; y++)
@@ -353,12 +439,17 @@ public class SudokuBoard
     			int yValue = square.y * SquareSize + y;
     			int curValue = fullBoard[xValue][yValue];
     			if(curValue > 0)
-    				options[curValue] = false;
+    			{
+    				int index = options.indexOf(curValue);
+    				if(index >= 0)
+    					options.remove(index);
+    			}
     			else
     			{
-    				boolean[] tempOptions = GetCellOptions(new Point(xValue, yValue), includePending);
-    				for(int i=0; i < options.length; i++)
-    					options[i] |= tempOptions[i];
+    				List<Byte> tempOptions = GetCellOptions(new Point(xValue, yValue), includePending);
+    				for(int i=0; i<tempOptions.size(); i++)
+    					if(!options.contains(tempOptions.get(i)))
+    						options.add(tempOptions.get(i));
     			}
     		}
 
@@ -366,12 +457,12 @@ public class SudokuBoard
     	return options;
     }
     
-    public boolean[] GetPendingSquareOptions(Point square)
+    public List<Byte> GetPendingSquareOptions(Point square)
     {
     	//For each cell in the square, find the options
     	//Combine the options together for all squares
     	
-    	boolean[] options = new boolean[BoardSize + 1];
+    	List<Byte> options = new ArrayList<Byte>();
     	
     	for(int x = 0; x<SquareSize; x++)
     		for(int y=0; y<SquareSize; y++)
@@ -380,12 +471,17 @@ public class SudokuBoard
     			int yValue = square.y * SquareSize + y;
     			int curValue = mPendingMove[xValue][yValue];
     			if(curValue > 0)
-    				options[curValue] = false;
+    			{
+    				int index = options.indexOf(curValue);
+    				if(index >= 0)
+    					options.remove(index);
+    			}
     			else
     			{
-    				boolean[] tempOptions = GetCellOptions(new Point(xValue, yValue), true);
-    				for(int i=0; i < options.length; i++)
-    					options[i] |= tempOptions[i];
+    				List<Byte> tempOptions = GetCellOptions(new Point(xValue, yValue), true);
+    				for(int i=0; i<tempOptions.size(); i++)
+    					if(!options.contains(tempOptions.get(i)))
+    						options.add(tempOptions.get(i));
     			}
     		}
 
@@ -395,14 +491,10 @@ public class SudokuBoard
     
     public boolean IsCellValid(Point cell)
     {
-    	boolean[] options = GetCellOptions(cell, true);
+    	List<Byte> options = GetCellOptions(cell, true);
     	
-    	for(int i=1; i<options.length; i++)
-    		if(options[i])
-    		{
-    			//Log.i("SudokuBoard", String.format("Cell (%d, %d) has %d as an option", cell.x, cell.y, i));
-    			return true;
-    		}
+    	if(options.size() > 0)
+    		return true;
     	
     	return false;
     }

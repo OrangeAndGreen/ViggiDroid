@@ -26,7 +26,7 @@
     
     <TextView
         android:id="@+id/textPlayer1"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/divider1"
         android:layout_alignParentLeft="true"
@@ -43,7 +43,7 @@
     
     <TextView
         android:id="@+id/textPlayer2"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/inputPlayer1"
         android:layout_alignParentLeft="true"
@@ -70,7 +70,7 @@
     
     <TextView
         android:id="@+id/textCellsToFill"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/divider2"
         android:layout_alignParentLeft="true"
@@ -85,9 +85,44 @@
   		android:text=""
   		/>
     
+    <Spinner
+  		android:id="@+id/spinnerHandSize"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/textCellsToFill"
+        android:layout_alignParentRight="true"
+  		android:text=""
+  		/>
+    
+    <TextView
+        android:id="@+id/textHandSize"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/divider2"
+        android:layout_alignLeft="@+id/spinnerHandSize"
+        android:text="@string/handSize"
+        />
+    
+    <TextView
+        android:id="@+id/textBonusCells"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/spinnerHandSize"
+        android:layout_alignLeft="@+id/spinnerHandSize"
+        android:text="@string/bonusCells"
+        />
+    <Spinner
+  		android:id="@+id/spinnerBonusCells"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/textBonusCells"
+        android:layout_alignLeft="@+id/spinnerHandSize"
+  		android:text=""
+  		/>
+    
     <TextView
         android:id="@+id/textHandSystem"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/spinnerCellsToFill"
         android:layout_alignParentLeft="true"
@@ -104,7 +139,7 @@
     
     <TextView
         android:id="@+id/textScoringSystem"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/spinnerHandSystem"
         android:layout_alignParentLeft="true"

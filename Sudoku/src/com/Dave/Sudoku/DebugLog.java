@@ -28,6 +28,7 @@ public class DebugLog
 				FileWriter fw = new FileWriter(fullPath, true);
 				fw.write(entry);
 				fw.close();
+				Log.i("DebugFile", entry);
 			}
 			catch (Exception e)
 			{

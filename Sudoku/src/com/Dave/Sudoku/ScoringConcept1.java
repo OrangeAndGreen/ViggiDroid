@@ -1,5 +1,7 @@
 package com.Dave.Sudoku;
 
+import java.util.List;
+
 import android.graphics.Point;
 
 /*
@@ -17,7 +19,7 @@ public class ScoringConcept1 implements IScoring
 		if(number <= 0)
 			return 0;
 		
-		int score = number;
+		int score = number * board.GetCellMultiplier(point);
 		if(multiplier > 0)
 			score *= multiplier;
 		
@@ -28,18 +30,18 @@ public class ScoringConcept1 implements IScoring
 		
 		int playerTurn = SudokuBoard.GetPlayerTerritory(point);
 		
-		Point[] enemySquares = SudokuBoard.GetPlayerSquares(1 - playerTurn);
+		List<Point> enemySquares = SudokuBoard.GetPlayerSquares(1 - playerTurn);
 		
-		for(int i=0; i<enemySquares.length; i++)
+		for(int i=0; i<enemySquares.size(); i++)
 		{
-			boolean[] initialSquareOptions = board.GetSquareOptions(enemySquares[i], true);
+			List<Byte> initialSquareOptions = board.GetSquareOptions(enemySquares.get(i), true);
 			
 			board.SetCell(point, number, playerTurn, false);
 			
-			boolean[] finalSquareOptions = board.GetSquareOptions(enemySquares[i], true);
+			List<Byte> finalSquareOptions = board.GetSquareOptions(enemySquares.get(i), true);
 			
-			for(int n = 1; n < initialSquareOptions.length; n++)
-				if(initialSquareOptions[n] && !finalSquareOptions[n])
+			for(int n = 0; n < initialSquareOptions.size(); n++)
+				if(!finalSquareOptions.contains(initialSquareOptions.get(n)))
 				{
 					//Log.i("ScoringConcept1", String.format("Adding %d to score", n));
 					score += n;

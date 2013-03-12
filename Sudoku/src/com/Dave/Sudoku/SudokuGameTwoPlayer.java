@@ -28,12 +28,13 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	private int GamePhase = 0;
 	private int PlayerTurn = 0;
 	
-	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill)
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
 		
-		Board = SudokuBoard.Create(cellsToFill, true);
+		Board = SudokuBoard.Create(cellsToFill, true, bonusCells);
+		//Board = SudokuBoard.Create(-1, true);
 		
 		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
@@ -143,7 +144,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		if(GamePhase == 1)
 		{
 			int score = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
-			DebugLog.Write(String.format("Move scores %d", score), null);
+			//DebugLog.Write(String.format("Move scores %d", score), null);
 			if(PlayerTurn == 0)
 				Player1Score += score;
 			else
@@ -152,7 +153,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		
 		int oldMultiplier = mCurrentMultiplier;
 		mCurrentMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
-		Log.i("SudokuGameTwoPlayer", String.format("Turn multiplier: %d", mCurrentMultiplier));
+		DebugLog.Write(String.format("Turn multiplier: %d", mCurrentMultiplier), null);
 		//TODO: Need a better way to tell when the turn is over. The multiplier should be able to stay the same for multiple turns.
 		if(mCurrentMultiplier == 0 || mCurrentMultiplier <= oldMultiplier)
 		{
