@@ -501,7 +501,7 @@ public class SudokuBoard
     
     public boolean IsSquareValid(Point square)
     {
-    	
+    	//TODO: Implement and use this
     	return true;
     }
     
