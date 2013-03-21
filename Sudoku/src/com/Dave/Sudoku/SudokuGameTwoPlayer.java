@@ -14,26 +14,27 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 {
 	private static final int mNumberOfPlayers = 2;
 	
-	public SudokuBoard Board = null;
+	private SudokuBoard Board = null;
 	
-	public int Player1Score = 0;
-	public int Player2Score = 0;
+	private int Player1Score = 0;
+	private int Player2Score = 0;
 	private int mProposedScore = 0;
 	private int mProposedMultiplier = 0;
 	private int mCurrentMultiplier = 0;
 	
-	public String Player1Name = null;
-	public String Player2Name = null;
+	private String Player1Name = null;
+	private String Player2Name = null;
 	
-	public int GamePhase = 0;
-	public int PlayerTurn = 0;
+	private int GamePhase = 0;
+	private int PlayerTurn = 0;
 	
-	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill)
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
 		
-		Board = SudokuBoard.Create(cellsToFill, true);
+		Board = SudokuBoard.Create(cellsToFill, true, bonusCells);
+		//Board = SudokuBoard.Create(-1, true);
 		
 		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
@@ -63,9 +64,9 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return Board;
 	}
 	
-	public byte[][] GetFullBoard()
+	public int GetGamePhase()
 	{
-		return Board.GetFullBoard(true);
+		return GamePhase;
 	}
 
 	public boolean HandleClick(Point cell)
@@ -143,6 +144,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		if(GamePhase == 1)
 		{
 			int score = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
+			//DebugLog.Write(String.format("Move scores %d", score), null);
 			if(PlayerTurn == 0)
 				Player1Score += score;
 			else
@@ -151,7 +153,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		
 		int oldMultiplier = mCurrentMultiplier;
 		mCurrentMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
-		Log.i("SudokuGameTwoPlayer", String.format("Turn multiplier: %d", mCurrentMultiplier));
+		DebugLog.Write(String.format("Turn multiplier: %d", mCurrentMultiplier), null);
 		//TODO: Need a better way to tell when the turn is over. The multiplier should be able to stay the same for multiple turns.
 		if(mCurrentMultiplier == 0 || mCurrentMultiplier <= oldMultiplier)
 		{
@@ -165,7 +167,10 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 			{
 				//Go back to the current player's turn
 				PlayerTurn = 1 - PlayerTurn;
+				DebugLog.Write(String.format("Player %d goes again", PlayerTurn + 1), null);
 			}
+			else
+				DebugLog.Write(String.format("Now player %d's turn", PlayerTurn + 1), null);
 		}
 		
 		mProposedScore = 0;
@@ -175,6 +180,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		//See if we need to move from the intro phase to the main phase
 		if(GamePhase == 0 && Board.CheckSquare(new Point(1, 1)))
 		{
+			DebugLog.Write("Moving to main phase of game", null);
 			GamePhase = 1;
 		}
 		

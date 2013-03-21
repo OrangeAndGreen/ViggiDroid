@@ -15,9 +15,9 @@ public interface ISudokuGame
 	
 	int GetCurrentPlayer();
 	
-	SudokuBoard GetBoard();
+	int GetGamePhase();
 	
-	byte[][] GetFullBoard();
+	SudokuBoard GetBoard();
 	
 	boolean HandleClick(Point point);
 	

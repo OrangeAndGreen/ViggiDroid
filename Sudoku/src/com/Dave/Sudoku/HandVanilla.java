@@ -7,6 +7,11 @@ public class HandVanilla implements IHand
 {
 	private int mHandSize = 5;
 	
+	public String GetName()
+	{
+		return "Vanilla";
+	}
+	
 	public void SetHandSize(int size)
 	{
 		mHandSize = size;

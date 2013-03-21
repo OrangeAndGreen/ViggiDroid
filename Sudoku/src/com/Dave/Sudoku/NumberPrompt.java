@@ -1,5 +1,7 @@
 package com.Dave.Sudoku;
 
+import java.util.List;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -10,7 +12,7 @@ public class NumberPrompt extends Dialog
 {
 	protected OnNumberSetListener mListener = null;
 	
-	public boolean[] Options = null;
+	public List<Byte> Options = null;
 	
 	private Button mButtonOne = null;
 	private Button mButtonTwo = null;
@@ -23,7 +25,7 @@ public class NumberPrompt extends Dialog
 	private Button mButtonNine = null;
 	private Button mButtonCancel = null;
 	
-	public NumberPrompt(Context context, OnNumberSetListener listener, boolean[] options)
+	public NumberPrompt(Context context, OnNumberSetListener listener, List<Byte> options)
 	{
 		super(context);
 		mListener = listener;
@@ -76,19 +78,22 @@ public class NumberPrompt extends Dialog
 		super.show();
 	}
 
-	public void SetOptions(boolean[] options)
+	public void SetOptions(List<Byte> options)
 	{
 		Options = options;
 		
-		mButtonOne.setEnabled(Options[1]);
-		mButtonTwo.setEnabled(Options[2]);
-		mButtonThree.setEnabled(Options[3]);
-		mButtonFour.setEnabled(Options[4]);
-		mButtonFive.setEnabled(Options[5]);
-		mButtonSix.setEnabled(Options[6]);
-		mButtonSeven.setEnabled(Options[7]);
-		mButtonEight.setEnabled(Options[8]);
-		mButtonNine.setEnabled(Options[9]);
+		if(mButtonOne == null)
+			return;
+		
+		mButtonOne.setEnabled(Options.contains((byte)1));
+		mButtonTwo.setEnabled(Options.contains((byte)2));
+		mButtonThree.setEnabled(Options.contains((byte)3));
+		mButtonFour.setEnabled(Options.contains((byte)4));
+		mButtonFive.setEnabled(Options.contains((byte)5));
+		mButtonSix.setEnabled(Options.contains((byte)6));
+		mButtonSeven.setEnabled(Options.contains((byte)7));
+		mButtonEight.setEnabled(Options.contains((byte)8));
+		mButtonNine.setEnabled(Options.contains((byte)9));
 	}
 	
 	private class NumberButtonListener implements View.OnClickListener

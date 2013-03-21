@@ -17,9 +17,9 @@ public class SudokuGameOnePlayer implements ISudokuGame
 	{
 		//Create the starting board
         if(difficulty == null || difficulty.equals("Hard"))
-        	mBoard = SudokuBoard.Create(20, false);
+        	mBoard = SudokuBoard.Create(20, false, 0);
         else
-        	mBoard = SudokuBoard.Create(40, false);
+        	mBoard = SudokuBoard.Create(40, false, 0);
         
         //Fill in a couple entries (for testing)
         //PlayerBoard[2][0] = 1;
@@ -50,14 +50,14 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return 0;
 	}
 	
+	public int GetGamePhase()
+	{
+		return 1;
+	}
+	
 	public SudokuBoard GetBoard()
 	{
 		return mBoard;
-	}
-	
-	public byte[][] GetFullBoard()
-	{
-		return mBoard.GetFullBoard(true);
 	}
 
 	public boolean HandleClick(Point point)

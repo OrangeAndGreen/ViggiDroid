@@ -32,7 +32,10 @@
     <string name="defaultplayer1">Player 1</string>
     <string name="defaultplayer2">Player 2</string>
     <string name="cellstofill">Cells to pre-fill:</string>
+    <string name="handSize">Hand Size:</string>
+    <string name="bonusCells">2x Cells:</string>
     <string name="scoringsystem">Scoring System:</string>
+    <string name="handsystem">Hand System:</string>
     <string name="start">Start Game</string>
 
 </resources>

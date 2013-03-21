@@ -11,7 +11,7 @@ public class ScoringVanilla implements IScoring
 	
 	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier)
 	{
-		return number;
+		return number * board.GetCellMultiplier(point);
 	}
 	
 	public int GetNextMultiplier(SudokuBoard board, Point point, byte number, int currentMultiplier)
