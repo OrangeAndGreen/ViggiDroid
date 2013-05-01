@@ -1,7 +1,7 @@
 .metadata/
-*/gen/
-*/bin/
-*/obj/
+gen/
+bin/
+obj/
 
 *.properties
 
