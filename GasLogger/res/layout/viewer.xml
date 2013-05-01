@@ -3,7 +3,9 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent" 
     android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:background="@drawable/background" 
+    >
     
     <LinearLayout
         android:orientation="horizontal"
@@ -17,6 +19,12 @@
     		android:layout_width="75dp"
     		android:layout_height="50dp"
     		android:text="@string/back"
+	    	android:textSize="18sp"
+	   		android:shadowColor="#222222"
+	   		android:shadowRadius="3"
+	   		android:shadowDx="1"
+	   		android:shadowDy="1"    		
+    		android:background="@drawable/button_background"
     		/>
     	<Button
     		android:id="@+id/button_quit_view"
@@ -24,6 +32,12 @@
     		android:layout_width="75dp"
     		android:layout_height="50dp"
     		android:text="@string/quit"
+	    	android:textSize="18sp"
+	   		android:shadowColor="#222222"
+	   		android:shadowRadius="3"
+	   		android:shadowDx="1"
+	   		android:shadowDy="1"    		
+    		android:background="@drawable/button_background"
     		/>
     </LinearLayout>
     
