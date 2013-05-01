@@ -1,9 +1,7 @@
 .metadata/
 */gen/
 */bin/
-*/obj/
 
 *.properties
 
 *.suo
-*.user

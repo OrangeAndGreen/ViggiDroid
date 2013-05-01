@@ -75,6 +75,8 @@ public class SudokuActivity extends Activity
 	private List<Byte> mCellOptions = null;
 	private NumberPrompt mPrompt = null;
 	
+	private HttpClient mClient = null;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -84,6 +86,9 @@ public class SudokuActivity extends Activity
         mContext = this;
         
         LoadMainMenu();
+        
+        mClient = new HttpClient(this);
+        mClient.TestCommunication();
     }
     
     @Override

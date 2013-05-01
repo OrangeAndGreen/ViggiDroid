@@ -3,6 +3,7 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@drawable/background"    
     >
     
     <LinearLayout
@@ -17,6 +18,12 @@
     		android:layout_width="75dp"
     		android:layout_height="50dp"
     		android:text="@string/back"
+	    	android:textSize="18sp"
+	   		android:shadowColor="#222222"
+	   		android:shadowRadius="3"
+	   		android:shadowDx="1"
+	   		android:shadowDy="1"    		
+    		android:background="@drawable/button_background"
     		/>
     	<Button
     		android:id="@+id/button_quit_settings"
@@ -24,6 +31,12 @@
     		android:layout_width="75dp"
     		android:layout_height="50dp"
     		android:text="@string/quit"
+	    	android:textSize="18sp"
+	   		android:shadowColor="#222222"
+	   		android:shadowRadius="3"
+	   		android:shadowDx="1"
+	   		android:shadowDy="1"    		
+    		android:background="@drawable/button_background"
     		/>
     </LinearLayout>
     
@@ -34,6 +47,12 @@
     	android:layout_width="fill_parent"
     	android:layout_height="50dp"
     	android:text="@string/settings_edit"
+    	android:textSize="18sp"
+   		android:shadowColor="#222222"
+   		android:shadowRadius="3"
+   		android:shadowDx="1"
+   		android:shadowDy="1"    	
+    	android:background="@drawable/button_background"
     	/>
 
     <Button
@@ -41,6 +60,12 @@
     	android:layout_width="fill_parent"
     	android:layout_height="50dp"
     	android:text="@string/settings_import"
+    	android:textSize="18sp"
+   		android:shadowColor="#222222"
+   		android:shadowRadius="3"
+   		android:shadowDx="1"
+   		android:shadowDy="1"    	
+    	android:background="@drawable/button_background"
     	/>
     
     <Button
@@ -48,6 +73,12 @@
     	android:layout_width="fill_parent"
     	android:layout_height="50dp"
     	android:text="@string/settings_export"
+    	android:textSize="18sp"
+   		android:shadowColor="#222222"
+   		android:shadowRadius="3"
+   		android:shadowDx="1"
+   		android:shadowDy="1"    	
+    	android:background="@drawable/button_background"
     	/>
     
 </LinearLayout>
