@@ -114,19 +114,19 @@ namespace TwodokuServer
             return String.Format("Deleting from DB '{0}' {1}: {2}\r\n", table, success, label);
         }
 
-        public string Update(string table, string update, string qualifier)
+        public bool Update(string table, string update, string qualifier)
         {
-            string ret = null;
+            bool ret = false;
             string command = String.Format("UPDATE {0} SET {1} WHERE {2}", table, update, qualifier);
             try
             {
                 SqlCommand updateCommand = new SqlCommand(command, mSQL);
                 updateCommand.ExecuteNonQuery();
-                ret = "Updated DB";
+                ret = true;
             }
             catch
             {
-                ret = "Error updating DB";
+                ret = false;
                 LogFile.LogError(String.Format("Error updating database: {0}", command));
             }
             return ret;
@@ -372,13 +372,62 @@ namespace TwodokuServer
             return lastID + 1;
         }
 
-        public void AddGame(TwodokuGameInfo gameInfo)
+        public bool AddGame(TwodokuGameInfo gameInfo)
         {
+            string values = "";
+            values += "'" + gameInfo.GameId + "',";
+            values += "'" + gameInfo.Player1 + "',";
+            values += "'" + gameInfo.Player1Score + "',";
+            values += "'" + gameInfo.Player2 + "',";
+            values += "'" + gameInfo.Player2Score + "',";
+            values += "'" + DateTime.Now.ToString() + "',";
+            values += "'" + DateTime.Now.ToString() + "',";
+            values += "'" + gameInfo.Active + "',";
+            values += "'" + gameInfo.Turn + "',";
+            values += "'" + gameInfo.HandSystem + "',";
+            values += "'" + gameInfo.HandSize + "',";
+            values += "'" + gameInfo.ScoringSystem + "',";
+            values += "'" + gameInfo.InitialBoard + "',";
+            values += "'" + gameInfo.PlayerBoard + "',";
+            values += "'" + gameInfo.Multipliers + "'";
+
+            return Insert(TableGames, values);
         }
 
         public bool UpdateGame(TwodokuGameInfo gameInfo)
         {
-            return false;
+            //Retrieve the game and make sure everything matches (players, etc.)
+            TwodokuGameInfo existingGame = GetGame(gameInfo.GameId);
+            if (existingGame == null || !existingGame.IsSameGame(gameInfo))
+                return false;
+
+            //Update: Scores, PlayDate, Active, Turn, PlayerBoard
+            string update = "";
+            update += string.Format("{0}='{1}',", ColumnPlayer1Score, gameInfo.Player1Score);
+            update += string.Format("{0}='{1}',", ColumnPlayer2Score, gameInfo.Player2Score);
+            update += string.Format("{0}='{1}',", ColumnPlayDate, gameInfo.PlayDate);
+            update += string.Format("{0}='{1}',", ColumnActive, gameInfo.Active);
+            update += string.Format("{0}='{1}',", ColumnTurn, gameInfo.Turn);
+            update += string.Format("{0}='{1}'", ColumnPlayerBoard, gameInfo.PlayerBoard);
+
+            string qualifier = string.Format("{0}='{1}'", ColumnGameId, gameInfo.GameId);
+            return Update(TableGames, update, qualifier);
+        }
+
+        public TwodokuGameInfo GetGame(int gameId)
+        {
+            TwodokuGameInfo gameInfo = null;
+            string qualifier = ColumnGameId + "='" + gameId + "'";
+            string query = String.Format("select {0} from {1} where {2}", "*", DBHelper.TableGames, qualifier);
+            SqlDataReader reader = Query(query);
+
+            if (reader != null)
+            {
+                reader.Read();
+                gameInfo = TwodokuGameInfo.FromSqlReader(reader);
+                reader.Close();
+            }
+            return gameInfo;
         }
     }
 }

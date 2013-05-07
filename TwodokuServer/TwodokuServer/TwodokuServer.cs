@@ -101,8 +101,8 @@ namespace TwodokuServer
                 HttpUrl = tokens[1];
                 HttpProtocolVersionString = tokens[2];
 
-                Console.WriteLine("starting: " + request);
-
+                DateTime now = DateTime.Now;
+                Console.WriteLine(string.Format("{0} {1}: starting {2}", now.ToShortDateString(), now.ToShortTimeString(), request));
 
                 ReadHeaders(inputStream);
                 if (HttpMethod.Equals("GET"))
@@ -132,13 +132,13 @@ namespace TwodokuServer
 
         public void ReadHeaders(Stream inputStream)
         {
-            Console.WriteLine("readHeaders()");
+            //Console.WriteLine("readHeaders()");
             String line;
             while ((line = StreamReadLine(inputStream)) != null)
             {
                 if (line.Equals(""))
                 {
-                    Console.WriteLine("got headers");
+                    //Console.WriteLine("got headers");
                     return;
                 }
 
@@ -155,14 +155,14 @@ namespace TwodokuServer
                 }
 
                 string value = line.Substring(pos, line.Length - pos);
-                Console.WriteLine("header: {0}:{1}", name, value);
+                //Console.WriteLine("header: {0}:{1}", name, value);
                 HttpHeaders[name] = value;
             }
         }
 
         public void HandleGETRequest(StreamWriter outputStream)
         {
-            Console.WriteLine("request: {0}", HttpUrl);
+            //Console.WriteLine("request: {0}", HttpUrl);
 
             //Write the success response
             outputStream.WriteLine("HTTP/1.0 200 OK");
@@ -184,6 +184,7 @@ namespace TwodokuServer
 
             if (method.Equals("Gamelist"))
             {
+                Console.WriteLine(string.Format("     Sending game list to {0}", player1));
                 string qualifier = DBHelper.ColumnPlayer1 + "='" + player1 + "' OR " + DBHelper.ColumnPlayer2 + "='" + player1 + "'";
                 string query = String.Format("select {0} from {1} where {2} order by {3}", "*", DBHelper.TableGames, qualifier, "STARTDATE");
                 SqlDataReader reader = mDB.Query(query);
@@ -192,16 +193,17 @@ namespace TwodokuServer
                 {
                     while (reader.Read())
                     {
-                        DateTime timestamp = (DateTime)reader[DBHelper.ColumnStartDate];
+                        TwodokuGameInfo gameInfo = TwodokuGameInfo.FromSqlReader(reader);
+                        DateTime timestamp = gameInfo.StartDate;
                         string startDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
-                        timestamp = (DateTime)reader[DBHelper.ColumnPlayDate];
+                        timestamp = gameInfo.PlayDate;
                         string playDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
 
                         outputStream.WriteLine(string.Format("{0},{1},{2},{3},{4},{5},{6},{7}",
-                                (int)reader[DBHelper.ColumnGameId],
-                                (string)reader[DBHelper.ColumnPlayer1], (int)reader[DBHelper.ColumnPlayer1Score],
-                                (string)reader[DBHelper.ColumnPlayer2], (int)reader[DBHelper.ColumnPlayer2Score],
-                                startDate, playDate, (int)reader[DBHelper.ColumnTurn]));
+                                gameInfo.GameId,
+                                gameInfo.Player1, gameInfo.Player1Score,
+                                gameInfo.Player2, gameInfo.Player2Score,
+                                startDate, playDate, gameInfo.Turn));
                     }
                     reader.Close();
                 }
@@ -231,7 +233,7 @@ namespace TwodokuServer
             // we hand him needs to let him see the "end of the stream" at this content 
             // length, because otherwise he won't know when he's seen it all! 
 
-            Console.WriteLine("get post data start");
+            //Console.WriteLine("get post data start");
             int content_len = 0;
             MemoryStream ms = new MemoryStream();
             if (HttpHeaders.ContainsKey("content-length"))
@@ -247,10 +249,10 @@ namespace TwodokuServer
                 int to_read = content_len;
                 while (to_read > 0)
                 {
-                    Console.WriteLine("starting Read, to_read={0}", to_read);
+                    //Console.WriteLine("starting Read, to_read={0}", to_read);
 
                     int numread = inputStream.Read(buf, 0, Math.Min(BUF_SIZE, to_read));
-                    Console.WriteLine("read finished, numread={0}", numread);
+                    //Console.WriteLine("read finished, numread={0}", numread);
                     if (numread == 0)
                     {
                         if (to_read == 0)
@@ -267,13 +269,13 @@ namespace TwodokuServer
                 }
                 ms.Seek(0, SeekOrigin.Begin);
             }
-            Console.WriteLine("get post data end");
+            Console.WriteLine(string.Format("     Received {0} bytes", content_len));
 
             StreamReader sr = new StreamReader(ms);
             
             string data = sr.ReadToEnd();
 
-            Console.WriteLine("POST request: {0}", data);
+            //Console.WriteLine("POST request: {0}", data);
             
             //Parse the data
             int gameId = 0;
@@ -290,16 +292,18 @@ namespace TwodokuServer
             TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
 
             //Update the database
-            bool success = true;
+            bool success = false;
             if (gameId <= 0)
             {
                 //Add new game
+                Console.WriteLine(string.Format("     Adding new game for {0}", gameInfo.Player1));
                 gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
-                mDB.AddGame(gameInfo);
+                success = mDB.AddGame(gameInfo);
             }
             else
             {
                 //Update existing game
+                Console.WriteLine(string.Format("     Updating game for {0}", gameInfo.Player1));
                 success = mDB.UpdateGame(gameInfo);
             }
             

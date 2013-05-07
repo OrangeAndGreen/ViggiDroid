@@ -22,11 +22,14 @@ namespace TwodokuServer
         public static void LogError(string error)
         {
             string filename = "Errors.txt";
+            string entry = DateTime.Now.ToString() + ": " + error;
 
             TextWriter writer = null;
             writer = System.IO.File.AppendText(filename);
-            writer.Write(DateTime.Now.ToString() + ": " + error + "\n");
+            writer.Write(entry + "\n");
             writer.Close();
+
+            Console.WriteLine(entry);
         }
     }
 }

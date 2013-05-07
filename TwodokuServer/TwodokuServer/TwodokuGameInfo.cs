@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
+using System.Data.SqlClient;
 
 namespace TwodokuServer
 {
@@ -14,6 +15,9 @@ namespace TwodokuServer
         public int Player1Score = 0;
         public string Player2 = null;
         public int Player2Score = 0;
+
+        public DateTime StartDate;
+        public DateTime PlayDate;
 
         public int Active = 0;
         public int Turn = 0;
@@ -44,6 +48,53 @@ namespace TwodokuServer
             ret.Multipliers = (string)dataEntries["Multipliers"];
 
             return ret;
+        }
+
+        public static TwodokuGameInfo FromSqlReader(SqlDataReader reader)
+        {
+            TwodokuGameInfo gameInfo = new TwodokuGameInfo();
+
+            gameInfo.GameId = (int)reader[DBHelper.ColumnGameId];
+            gameInfo.Player1 = (string)reader[DBHelper.ColumnPlayer1];
+            gameInfo.Player1Score = (int)reader[DBHelper.ColumnPlayer1Score];
+            gameInfo.Player2 = (string)reader[DBHelper.ColumnPlayer2];
+            gameInfo.Player2Score = (int)reader[DBHelper.ColumnPlayer2Score];
+            
+            gameInfo.StartDate = (DateTime)reader[DBHelper.ColumnStartDate];
+            gameInfo.PlayDate = (DateTime)reader[DBHelper.ColumnPlayDate];
+
+            gameInfo.Active = (int)reader[DBHelper.ColumnActive];
+            gameInfo.Turn = (int)reader[DBHelper.ColumnTurn];
+
+            gameInfo.InitialBoard = (string)reader[DBHelper.ColumnStartingBoard];
+            gameInfo.PlayerBoard = (string)reader[DBHelper.ColumnPlayerBoard];
+            gameInfo.Multipliers = (string)reader[DBHelper.ColumnMultipliers];
+
+            gameInfo.HandSystem = (string)reader[DBHelper.ColumnHandSystem];
+            gameInfo.HandSize = (int)reader[DBHelper.ColumnHandSize];
+            gameInfo.ScoringSystem = (string)reader[DBHelper.ColumnScoringSystem];
+
+            return gameInfo;
+        }
+
+        public bool IsSameGame(TwodokuGameInfo gameInfo)
+        {
+            if (GameId != gameInfo.GameId)
+                return false;
+            if (Player1 != gameInfo.Player1)
+                return false;
+            if (Player2 != gameInfo.Player2)
+                return false;
+            //if (StartDate != gameInfo.StartDate)
+            //    return false;
+            //if (HandSystem != gameInfo.HandSystem)
+            //    return false;
+            //if (HandSize != gameInfo.HandSize)
+            //    return false;
+            //if (ScoringSystem != gameInfo.ScoringSystem)
+            //    return false;
+
+            return true;
         }
     }
 }
