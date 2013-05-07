@@ -35,9 +35,29 @@ public class SudokuGameOnePlayer implements ISudokuGame
 		return mNumberOfPlayers;
 	}
 	
+	public String GetPlayer1Name()
+	{
+		return "Player 1";
+	}
+	
+	public int GetPlayer1Score()
+	{
+		return 0;
+	}
+	
 	public int GetPlayer1Color()
 	{
 		return Color.BLACK;
+	}
+	
+	public String GetPlayer2Name()
+	{
+		return "";
+	}
+	
+	public int GetPlayer2Score()
+	{
+		return 0;
 	}
 	
 	public int GetPlayer2Color()
@@ -48,6 +68,11 @@ public class SudokuGameOnePlayer implements ISudokuGame
 	public int GetCurrentPlayer()
 	{
 		return 0;
+	}
+	
+	public boolean IsLocalPlayerTurn(String localPlayer)
+	{
+		return true;
 	}
 	
 	public int GetGamePhase()

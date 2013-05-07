@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/commentMainLayout"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    >
+    <TextView
+    	android:id="@+id/nameIntro"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true"
+    	android:text="@string/name"
+    />
+    <EditText
+    	android:id="@+id/nameInput"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:layout_below="@+id/nameIntro"
+		android:layout_alignParentLeft="true"
+    	android:text="@string/blank"
+    />
+    	
+	<Button android:id="@+id/nameOk"
+		android:layout_width="wrap_content"
+	  	android:layout_height="wrap_content"
+	  	android:layout_below="@+id/nameInput"
+	   	android:layout_centerInParent="true"
+	   	android:text="@string/ok" />
+    
+</RelativeLayout>

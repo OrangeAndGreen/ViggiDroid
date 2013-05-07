@@ -60,4 +60,12 @@
         android:text="@string/twoplayer"
         />
     
+    <LinearLayout
+        android:id="@+id/twoPlayerList"
+        android:layout_width="fill_parent"
+  		android:layout_height="fill_parent"
+  		android:layout_below="@+id/buttonTwoPlayer"
+        android:layout_centerInParent="true"
+        />
+    
 </RelativeLayout>

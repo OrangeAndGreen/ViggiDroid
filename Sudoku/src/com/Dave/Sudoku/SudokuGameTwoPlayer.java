@@ -1,5 +1,7 @@
 package com.Dave.Sudoku;
 
+import java.util.List;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,11 +12,14 @@ import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.widget.TextView;
 
-public class SudokuGameTwoPlayer implements ISudokuGame
+public class SudokuGameTwoPlayer
 {
 	private static final int mNumberOfPlayers = 2;
 	
 	private SudokuBoard Board = null;
+	
+	private IScoring mScoring = null;
+	private IHand mHand = null;
 	
 	private int Player1Score = 0;
 	private int Player2Score = 0;
@@ -28,7 +33,9 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	private int GamePhase = 0;
 	private int PlayerTurn = 0;
 	
-	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells)
+	public int GameID = -1;
+	
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells, String scoringSystem, String handSystem, int handSize)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
@@ -36,17 +43,83 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		Board = SudokuBoard.Create(cellsToFill, true, bonusCells);
 		//Board = SudokuBoard.Create(-1, true);
 		
+		if(scoringSystem != null && scoringSystem == "System 1")
+    	{
+    		mScoring = new ScoringConcept1();
+    	}
+    	else if(scoringSystem != null && scoringSystem == "System 2")
+    	{
+    		mScoring = new ScoringConcept2();
+    	}
+    	else if(scoringSystem != null && scoringSystem == "Least square")
+    	{
+    		mScoring = new ScoringConcept3();
+    	}
+    	else
+    	{
+    		mScoring = new ScoringVanilla();
+    	}
+    	DebugLog.Write("Scoring: " + mScoring.GetName(), null);
+		
+    	if(handSystem != null && handSystem == "Concept 1")
+    		mHand = new HandConcept1();
+    	else
+    		mHand = new HandVanilla();
+    	
+    	mHand.SetHandSize(handSize);
+    	DebugLog.Write("Hand: " + mHand.GetName(), null);
+    	
 		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
+	
+	
 
+	public String GetScoringSystem()
+	{
+		return mScoring.GetName();
+	}
+	
+	public String GetHandSystem()
+	{
+		return mHand.GetName();
+	}
+	
+	public List<Byte> GetHand()
+	{
+		if(mHand == null)
+			return null;
+		
+		return mHand.GetHand(GetBoard(), GetCurrentPlayer());
+	}
+	
 	public int GetNumberOfPlayers()
 	{
 		return mNumberOfPlayers;
 	}
 	
+	public String GetPlayer1Name()
+	{
+		return Player1Name;
+	}
+	
+	public int GetPlayer1Score()
+	{
+		return Player1Score;
+	}
+	
 	public int GetPlayer1Color()
 	{
 		return Color.rgb(79, 129, 189);
+	}
+	
+	public String GetPlayer2Name()
+	{
+		return Player2Name;
+	}
+	
+	public int GetPlayer2Score()
+	{
+		return Player2Score;
 	}
 	
 	public int GetPlayer2Color()
@@ -57,6 +130,15 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 	public int GetCurrentPlayer()
 	{
 		return PlayerTurn;
+	}
+	
+	public boolean IsLocalPlayerTurn(String localPlayer)
+	{
+		int localPlayerIndex = 0;
+		if(localPlayer == Player2Name)
+			localPlayerIndex = 1;
+		
+		return PlayerTurn == localPlayerIndex;
 	}
 	
 	public SudokuBoard GetBoard()
@@ -127,23 +209,28 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		return true;
 	}
 	
-	public void ShowMove(SudokuView view, Point point, byte number, IScoring scoring)
+	public void ShowMove(SudokuView view, Point point, byte number)
 	{
 		if(GamePhase == 1)
 		{
-			mProposedScore = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
-			mProposedMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
+			mProposedScore = mScoring.ScoreMove(Board, point, number, mCurrentMultiplier);
+			mProposedMultiplier = mScoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
 		}
 		
 		UpdateBoard(view, point, number, true);
 	}
 	
-	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number, IScoring scoring)
+	public AlertDialog.Builder MakeMove(Context context, SudokuView view, Point point, byte number)
 	{
+		if(mHand != null && GetGamePhase() > 0)
+    	{
+    		mHand.TakeNumber(GetBoard(), GetCurrentPlayer(), number);
+    	}
+		
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
-			int score = scoring.ScoreMove(Board, point, number, mCurrentMultiplier);
+			int score = mScoring.ScoreMove(Board, point, number, mCurrentMultiplier);
 			//DebugLog.Write(String.format("Move scores %d", score), null);
 			if(PlayerTurn == 0)
 				Player1Score += score;
@@ -152,7 +239,7 @@ public class SudokuGameTwoPlayer implements ISudokuGame
 		}
 		
 		int oldMultiplier = mCurrentMultiplier;
-		mCurrentMultiplier = scoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
+		mCurrentMultiplier = mScoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
 		DebugLog.Write(String.format("Turn multiplier: %d", mCurrentMultiplier), null);
 		//TODO: Need a better way to tell when the turn is over. The multiplier should be able to stay the same for multiple turns.
 		if(mCurrentMultiplier == 0 || mCurrentMultiplier <= oldMultiplier)

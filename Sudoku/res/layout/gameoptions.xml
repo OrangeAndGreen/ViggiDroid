@@ -25,27 +25,10 @@
 		/>
     
     <TextView
-        android:id="@+id/textPlayer1"
-        android:layout_width="wrap_content"
-  		android:layout_height="wrap_content"
-  		android:layout_below="@+id/divider1"
-        android:layout_alignParentLeft="true"
-        android:text="@string/player1"
-        />
-    <EditText
-        android:id="@+id/inputPlayer1"
-        android:layout_width="fill_parent"
-  		android:layout_height="wrap_content"
-  		android:layout_below="@+id/textPlayer1"
-        android:layout_alignParentLeft="true"
-        android:text="@string/defaultplayer1"
-        />
-    
-    <TextView
         android:id="@+id/textPlayer2"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/inputPlayer1"
+  		android:layout_below="@+id/divider1"
         android:layout_alignParentLeft="true"
         android:text="@string/player2"
         />

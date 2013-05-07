@@ -10,6 +10,9 @@
     <string name="x">X</string>
     <string name="twoplayer">2 Player</string>
     
+    <string name="name">Name:</string>
+    <string name="ok">OK</string>
+    
     <string name="select_number">Select number:</string>
     <string name="number_one">1</string>
     <string name="number_two">2</string>

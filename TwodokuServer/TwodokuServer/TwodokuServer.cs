@@ -7,29 +7,32 @@ using System.Net.Sockets;
 using System.Collections;
 using System.Threading;
 using System.Net;
+using System.Data.SqlClient;
 
 namespace TwodokuServer
 {
     public class TwodokuServer
     {
+        private DBHelper mDB = null;
         protected int mPort;
-        TcpListener mListener;
         bool mActive = true;
 
         public TwodokuServer(int port)
         {
             mPort = port;
+            mDB = new DBHelper(@".\SQLEXPRESS", @"Twodoku");
+            Console.WriteLine(mDB.Open());
         }
 
         public void listen()
         {
-            mListener = new TcpListener(IPAddress.Loopback, mPort);
-            mListener.Start();
+            TcpListener listener = new TcpListener(IPAddress.Loopback, mPort);
+            listener.Start();
             while (mActive)
             {
-                TcpClient s = mListener.AcceptTcpClient();
-                HttpProcessor processor = new HttpProcessor(s, this);
-                Thread thread = new Thread(new ThreadStart(processor.process));
+                TcpClient s = listener.AcceptTcpClient();
+                HttpProcessor processor = new HttpProcessor(s, mDB);
+                Thread thread = new Thread(new ThreadStart(processor.Process));
                 thread.Start();
                 Thread.Sleep(1);
             }
@@ -40,27 +43,24 @@ namespace TwodokuServer
 
     public class HttpProcessor
     {
-        public TcpClient mSocket;
-        public TwodokuServer mServer;
+        private TcpClient mSocket;
+        private DBHelper mDB = null;
 
-        private Stream mInputStream;
-        public StreamWriter OutputStream;
-
+        //TODO: Do these all need to be globals?
         public String HttpMethod;
         public String HttpUrl;
         public String HttpProtocolVersionString;
         public Hashtable HttpHeaders = new Hashtable();
 
-
         private static int MAX_POST_SIZE = 10 * 1024 * 1024; // 10MB
 
-        public HttpProcessor(TcpClient s, TwodokuServer srv)
+        public HttpProcessor(TcpClient s, DBHelper db)
         {
             mSocket = s;
-            mServer = srv;
+            mDB = db;
         }
 
-        private string streamReadLine(Stream inputStream)
+        private string StreamReadLine(Stream inputStream)
         {
             string data = "";
             while (true)
@@ -80,18 +80,18 @@ namespace TwodokuServer
             return data;
         }
 
-        public void process()
+        public void Process()
         {
             // we can't use a StreamReader for input, because it buffers up extra data on us inside it's
             // "processed" view of the world, and we want the data raw after the headers
-            mInputStream = new BufferedStream(mSocket.GetStream());
+            Stream inputStream = new BufferedStream(mSocket.GetStream());
 
             // we probably shouldn't be using a streamwriter for all output from handlers either
-            OutputStream = new StreamWriter(new BufferedStream(mSocket.GetStream()));
+            StreamWriter outputStream = new StreamWriter(new BufferedStream(mSocket.GetStream()));
             try
             {
                 //Parse the request
-                String request = streamReadLine(mInputStream);
+                String request = StreamReadLine(inputStream);
                 string[] tokens = request.Split(' ');
                 if (tokens.Length != 3)
                 {
@@ -104,32 +104,37 @@ namespace TwodokuServer
                 Console.WriteLine("starting: " + request);
 
 
-                readHeaders();
+                ReadHeaders(inputStream);
                 if (HttpMethod.Equals("GET"))
                 {
-                    handleGETRequest();
+                    HandleGETRequest(outputStream);
                 }
                 else if (HttpMethod.Equals("POST"))
                 {
-                    handlePOSTRequest();
+                    HandlePOSTRequest(inputStream, outputStream);
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine("Exception: " + e.ToString());
-                writeFailure();
+
+                //Write the failure response
+                outputStream.WriteLine("HTTP/1.0 404 File not found");
+                outputStream.WriteLine("Connection: close");
+                outputStream.WriteLine("");
             }
-            OutputStream.Flush();
-            mInputStream = null;
-            OutputStream = null;
+            outputStream.Flush();
+            outputStream.Close();
+            inputStream = null;
+            outputStream = null;
             mSocket.Close();
         }
 
-        public void readHeaders()
+        public void ReadHeaders(Stream inputStream)
         {
             Console.WriteLine("readHeaders()");
             String line;
-            while ((line = streamReadLine(mInputStream)) != null)
+            while ((line = StreamReadLine(inputStream)) != null)
             {
                 if (line.Equals(""))
                 {
@@ -155,36 +160,70 @@ namespace TwodokuServer
             }
         }
 
-        public void handleGETRequest()
+        public void HandleGETRequest(StreamWriter outputStream)
         {
             Console.WriteLine("request: {0}", HttpUrl);
-            writeSuccess();
+
+            //Write the success response
+            outputStream.WriteLine("HTTP/1.0 200 OK");
+            outputStream.WriteLine("Content-Type: text/html");
+            outputStream.WriteLine("Connection: close");
+            outputStream.WriteLine("");
+
 
             string method = "";
             if (HttpHeaders.ContainsKey("method"))
-            {
                 method = (string)HttpHeaders["method"];
-            }
+
+            string player1 = "";
+            if (HttpHeaders.ContainsKey("player1"))
+                player1 = (string)HttpHeaders["player1"];
+            string player2 = "";
+            if (HttpHeaders.ContainsKey("player2"))
+                player2 = (string)HttpHeaders["player2"];
 
             if (method.Equals("Gamelist"))
             {
-                OutputStream.WriteLine("No games");
+                string qualifier = DBHelper.ColumnPlayer1 + "='" + player1 + "' OR " + DBHelper.ColumnPlayer2 + "='" + player1 + "'";
+                string query = String.Format("select {0} from {1} where {2} order by {3}", "*", DBHelper.TableGames, qualifier, "STARTDATE");
+                SqlDataReader reader = mDB.Query(query);
+
+                if (reader != null)
+                {
+                    while (reader.Read())
+                    {
+                        DateTime timestamp = (DateTime)reader[DBHelper.ColumnStartDate];
+                        string startDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
+                        timestamp = (DateTime)reader[DBHelper.ColumnPlayDate];
+                        string playDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
+
+                        outputStream.WriteLine(string.Format("{0},{1},{2},{3},{4},{5},{6},{7}",
+                                (int)reader[DBHelper.ColumnGameId],
+                                (string)reader[DBHelper.ColumnPlayer1], (int)reader[DBHelper.ColumnPlayer1Score],
+                                (string)reader[DBHelper.ColumnPlayer2], (int)reader[DBHelper.ColumnPlayer2Score],
+                                startDate, playDate, (int)reader[DBHelper.ColumnTurn]));
+                    }
+                    reader.Close();
+                }
+                else
+                    outputStream.WriteLine("No games");
             }
             else
             {
-                OutputStream.WriteLine("<html><body><h1>test server</h1>");
-                OutputStream.WriteLine("Current Time: " + DateTime.Now.ToString());
-                OutputStream.WriteLine("url : {0}", HttpUrl);
+                //Sample code for default response
+                outputStream.WriteLine("<html><body><h1>test server</h1>");
+                outputStream.WriteLine("Current Time: " + DateTime.Now.ToString());
+                outputStream.WriteLine("url : {0}", HttpUrl);
 
-                OutputStream.WriteLine("<form method=post action=/form>");
-                OutputStream.WriteLine("<input type=text name=foo value=foovalue>");
-                OutputStream.WriteLine("<input type=submit name=bar value=barvalue>");
-                OutputStream.WriteLine("</form>");
+                outputStream.WriteLine("<form method=post action=/form>");
+                outputStream.WriteLine("<input type=text name=foo value=foovalue>");
+                outputStream.WriteLine("<input type=submit name=bar value=barvalue>");
+                outputStream.WriteLine("</form>");
             }
         }
 
         private const int BUF_SIZE = 4096;
-        public void handlePOSTRequest()
+        public void HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
         {
             // this post data processing just reads everything into a memory stream.
             // this is fine for smallish things, but for large stuff we should really
@@ -195,9 +234,9 @@ namespace TwodokuServer
             Console.WriteLine("get post data start");
             int content_len = 0;
             MemoryStream ms = new MemoryStream();
-            if (this.HttpHeaders.ContainsKey("Content-Length"))
+            if (this.HttpHeaders.ContainsKey("content-length"))
             {
-                content_len = Convert.ToInt32(this.HttpHeaders["Content-Length"]);
+                content_len = Convert.ToInt32(this.HttpHeaders["content-length"]);
                 if (content_len > MAX_POST_SIZE)
                 {
                     throw new Exception(
@@ -210,7 +249,7 @@ namespace TwodokuServer
                 {
                     Console.WriteLine("starting Read, to_read={0}", to_read);
 
-                    int numread = this.mInputStream.Read(buf, 0, Math.Min(BUF_SIZE, to_read));
+                    int numread = inputStream.Read(buf, 0, Math.Min(BUF_SIZE, to_read));
                     Console.WriteLine("read finished, numread={0}", numread);
                     if (numread == 0)
                     {
@@ -231,29 +270,37 @@ namespace TwodokuServer
             Console.WriteLine("get post data end");
 
             StreamReader sr = new StreamReader(ms);
-            Console.WriteLine("POST request: {0}", HttpUrl);
+            
             string data = sr.ReadToEnd();
 
-            OutputStream.WriteLine("<html><body><h1>test server</h1>");
-            OutputStream.WriteLine("<a href=/test>return</a><p>");
-            OutputStream.WriteLine("postbody: <pre>{0}</pre>", data);
-        }
+            Console.WriteLine("POST request: {0}", data);
+            
+            //Next:
+            //Handle the POST
+                //Parse the data
+            Hashtable dataEntries = new Hashtable();
+            string[] lines = data.Split('&');
+            foreach (string line in lines)
+            {
+                string[] parts = line.Split('=');
+                dataEntries[parts[0]] = parts[1];
+            }
+            //TODO: Resume here
+            string player1 = "";
+            int player1Score = 0;
+            string player2 = "";
+            int player2Score = 0;
 
-        public void writeSuccess(string content_type = "text/html")
-        {
-            OutputStream.WriteLine("HTTP/1.0 200 OK");
-            OutputStream.WriteLine("Content-Type: " + content_type);
-            OutputStream.WriteLine("Connection: close");
-            OutputStream.WriteLine("");
-        }
+                //Update the database
+            //Respond with failure if there is a problem (i.e. gameId and players don't match)
 
-        public void writeFailure()
-        {
-            OutputStream.WriteLine("HTTP/1.0 404 File not found");
-            OutputStream.WriteLine("Connection: close");
-            OutputStream.WriteLine("");
+            outputStream.WriteLine("HTTP/1.0 200 OK");
+            outputStream.WriteLine("Content-Type: text/html");
+            outputStream.WriteLine("Connection: close");
+            outputStream.WriteLine("");
+            outputStream.WriteLine("<html><body><h1>test server</h1>");
+            outputStream.WriteLine("<a href=/test>return</a><p>");
+            outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
         }
     }
-
-
 }

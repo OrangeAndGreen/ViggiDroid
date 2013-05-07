@@ -166,7 +166,7 @@ public class SudokuBoard
 					Point cell = new Point(x, y);
 					if(ret.GetCellOptions(cell, true).contains(value))
 					{
-						ret.SetCell(cell, value, 0, true);
+						ret.mInitialBoard[x][y] = value;
 						break;
 					}
 				}
@@ -294,8 +294,8 @@ public class SudokuBoard
     		return mPlayer1Board;
     	if(player == 1)
     		return mPlayer2Board;
-    	else
-    		return mInitialBoard;
+
+    	return mInitialBoard;
     }
     
     public byte[][] GetPendingMoves()
