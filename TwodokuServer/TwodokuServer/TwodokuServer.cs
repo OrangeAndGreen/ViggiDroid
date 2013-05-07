@@ -234,9 +234,9 @@ namespace TwodokuServer
             Console.WriteLine("get post data start");
             int content_len = 0;
             MemoryStream ms = new MemoryStream();
-            if (this.HttpHeaders.ContainsKey("content-length"))
+            if (HttpHeaders.ContainsKey("content-length"))
             {
-                content_len = Convert.ToInt32(this.HttpHeaders["content-length"]);
+                content_len = Convert.ToInt32(HttpHeaders["content-length"]);
                 if (content_len > MAX_POST_SIZE)
                 {
                     throw new Exception(
@@ -275,9 +275,10 @@ namespace TwodokuServer
 
             Console.WriteLine("POST request: {0}", data);
             
-            //Next:
-            //Handle the POST
-                //Parse the data
+            //Parse the data
+            int gameId = 0;
+            int.TryParse((string)HttpHeaders["gameid"], out gameId);
+
             Hashtable dataEntries = new Hashtable();
             string[] lines = data.Split('&');
             foreach (string line in lines)
@@ -285,22 +286,40 @@ namespace TwodokuServer
                 string[] parts = line.Split('=');
                 dataEntries[parts[0]] = parts[1];
             }
-            //TODO: Resume here
-            string player1 = "";
-            int player1Score = 0;
-            string player2 = "";
-            int player2Score = 0;
 
-                //Update the database
+            TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
+
+            //Update the database
+            bool success = true;
+            if (gameId <= 0)
+            {
+                //Add new game
+                gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
+                mDB.AddGame(gameInfo);
+            }
+            else
+            {
+                //Update existing game
+                success = mDB.UpdateGame(gameInfo);
+            }
+            
             //Respond with failure if there is a problem (i.e. gameId and players don't match)
-
-            outputStream.WriteLine("HTTP/1.0 200 OK");
-            outputStream.WriteLine("Content-Type: text/html");
-            outputStream.WriteLine("Connection: close");
-            outputStream.WriteLine("");
-            outputStream.WriteLine("<html><body><h1>test server</h1>");
-            outputStream.WriteLine("<a href=/test>return</a><p>");
-            outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
+            if (success)
+            {
+                outputStream.WriteLine("HTTP/1.0 200 OK");
+                outputStream.WriteLine("Content-Type: text/html");
+                outputStream.WriteLine("Connection: close");
+                outputStream.WriteLine("");
+                outputStream.WriteLine("<html><body><h1>test server</h1>");
+                outputStream.WriteLine("<a href=/test>return</a><p>");
+                outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
+            }
+            else
+            {
+                outputStream.WriteLine("HTTP/1.0 404 File not found");
+                outputStream.WriteLine("Connection: close");
+                outputStream.WriteLine("");
+            }
         }
     }
 }

@@ -371,5 +371,14 @@ namespace TwodokuServer
             }
             return lastID + 1;
         }
+
+        public void AddGame(TwodokuGameInfo gameInfo)
+        {
+        }
+
+        public bool UpdateGame(TwodokuGameInfo gameInfo)
+        {
+            return false;
+        }
     }
 }
