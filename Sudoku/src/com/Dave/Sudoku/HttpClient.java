@@ -1,6 +1,5 @@
 package com.Dave.Sudoku;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +14,6 @@ import android.content.Context;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 public class HttpClient
 {
@@ -200,7 +198,6 @@ public class HttpClient
 			List<TwoPlayerGameInfo> result = new ArrayList<TwoPlayerGameInfo>();
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("Method", "Gamelist"));
-			//TODO: Change this header to "Player"
 			headers.add(new Header("Player1", mPlayer));
 			try
 			{
@@ -303,15 +300,7 @@ public class HttpClient
 				data.add(new Header("Player2Score", Integer.toString(mGame.GetPlayer2Score())));
 				data.add(new Header("Active", "true"));
 				data.add(new Header("Turn", Integer.toString(mGame.GetCurrentPlayer())));
-				
-				//String board = "";
-				byte[][] array = mGame.GetBoard().GetSubBoard(2);
-		    	//for(int x = 0 ; x<SudokuBoard.BoardSize; x++)
-		    	//	for(int y=0; y<SudokuBoard.BoardSize; y++)
-		    	//		board += Integer.toString(array[x][y]);
-		    	
-		    	//Log.d("", "Initial board: " + board);
-				
+								
 				//Build the strings for the different boards
 				String playerBoard = "";
 				String startingBoard = "";
