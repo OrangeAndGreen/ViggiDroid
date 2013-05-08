@@ -138,16 +138,16 @@ public class SudokuView extends View
 				
 				for(int i=0; i<SudokuBoard.BoardSize; i++)
 				{
-					float theta = (float)(i - 1) * 360 / SudokuBoard.BoardSize - 90;
+					float theta = (float)(i) * 360 / SudokuBoard.BoardSize - 90;
 					
 					int xPixel = (int)(xCenter + radius * Math.cos(theta / 180 * Math.PI));
 					int yPixel = (int)(yCenter + radius * Math.sin(theta / 180 * Math.PI));
 					
-					canvas.drawText(String.format("%d", i), xPixel, yPixel, numberPaint);
-					if(!newOptions.contains(i + 1))
+					canvas.drawText(String.format("%d", i + 1), xPixel, yPixel, numberPaint);
+					if(!newOptions.contains((byte)(i + 1)))
 					{
 						Paint curPaint = null;
-						if(!oldOptions.contains(i + 1))
+						if(!oldOptions.contains((byte)(i + 1)))
 							curPaint = oldExPaint;
 						else
 							curPaint = newExPaint;

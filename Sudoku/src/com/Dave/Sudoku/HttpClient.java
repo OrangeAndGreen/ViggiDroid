@@ -181,7 +181,7 @@ public class HttpClient
 		task.execute(server);
 	}
 	
-	private class GetGameListTask extends AsyncTask<String, Void, List<TwoPlayerGameInfo>>
+	private class GetGameListTask extends AsyncTask<String, Void, List<SudokuGameTwoPlayer>>
 	{
 		private String mPlayer = null;
 		private GameListReadyListener mListener = null;
@@ -193,28 +193,28 @@ public class HttpClient
 		}
 
 		@Override
-		protected List<TwoPlayerGameInfo> doInBackground(String... urls)
+		protected List<SudokuGameTwoPlayer> doInBackground(String... urls)
 		{
-			List<TwoPlayerGameInfo> result = new ArrayList<TwoPlayerGameInfo>();
+			List<SudokuGameTwoPlayer> result = new ArrayList<SudokuGameTwoPlayer>();
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("Method", "Gamelist"));
-			headers.add(new Header("Player1", mPlayer));
+			headers.add(new Header("Player", mPlayer));
 			try
 			{
 				String strResult = DownloadText(urls[0], headers);
 				String[] lines = strResult.split("\n");
 				for(String line : lines)
-					result.add(TwoPlayerGameInfo.FromString(line));
+					result.add(SudokuGameTwoPlayer.FromString(line, true));
 			}
 			catch(Exception e)
 			{
-				Log.e("HttpClient", "Error communicating with server" + e.getLocalizedMessage());
+				Log.e("HttpClient", "Error communicating with server: " + e.getLocalizedMessage());
 			}
 			return result;
 		}
 		
 		@Override
-		protected void onPostExecute(List<TwoPlayerGameInfo> result)
+		protected void onPostExecute(List<SudokuGameTwoPlayer> result)
 		{
 			mListener.OnGameListReady(result);
 		}
@@ -222,15 +222,15 @@ public class HttpClient
 	
 	public interface GameListReadyListener
 	{
-		public void OnGameListReady(List<TwoPlayerGameInfo> gameList);
+		public void OnGameListReady(List<SudokuGameTwoPlayer> gameList);
 	}
 
 
 	///// Get game /////
 	
-	public void GetGame(String server, int gameId, GameReadyListener listener)
+	public void GetGame(String server, int gameId, String player, GameReadyListener listener)
 	{
-		GetGameTask task = new GetGameTask(gameId, listener);
+		GetGameTask task = new GetGameTask(gameId, player, listener);
 		task.execute(server);
 	}
 	
@@ -238,18 +238,33 @@ public class HttpClient
 	{
 		private Integer mGameId = 0;
 		private GameReadyListener mListener = null;
+		private String mPlayer = null;
 		
-		public GetGameTask(int gameId, GameReadyListener listener)
+		public GetGameTask(int gameId, String player, GameReadyListener listener)
 		{
 			mGameId = gameId;
+			mPlayer = player;
 			mListener = listener;
 		}
 		
 		@Override
 		protected SudokuGameTwoPlayer doInBackground(String... server)
 		{
-			//TODO: Retrieve the game from the server
-			return null;
+			SudokuGameTwoPlayer result = null;
+			List<Header> headers = new ArrayList<Header>();
+			headers.add(new Header("Method", "Game"));
+			headers.add(new Header("GameId", Integer.toString(mGameId)));
+			headers.add(new Header("Player", mPlayer));
+			try
+			{
+				String strResult = DownloadText(server[0], headers);
+				result = SudokuGameTwoPlayer.FromString(strResult, false);
+			}
+			catch(Exception e)
+			{
+				Log.e("HttpClient", "Error communicating with server" + e.getLocalizedMessage());
+			}
+			return result;
 		}
 		
 		@Override
@@ -267,20 +282,22 @@ public class HttpClient
 
 	///// Update game /////
 	
-	public void UpdateGame(String server, SudokuGameTwoPlayer game, GameUpdatedListener listener)
+	public void UpdateGame(String server, SudokuGameTwoPlayer game, String player, GameUpdatedListener listener)
 	{
-		UpdateGameTask task = new UpdateGameTask(game, listener);
+		UpdateGameTask task = new UpdateGameTask(game, player, listener);
 		task.execute(server);
 	}
 	
 	private class UpdateGameTask extends AsyncTask<String, Void, Boolean>
 	{
 		private SudokuGameTwoPlayer mGame = null;
+		private String mPlayer = null;
 		private GameUpdatedListener mListener = null;
 		
-		public UpdateGameTask(SudokuGameTwoPlayer game, GameUpdatedListener listener)
+		public UpdateGameTask(SudokuGameTwoPlayer game, String player, GameUpdatedListener listener)
 		{
 			mGame = game;
+			mPlayer = player;
 			mListener = listener;
 		}
 		
@@ -291,14 +308,15 @@ public class HttpClient
 			try
 			{
 				List<Header> headers = new ArrayList<Header>();
-				headers.add(new Header("GameID", Integer.toString(mGame.GameID)));
+				headers.add(new Header("GameID", Integer.toString(mGame.GameId)));
+				headers.add(new Header("Player", mPlayer));
 				
 				List<Header> data = new ArrayList<Header>();
 				data.add(new Header("Player1", mGame.GetPlayer1Name()));
 				data.add(new Header("Player1Score", Integer.toString(mGame.GetPlayer1Score())));
 				data.add(new Header("Player2", mGame.GetPlayer2Name()));
 				data.add(new Header("Player2Score", Integer.toString(mGame.GetPlayer2Score())));
-				data.add(new Header("Active", "true"));
+				data.add(new Header("Active", "1"));
 				data.add(new Header("Turn", Integer.toString(mGame.GetCurrentPlayer())));
 								
 				//Build the strings for the different boards
@@ -321,7 +339,7 @@ public class HttpClient
 				
 				data.add(new Header("PlayerBoard", playerBoard));
 				
-				if(mGame.GameID <= 0)
+				if(mGame.GameId <= 0)
 				{
 					//This data only needs to be sent the first time a game is sent to the server
 					data.add(new Header("HandSystem", mGame.GetHandSystem()));

@@ -57,6 +57,26 @@ public class SudokuBoard
 			
 	}
 	
+	public SudokuBoard(String initialBoard, String playerBoard, String multipliers)
+	{
+		this();
+		
+		int index = 0;
+		for(int x=0; x<BoardSize; x++)
+			for(int y=0; y<BoardSize; y++)
+			{
+				mInitialBoard[x][y] = Byte.parseByte(initialBoard.substring(index, index + 1));
+				mCellMultipliers[x][y] = Byte.parseByte(multipliers.substring(index, index + 1));
+				
+				if(GetPlayerTerritory(new Point(x, y)) == 0)
+					mPlayer1Board[x][y] = Byte.parseByte(playerBoard.substring(index, index + 1));
+				else
+					mPlayer2Board[x][y] = Byte.parseByte(playerBoard.substring(index, index + 1));
+				
+				index++;
+			}
+	}
+	
 	private static byte[][] CreateBoard()
 	{
 		byte[][] output = new byte[BoardSize][];
@@ -432,6 +452,7 @@ public class SudokuBoard
     	
     	List<Byte> options = new ArrayList<Byte>();
     	
+    	//Check each cell in the square
     	for(int x = 0; x<SquareSize; x++)
     		for(int y=0; y<SquareSize; y++)
     		{
@@ -440,6 +461,7 @@ public class SudokuBoard
     			int curValue = fullBoard[xValue][yValue];
     			if(curValue > 0)
     			{
+    				//If this cell has a value then that value is not an option in the square
     				int index = options.indexOf(curValue);
     				if(index >= 0)
     					options.remove(index);

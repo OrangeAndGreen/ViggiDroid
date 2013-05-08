@@ -1,5 +1,6 @@
 package com.Dave.Sudoku;
 
+import java.util.Calendar;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -33,7 +34,19 @@ public class SudokuGameTwoPlayer
 	private int GamePhase = 0;
 	private int PlayerTurn = 0;
 	
-	public int GameID = -1;
+	public int GameId = -1;
+	public Calendar StartDate = null;
+	public Calendar PlayDate = null;
+	public int Active = 0;
+	
+	//public String HandSystem = null;
+	public int HandSize = 0;
+	//public String ScoringSystem = null;
+	
+	private SudokuGameTwoPlayer()
+	{
+		
+	}
 	
 	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells, String scoringSystem, String handSystem, int handSize)
 	{
@@ -43,36 +56,104 @@ public class SudokuGameTwoPlayer
 		Board = SudokuBoard.Create(cellsToFill, true, bonusCells);
 		//Board = SudokuBoard.Create(-1, true);
 		
-		if(scoringSystem != null && scoringSystem == "System 1")
-    	{
-    		mScoring = new ScoringConcept1();
-    	}
-    	else if(scoringSystem != null && scoringSystem == "System 2")
-    	{
-    		mScoring = new ScoringConcept2();
-    	}
-    	else if(scoringSystem != null && scoringSystem == "Least square")
-    	{
-    		mScoring = new ScoringConcept3();
-    	}
-    	else
-    	{
-    		mScoring = new ScoringVanilla();
-    	}
+		mScoring = CreateScoring(scoringSystem);
     	DebugLog.Write("Scoring: " + mScoring.GetName(), null);
 		
-    	if(handSystem != null && handSystem == "Concept 1")
-    		mHand = new HandConcept1();
-    	else
-    		mHand = new HandVanilla();
-    	
-    	mHand.SetHandSize(handSize);
+    	mHand = CreateHand(handSystem, handSize);
     	DebugLog.Write("Hand: " + mHand.GetName(), null);
     	
 		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
 	
+	public static SudokuGameTwoPlayer FromString(String input, boolean infoOnly)
+	{
+		SudokuGameTwoPlayer game = new SudokuGameTwoPlayer();
+		
+		Log.d("SudokuGameTwoPlayer", input);
+		
+		String[] parts = input.split(",");
+		
+		game.GameId = Integer.parseInt(parts[0]);
+		game.Player1Name = parts[1];
+		game.Player1Score = Integer.parseInt(parts[2]);
+		game.Player2Name = parts[3];
+		game.Player2Score = Integer.parseInt(parts[4]);
+		game.StartDate = ParseCalendar(parts[5]);
+		game.PlayDate = ParseCalendar(parts[6]);
+		game.PlayerTurn = Integer.parseInt(parts[7].trim());
+		game.Active = Integer.parseInt(parts[8].trim());
+		
+		if(!infoOnly)
+		{
+			//game.HandSystem = parts[9];
+			game.HandSize = Integer.parseInt(parts[10].trim());
+			//game.ScoringSystem = parts[11];
+			
+			String startingBoard = parts[12];
+			String playerBoard = parts[13];
+			String multipliers = parts[14];
+			
+			game.Board = new SudokuBoard(startingBoard, playerBoard, multipliers);
+			game.mScoring = CreateScoring(parts[11]);
+			game.mHand = CreateHand(parts[9], game.HandSize);
+		}
+		
+		return game;
+	}
 	
+	public static IScoring CreateScoring(String scoringSystem)
+	{
+		IScoring ret = null;
+		
+		if(scoringSystem != null && scoringSystem.equals("System 1"))
+    	{
+			ret = new ScoringConcept1();
+    	}
+    	else if(scoringSystem != null && scoringSystem.equals("System 2"))
+    	{
+    		ret = new ScoringConcept2();
+    	}
+    	else if(scoringSystem != null && scoringSystem.equals("Least square"))
+    	{
+    		ret = new ScoringConcept3();
+    	}
+    	else
+    	{
+    		ret = new ScoringVanilla();
+    	}
+		
+		return ret;
+	}
+	
+	public static IHand CreateHand(String handSystem, int handSize)
+	{
+		IHand ret = null;
+		
+		if(handSystem != null && handSystem.equals("Concept 1"))
+			ret = new HandConcept1();
+    	else
+    		ret = new HandVanilla();
+    	
+		ret.SetHandSize(handSize);
+    	
+    	return ret;
+	}
+	
+	private static Calendar ParseCalendar(String input)
+	{
+		Calendar ret = Calendar.getInstance();
+		
+		String[] parts = input.split(":");
+		
+		ret.set(Calendar.YEAR, Integer.parseInt(parts[0]));
+		ret.set(Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
+		ret.set(Calendar.DAY_OF_MONTH, Integer.parseInt(parts[2]) - 1);
+		ret.set(Calendar.HOUR, Integer.parseInt(parts[3]));
+		ret.set(Calendar.MINUTE, Integer.parseInt(parts[4]));
+		ret.set(Calendar.SECOND, Integer.parseInt(parts[5]));
+		
+		return ret;
+	}
 
 	public String GetScoringSystem()
 	{
@@ -135,7 +216,7 @@ public class SudokuGameTwoPlayer
 	public boolean IsLocalPlayerTurn(String localPlayer)
 	{
 		int localPlayerIndex = 0;
-		if(localPlayer == Player2Name)
+		if(localPlayer.equals(Player2Name))
 			localPlayerIndex = 1;
 		
 		return PlayerTurn == localPlayerIndex;
@@ -274,6 +355,7 @@ public class SudokuGameTwoPlayer
 		//See if the game is over
 		if(Board.CheckBoard(false))
 		{
+			Active = 0;
 			return CreateEnding(context);
 		}
 		
@@ -368,7 +450,7 @@ public class SudokuGameTwoPlayer
 		return builder;
 	}
 	
-	public void UpdateScore(TextView view)
+	public void UpdateScore(TextView view, String localPlayer)
 	{
 		String player1String = String.format("%s: %d", Player1Name, Player1Score);
 		String player2String = String.format("\n%s: %d", Player2Name, Player2Score);
@@ -377,6 +459,9 @@ public class SudokuGameTwoPlayer
 		int player2Background = Color.TRANSPARENT;
 		
 		String proposedScore = " (your turn";
+		if(!IsLocalPlayerTurn(localPlayer))
+			proposedScore = " (their turn";
+		
 		if(mCurrentMultiplier > 1)
 			proposedScore += String.format(" with %dx bonus", mCurrentMultiplier);
 		proposedScore += ")";

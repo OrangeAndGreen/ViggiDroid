@@ -2,9 +2,11 @@ package com.Dave.Sudoku;
 
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 import com.Dave.Sudoku.HttpClient.GameListReadyListener;
+import com.Dave.Sudoku.HttpClient.GameReadyListener;
 import com.Dave.Sudoku.HttpClient.GameUpdatedListener;
 
 import android.app.Activity;
@@ -144,22 +146,21 @@ public class SudokuActivity extends Activity
     	//Start getting the list of existing games
         mClient.GetGameList(mServer, mPlayerName, new GameListReadyListener()
         {
-			public void OnGameListReady(List<TwoPlayerGameInfo> gameList)
+			public void OnGameListReady(List<SudokuGameTwoPlayer> gameList)
 			{
-				Toast.makeText(mContext, String.format("%d games found", gameList.size()), Toast.LENGTH_LONG).show();
+				Toast.makeText(mContext, String.format("%d games found", gameList.size()), Toast.LENGTH_SHORT).show();
 				
 				//Split the list into individual entries
-				for(TwoPlayerGameInfo entry : gameList)
+				for(SudokuGameTwoPlayer entry : gameList)
 				{
 					Button button = new Button(mContext);
-					button.setText(String.format("%s vs. %s, started %s", entry.Player1, entry.Player2, new SimpleDateFormat("MM/dd/yyyy").format(entry.StartDate.getTime())));
+					button.setText(String.format("%s vs. %s, started %s", entry.GetPlayer1Name(), entry.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy").format(entry.StartDate.getTime())));
 					button.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
 					
-					//TODO: Add button listener to retrieve and load the game
+					button.setOnClickListener(new ResumeButtonListener(entry.GameId));
 					
 					mTwoPlayerList.addView(button);
 				}
-				
 			}
 		});
     }
@@ -263,13 +264,43 @@ public class SudokuActivity extends Activity
     	mDebugText.setText(gameOptions);
     	
     	mGameText.setText("Battle Sudoku!");
-    	mGame.UpdateScore(mGameScore);
+    	mGame.UpdateScore(mGameScore, mPlayerName);
     	
     	mClearButton.setVisibility(Button.VISIBLE);
     	mConfirmButton.setVisibility(Button.VISIBLE);
     	mShowButton.setVisibility(Button.VISIBLE);
     	
     	DisablePendingButtons();
+    }
+    
+    private void ResumeGame(int gameId)
+    {
+    	mClient.GetGame(mServer, gameId, mPlayerName, new GameReadyListener()
+		{
+			public void OnGameReady(SudokuGameTwoPlayer game)
+			{
+				DebugLog.Write("Resuming two player game", null);
+		    	
+		    	PrepareGame();
+		    	
+		    	//Resume the two player game
+		    	mGame = game;
+		    	
+		    	String gameOptions = String.format("Game: %s, %s", mGame.GetHandSystem(), mGame.GetScoringSystem());
+		    	mDebugText.setText(gameOptions);
+		    	
+		    	mGameText.setText("Battle Sudoku!");
+		    	mGame.UpdateScore(mGameScore, mPlayerName);
+		    	
+		    	mClearButton.setVisibility(Button.VISIBLE);
+		    	mConfirmButton.setVisibility(Button.VISIBLE);
+		    	mShowButton.setVisibility(Button.VISIBLE);
+		    	
+		    	DisablePendingButtons();
+		    	
+		    	mSudoku.InitializeBoard(mGame.GetBoard(), mGame.GetPlayer1Color(), mGame.GetPlayer2Color());
+			}
+		});
     }
     
     private void PrepareGame()
@@ -290,8 +321,8 @@ public class SudokuActivity extends Activity
         {
 			public void onClick(View v)
 			{
-				if(mGame != null)
-					DebugLog.Write("Aborted board:\n" + mGame.GetBoard().toString(), null);
+				//if(mGame != null)
+				//	DebugLog.Write("Aborted board:\n" + mGame.GetBoard().toString(), null);
 				
 				LoadMainMenu();
 			}
@@ -346,8 +377,8 @@ public class SudokuActivity extends Activity
     	
     	Toast t = Toast.makeText(mContext, "Uploading game to server", Toast.LENGTH_SHORT);
 		t.show();
-    	
-    	mClient.UpdateGame(mServer, mGame, new GameUpdatedListener()
+		
+    	mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
     	{
 			public void OnGameUpdated(boolean success)
 			{
@@ -365,7 +396,7 @@ public class SudokuActivity extends Activity
     {
     	//Always calling ShowMove() to update (possibly erase) a pending move within the game
     	mGame.ShowMove(mSudoku, mPendingPoint, mPendingValue);
-		mGame.UpdateScore(mGameScore);
+		mGame.UpdateScore(mGameScore, mPlayerName);
     	if(mShowingPossibilities)
 		{
     		mSudoku.ShowSquareOptions();
@@ -485,6 +516,22 @@ public class SudokuActivity extends Activity
 		}
 	}
 
+	//This class responds when the user chooses to play an existing 2-player game
+	private class ResumeButtonListener implements OnClickListener
+	{
+		private int mGameId = -1;
+		
+		public ResumeButtonListener(int gameId)
+		{
+			mGameId = gameId;
+		}
+
+		public void onClick(View v)
+		{
+			ResumeGame(mGameId);
+		}
+	}
+	
 	//This class responds when the user clicks the Sudoku board
     private class SudokuTouchListener implements OnTouchListener
     {

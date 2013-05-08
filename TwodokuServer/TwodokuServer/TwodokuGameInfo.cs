@@ -34,6 +34,8 @@ namespace TwodokuServer
         {
             TwodokuGameInfo ret = new TwodokuGameInfo();
 
+            ret.GameId = gameId;
+
             ret.Player1 = (string)dataEntries["Player1"];
             int.TryParse((string)dataEntries["Player1Score"], out ret.Player1Score);
             ret.Player2 = (string)dataEntries["Player2"];
@@ -46,6 +48,8 @@ namespace TwodokuServer
             ret.ScoringSystem = (string)dataEntries["ScoringSystem"];
             ret.InitialBoard = (string)dataEntries["StartingBoard"];
             ret.Multipliers = (string)dataEntries["Multipliers"];
+
+            ret.PlayDate = DateTime.Now;
 
             return ret;
         }
@@ -75,6 +79,28 @@ namespace TwodokuServer
             gameInfo.ScoringSystem = (string)reader[DBHelper.ColumnScoringSystem];
 
             return gameInfo;
+        }
+
+        public string ToPacket(bool infoOnly)
+        {
+            string ret = "";
+
+            DateTime timestamp = StartDate;
+            string startDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
+            timestamp = PlayDate;
+            string playDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
+
+            ret = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                    GameId, Player1, Player1Score, Player2, Player2Score,
+                    startDate, playDate, Turn, Active);
+
+            if (!infoOnly)
+            {
+                ret += string.Format(",{0},{1},{2},{3},{4},{5}",
+                    HandSystem, HandSize, ScoringSystem, InitialBoard, PlayerBoard, Multipliers);
+            }
+
+            return ret;
         }
 
         public bool IsSameGame(TwodokuGameInfo gameInfo)
