@@ -2,7 +2,7 @@ package com.Dave.Sudoku;
 
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.Dave.Sudoku.HttpClient.GameListReadyListener;
@@ -21,11 +21,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup.LayoutParams;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,12 +53,11 @@ public class SudokuActivity extends Activity
 {
 	private String mServer = "http://10.0.2.2:8080";
 	private HttpClient mClient = null;
+	private boolean mShowingMainMenu = false;
 	
 	private SudokuGameTwoPlayer mGame = null;
-	
 	private String mPlayerName = null;
-	
-	private LinearLayout mTwoPlayerList = null;
+	private ListView mTwoPlayerList = null;
 	
 	private EditText mPlayer2Text = null;
 	private Spinner mCellsToFillSpinner = null;
@@ -88,6 +88,9 @@ public class SudokuActivity extends Activity
 	private List<Byte> mCellOptions = null;
 	private NumberPrompt mPrompt = null;
 
+	private ArrayList<String> mExistingGames = new ArrayList<String>();
+	private ArrayList<Integer> mExistingGameIds = new ArrayList<Integer>();
+	private ArrayAdapter<String> mArrayAdapter = null;
 	
     /** Called when the activity is first created. */
     @Override
@@ -125,9 +128,21 @@ public class SudokuActivity extends Activity
     	return null;
     }
     
+    @Override
+    public void onBackPressed()
+    {
+        if(mShowingMainMenu)
+        	finish();
+        else
+        	LoadMainMenu();
+        return;
+    }
+    
     private void LoadMainMenu()
     {
     	setContentView(R.layout.mainmenu);
+    	
+    	mShowingMainMenu = true;
     	
     	Button easyButton = (Button) findViewById(R.id.buttonEasy);
     	easyButton.setOnClickListener(new StartButtonListener(false, "Easy"));
@@ -138,11 +153,11 @@ public class SudokuActivity extends Activity
     	Button twoPlayerButton = (Button) findViewById(R.id.buttonTwoPlayer);
     	twoPlayerButton.setOnClickListener(new StartButtonListener(true, null));
     	
-    	if(mTwoPlayerList == null)
-    		mTwoPlayerList = (LinearLayout) findViewById(R.id.twoPlayerList);
-    	
-    	mTwoPlayerList.removeAllViews();
-    	
+    	mTwoPlayerList = (ListView) findViewById(R.id.twoPlayerList);
+    	mArrayAdapter = new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1, mExistingGames);
+    	mTwoPlayerList.setAdapter(mArrayAdapter);
+		mTwoPlayerList.setOnItemClickListener(new ResumeGameListener(mExistingGameIds));
+			
     	//Start getting the list of existing games
         mClient.GetGameList(mServer, mPlayerName, new GameListReadyListener()
         {
@@ -150,17 +165,21 @@ public class SudokuActivity extends Activity
 			{
 				Toast.makeText(mContext, String.format("%d games found", gameList.size()), Toast.LENGTH_SHORT).show();
 				
+				mArrayAdapter.clear();
+				//mExistingGames.clear();
+				mExistingGameIds.clear();
+				
 				//Split the list into individual entries
-				for(SudokuGameTwoPlayer entry : gameList)
+				for(int i=0; i<gameList.size(); i++)
 				{
-					Button button = new Button(mContext);
-					button.setText(String.format("%s vs. %s, started %s", entry.GetPlayer1Name(), entry.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy").format(entry.StartDate.getTime())));
-					button.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
-					
-					button.setOnClickListener(new ResumeButtonListener(entry.GameId));
-					
-					mTwoPlayerList.addView(button);
+					SudokuGameTwoPlayer game = gameList.get(i);
+					String entry = String.format("%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy").format(game.StartDate.getTime()));
+					if(game.IsLocalPlayerTurn(mPlayerName))
+						entry += " (your turn)";
+					mArrayAdapter.add(entry);
+					mExistingGameIds.add(game.GameId);
 				}
+					
 			}
 		});
     }
@@ -168,6 +187,8 @@ public class SudokuActivity extends Activity
     private void LoadGameMenu()
     {
     	setContentView(R.layout.gameoptions);
+    	
+    	mShowingMainMenu = false;
     	
     	mPlayer2Text = (EditText) findViewById(R.id.inputPlayer2);
     	
@@ -299,6 +320,8 @@ public class SudokuActivity extends Activity
 		    	DisablePendingButtons();
 		    	
 		    	mSudoku.InitializeBoard(mGame.GetBoard(), mGame.GetPlayer1Color(), mGame.GetPlayer2Color());
+		    	
+		    	DrawHand();
 			}
 		});
     }
@@ -306,6 +329,8 @@ public class SudokuActivity extends Activity
     private void PrepareGame()
     {
     	setContentView(R.layout.game);
+    	
+    	mShowingMainMenu = false;
         
     	//Get the GUI elements and assign listeners
         mSudoku = (SudokuView) findViewById(R.id.sudoku);
@@ -375,8 +400,8 @@ public class SudokuActivity extends Activity
     	
     	UpdateBoard();
     	
-    	Toast t = Toast.makeText(mContext, "Uploading game to server", Toast.LENGTH_SHORT);
-		t.show();
+    	//Toast t = Toast.makeText(mContext, "Uploading game to server", Toast.LENGTH_SHORT);
+		//t.show();
 		
     	mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
     	{
@@ -405,9 +430,9 @@ public class SudokuActivity extends Activity
     
     private void DrawHand()
     {
-    	List<Byte> hand = mGame.GetHand();
-    	if(hand != null && mGame != null && mGame.GetGamePhase() > 0)
-    	{    		
+    	if(mGame != null && mGame.GetHand() != null &&  mGame.GetGamePhase() > 0 && mGame.IsLocalPlayerTurn(mPlayerName))
+    	{
+    		List<Byte> hand = mGame.GetHand();	
     		String handText = "";
     		for(int i=0; i<hand.size(); i++)
     		{
@@ -420,6 +445,8 @@ public class SudokuActivity extends Activity
     		
     		mHandText.setText(handText);
     	}
+    	else
+    		mHandText.setText("");
     }
     
     private void EnablePendingButtons()
@@ -517,18 +544,18 @@ public class SudokuActivity extends Activity
 	}
 
 	//This class responds when the user chooses to play an existing 2-player game
-	private class ResumeButtonListener implements OnClickListener
+	private class ResumeGameListener implements OnItemClickListener
 	{
-		private int mGameId = -1;
+		private ArrayList<Integer> mGameIds = null;
 		
-		public ResumeButtonListener(int gameId)
+		public ResumeGameListener(ArrayList<Integer> gameIds)
 		{
-			mGameId = gameId;
+			mGameIds = gameIds;
 		}
 
-		public void onClick(View v)
+		public void onItemClick(AdapterView<?> adapter, View v, int position, long id)
 		{
-			ResumeGame(mGameId);
+			ResumeGame(mGameIds.get(position));
 		}
 	}
 	
@@ -605,4 +632,5 @@ public class SudokuActivity extends Activity
 			UpdateBoard();
 		}
     }
+
 }

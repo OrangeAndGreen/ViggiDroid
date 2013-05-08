@@ -19,8 +19,8 @@
 	    android:layout_height="2dp"
 	    android:layout_width="fill_parent"
 	    android:layout_below="@+id/titleText"
-	    android:layout_marginTop="30sp"
-        android:layout_marginBottom="30sp"
+	    android:layout_marginTop="15sp"
+        android:layout_marginBottom="15sp"
 	    android:background="#000080"
 		/>
     
@@ -46,8 +46,8 @@
 	    android:layout_height="2dp"
 	    android:layout_width="fill_parent"
 	    android:layout_below="@+id/buttonHard"
-	    android:layout_marginTop="30sp"
-        android:layout_marginBottom="30sp"
+	    android:layout_marginTop="15sp"
+        android:layout_marginBottom="15sp"
 	    android:background="#000080"
 		/>
     
@@ -60,7 +60,7 @@
         android:text="@string/twoplayer"
         />
     
-    <LinearLayout
+    <ListView
         android:id="@+id/twoPlayerList"
         android:layout_width="fill_parent"
   		android:layout_height="fill_parent"

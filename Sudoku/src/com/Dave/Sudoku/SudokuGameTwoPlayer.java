@@ -94,6 +94,8 @@ public class SudokuGameTwoPlayer
 			String multipliers = parts[14];
 			
 			game.Board = new SudokuBoard(startingBoard, playerBoard, multipliers);
+			if(game.Board.GetSquareOptions(new Point(1, 1), true).size() == 0)
+				game.GamePhase = 1;
 			game.mScoring = CreateScoring(parts[11]);
 			game.mHand = CreateHand(parts[9], game.HandSize);
 		}
