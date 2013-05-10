@@ -51,7 +51,7 @@ import android.widget.Toast;
 
 public class SudokuActivity extends Activity
 {
-	private String mServer = "http://10.0.2.2:8080";
+	private String mServer = "http://orangeandgreen.no-ip.biz:8080";
 	private HttpClient mClient = null;
 	private boolean mShowingMainMenu = false;
 	
