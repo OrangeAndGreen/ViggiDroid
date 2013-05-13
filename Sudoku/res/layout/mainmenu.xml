@@ -14,6 +14,7 @@
         android:text="@string/title"
         />
 
+    <!--
     <View  
         android:id="@+id/divider1"
 	    android:layout_height="2dp"
@@ -40,12 +41,12 @@
         android:layout_centerInParent="true"
         android:text="@string/hard"
         />
-    
+    -->
     <View   
         android:id="@+id/divider2"
 	    android:layout_height="2dp"
 	    android:layout_width="fill_parent"
-	    android:layout_below="@+id/buttonHard"
+	    android:layout_below="@+id/titleText"
 	    android:layout_marginTop="15sp"
         android:layout_marginBottom="15sp"
 	    android:background="#000080"

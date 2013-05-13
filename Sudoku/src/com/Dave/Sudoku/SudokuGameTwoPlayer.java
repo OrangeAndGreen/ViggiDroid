@@ -16,6 +16,8 @@ import android.widget.TextView;
 public class SudokuGameTwoPlayer
 {
 	private static final int mNumberOfPlayers = 2;
+	private static final int mBlue = Color.rgb(79, 129, 189);
+	private static final int mRed = Color.rgb(149, 55, 53);;
 	
 	private SudokuBoard Board = null;
 	
@@ -48,12 +50,12 @@ public class SudokuGameTwoPlayer
 		
 	}
 	
-	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, int cellsToFill, int bonusCells, String scoringSystem, String handSystem, int handSize)
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int bonusCells, String scoringSystem, String handSystem, int handSize)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
 		
-		Board = SudokuBoard.Create(cellsToFill, true, bonusCells);
+		Board = SudokuBoard.Create(fillCenter, cellsToFill, true, bonusCells);
 		//Board = SudokuBoard.Create(-1, true);
 		
 		mScoring = CreateScoring(scoringSystem);
@@ -192,7 +194,15 @@ public class SudokuGameTwoPlayer
 	
 	public int GetPlayer1Color()
 	{
-		return Color.rgb(79, 129, 189);
+		if(IsLocalPlayerTurn(GetPlayer1Name()))
+			return mBlue;
+		else
+			return mRed;
+	}
+	
+	public int GetLocalPlayerColor()
+	{
+		return mBlue;
 	}
 	
 	public String GetPlayer2Name()
@@ -207,7 +217,15 @@ public class SudokuGameTwoPlayer
 	
 	public int GetPlayer2Color()
 	{
-		return Color.rgb(149, 55, 53);
+		if(IsLocalPlayerTurn(GetPlayer2Name()))
+			return mBlue;
+		else
+			return mRed;
+	}
+	
+	public int GetRemotePlayerColor()
+	{
+		return mRed;
 	}
 	
 	public int GetCurrentPlayer()
@@ -218,7 +236,7 @@ public class SudokuGameTwoPlayer
 	public boolean IsLocalPlayerTurn(String localPlayer)
 	{
 		int localPlayerIndex = 0;
-		if(localPlayer.equals(Player2Name))
+		if(localPlayer.toLowerCase().equals(Player2Name.toLowerCase()))
 			localPlayerIndex = 1;
 		
 		return PlayerTurn == localPlayerIndex;
@@ -474,14 +492,18 @@ public class SudokuGameTwoPlayer
 				proposedScore += String.format(" and %dx bonus turn", mProposedMultiplier);
 			proposedScore += ")";
 		}
+		
+		int highlightColor = GetLocalPlayerColor();
+		if(!IsLocalPlayerTurn(localPlayer))
+			highlightColor = GetRemotePlayerColor();
 		if(GetCurrentPlayer() == 0)
 		{
-			player1Background = GetPlayer1Color();
+			player1Background = highlightColor;
 			player1String += proposedScore;
 		}
 		else
 		{
-			player2Background = GetPlayer2Color();
+			player2Background = highlightColor;
 			player2String += proposedScore;
 		}
 		

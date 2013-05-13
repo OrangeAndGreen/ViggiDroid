@@ -14,6 +14,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -53,6 +56,7 @@ public class SudokuActivity extends Activity
 {
 	private String mServer = "http://orangeandgreen.no-ip.biz:8080";
 	private HttpClient mClient = null;
+	private SharedPreferences mPreferences = null;
 	private boolean mShowingMainMenu = false;
 	
 	private SudokuGameTwoPlayer mGame = null;
@@ -60,8 +64,9 @@ public class SudokuActivity extends Activity
 	private ListView mTwoPlayerList = null;
 	
 	private EditText mPlayer2Text = null;
+	private CheckBox mFillCenter = null;
 	private Spinner mCellsToFillSpinner = null;
-	private CharSequence[] mFillOptions = { "-1", "0", "1", "3", "5" };
+	private CharSequence[] mFillOptions = { "-2", "-1", "0", "1", "3", "5" };
 	private Spinner mHandSizeSpinner = null;
 	private CharSequence[] mHandSizeOptions = { "3", "5", "7", "9" };
 	private Spinner mBonusCellsSpinner = null;
@@ -102,6 +107,9 @@ public class SudokuActivity extends Activity
 
         mClient = new HttpClient(this);
         
+        mPreferences = getPreferences(MODE_PRIVATE);
+        mPlayerName = mPreferences.getString("PlayerName", "");
+        
         //Show the name prompt
         showDialog(1);
     }
@@ -121,7 +129,7 @@ public class SudokuActivity extends Activity
     	else if(id == 1)
     	{
     		//Show the name prompt
-    		NamePrompt prompt = new NamePrompt(this, mNameSetListener);
+    		NamePrompt prompt = new NamePrompt(this, mPlayerName, mNameSetListener);
     		return prompt;
     	}
     	
@@ -144,11 +152,11 @@ public class SudokuActivity extends Activity
     	
     	mShowingMainMenu = true;
     	
-    	Button easyButton = (Button) findViewById(R.id.buttonEasy);
-    	easyButton.setOnClickListener(new StartButtonListener(false, "Easy"));
+    	//Button easyButton = (Button) findViewById(R.id.buttonEasy);
+    	//easyButton.setOnClickListener(new StartButtonListener(false, "Easy"));
     	
-    	Button hardButton = (Button) findViewById(R.id.buttonHard);
-    	hardButton.setOnClickListener(new StartButtonListener(false, "Hard"));
+    	//Button hardButton = (Button) findViewById(R.id.buttonHard);
+    	//hardButton.setOnClickListener(new StartButtonListener(false, "Hard"));
     	
     	Button twoPlayerButton = (Button) findViewById(R.id.buttonTwoPlayer);
     	twoPlayerButton.setOnClickListener(new StartButtonListener(true, null));
@@ -192,12 +200,13 @@ public class SudokuActivity extends Activity
     	
     	mPlayer2Text = (EditText) findViewById(R.id.inputPlayer2);
     	
+    	mFillCenter = (CheckBox) findViewById(R.id.fillCenterCheck);
     	mCellsToFillSpinner = (Spinner) findViewById(R.id.spinnerCellsToFill);
     	mHandSizeSpinner = (Spinner) findViewById(R.id.spinnerHandSize);
     	mBonusCellsSpinner = (Spinner) findViewById(R.id.spinnerBonusCells);
     	mScoringSystemSpinner = (Spinner) findViewById(R.id.spinnerScoringSystem);
     	mHandSystemSpinner = (Spinner) findViewById(R.id.spinnerHandSystem);
-		
+    	
 		//Setup the Cell-to-fill Spinner
 		ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mFillOptions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -237,17 +246,14 @@ public class SudokuActivity extends Activity
 				if(player2Name.trim().equals(""))
 					player2Name = "Player 2";
 				
+				boolean fillCenter = mFillCenter.isChecked();
 				int cellsToFill = Integer.parseInt(mFillOptions[mCellsToFillSpinner.getSelectedItemPosition()].toString());
-				
 				int handSize = Integer.parseInt(mHandSizeOptions[mHandSizeSpinner.getSelectedItemPosition()].toString());
-				
 				int bonusCells = Integer.parseInt(mBonusCellOptions[mBonusCellsSpinner.getSelectedItemPosition()].toString());
-				
 				String handSystem = mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
-				
 				String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
 				
-				StartTwoPlayerGame(mPlayerName, player2Name, cellsToFill, handSize, bonusCells, handSystem, scoringSystem);
+				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem);
 			}
 		});
     }
@@ -268,14 +274,14 @@ public class SudokuActivity extends Activity
         //mShowButton.setVisibility(Button.INVISIBLE);
     }
     
-    private void StartTwoPlayerGame(String player1Name, String player2Name, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem)
+    private void StartTwoPlayerGame(String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem)
     {
     	DebugLog.Write("Starting two player game", null);
     	
     	PrepareGame();
     	
     	//Start two player game
-    	mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, cellsToFill, bonusCells, scoringSystem, handSystem, handSize);
+    	mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, fillCenter, cellsToFill, bonusCells, scoringSystem, handSystem, handSize);
     	DebugLog.Write(String.format("Bonus cells: %d", bonusCells), null);
     	String cellsFilled = String.format("Fill %d", cellsToFill);
     	
@@ -340,18 +346,6 @@ public class SudokuActivity extends Activity
         
         mGameScore = (TextView) findViewById(R.id.gameScore);
         mGameScore.setText("");
-        
-        Button quitButton = (Button) findViewById(R.id.buttonQuit);
-        quitButton.setOnClickListener(new OnClickListener()
-        {
-			public void onClick(View v)
-			{
-				//if(mGame != null)
-				//	DebugLog.Write("Aborted board:\n" + mGame.GetBoard().toString(), null);
-				
-				LoadMainMenu();
-			}
-		});
         
         mClearButton = (Button) findViewById(R.id.buttonClear);
         mClearButton.setOnClickListener(new ClearButtonListener());
@@ -517,6 +511,10 @@ public class SudokuActivity extends Activity
 		public void onNameSet(NamePrompt view, String name)
 		{
 			mPlayerName = name;
+
+			Editor editor = mPreferences.edit();
+			editor.putString("PlayerName", mPlayerName);
+			editor.commit();
 			
 			LoadMainMenu();
 		}
@@ -564,12 +562,22 @@ public class SudokuActivity extends Activity
     {
 		public boolean onTouch(View arg0, MotionEvent arg1)
 		{
+			DebugLog.Write("User clicked board", null);
 			//Ignore the click if we're in the possibility view OR it's not the local player's turn
-			if(mShowingPossibilities || !mGame.IsLocalPlayerTurn(mPlayerName))
+			if(mShowingPossibilities)
+			{
+				DebugLog.Write("Ignoring board click, showing possibilities", null);
 				return false;
+			}
+			if(!mGame.IsLocalPlayerTurn(mPlayerName))
+			{
+				DebugLog.Write("Ignoring board click, not this player's turn", null);
+				return false;
+			}
 			
 			//Determine which cell was clicked
 			Point currentPoint = mSudoku.GetCell(arg1.getX(), arg1.getY());
+			DebugLog.Write(String.format("Clicked cell (%d, %d)", currentPoint.x, currentPoint.y), null);
 			Log.i("SudokuActivity", String.format("Clicked box (%d, %d)", currentPoint.x, currentPoint.y));
 			
 			//Make sure we got a legal cell value

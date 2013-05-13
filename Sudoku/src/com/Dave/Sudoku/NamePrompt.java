@@ -13,10 +13,14 @@ public class NamePrompt extends Dialog
 	
 	private EditText mNameText = null;
 	private Button mOKButton = null;
+	private String mDefaultName = null;
 	
-	public NamePrompt(Context context, OnNameSetListener listener)
+	public NamePrompt(Context context, String defaultName, OnNameSetListener listener)
 	{
 		super(context);
+		
+		mDefaultName = defaultName;
+				
 		mListener = listener;
 	}
 	
@@ -31,6 +35,9 @@ public class NamePrompt extends Dialog
 		mOKButton.setOnClickListener(new OKButtonListener());
 		
 		mNameText = (EditText) findViewById(R.id.nameInput);
+		if(mDefaultName != null)
+			mNameText.setText(mDefaultName);
+
 	}
 	
 	@Override

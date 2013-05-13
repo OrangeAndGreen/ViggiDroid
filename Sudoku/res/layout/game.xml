@@ -12,13 +12,6 @@
 		android:layout_alignParentLeft="true"
         android:text="@string/hello" />
     
-    <Button android:id="@+id/buttonQuit"
-        android:layout_width="50sp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-		android:layout_alignParentRight="true"
-		android:text="@string/x" />
-
     <TextView
         android:id="@+id/gameScore"
         android:layout_width="wrap_content"

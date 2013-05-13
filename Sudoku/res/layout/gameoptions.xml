@@ -51,11 +51,20 @@
 	    android:background="#000080"
 		/>
     
+    <CheckBox
+        android:id="@+id/fillCenterCheck"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/fillCenter"
+        android:layout_below="@+id/divider2"
+        android:layout_alignParentLeft="true"
+        />
+    
     <TextView
         android:id="@+id/textCellsToFill"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/divider2"
+  		android:layout_below="@+id/fillCenterCheck"
         android:layout_alignParentLeft="true"
         android:text="@string/cellstofill"
         />
@@ -81,7 +90,7 @@
         android:id="@+id/textHandSize"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/divider2"
+  		android:layout_below="@+id/fillCenterCheck"
         android:layout_alignLeft="@+id/spinnerHandSize"
         android:text="@string/handSize"
         />

@@ -120,6 +120,8 @@ public class SudokuView extends View
 				List<Byte> oldOptions = mBoard.GetSquareOptions(square, false);
 				List<Byte> newOptions = mBoard.GetSquareOptions(square, true);
 				
+				List<Byte> playedValues = mBoard.GetSquarePlayedValues(square, false);
+				
 				/*
 				String oldOptionString = "";
 				for(int i=0; i < oldOptions.length; i++)
@@ -138,20 +140,23 @@ public class SudokuView extends View
 				
 				for(int i=0; i<SudokuBoard.BoardSize; i++)
 				{
-					float theta = (float)(i) * 360 / SudokuBoard.BoardSize - 90;
-					
-					int xPixel = (int)(xCenter + radius * Math.cos(theta / 180 * Math.PI));
-					int yPixel = (int)(yCenter + radius * Math.sin(theta / 180 * Math.PI));
-					
-					canvas.drawText(String.format("%d", i + 1), xPixel, yPixel, numberPaint);
-					if(!newOptions.contains((byte)(i + 1)))
+					if(!playedValues.contains((byte)(i + 1)))
 					{
-						Paint curPaint = null;
-						if(!oldOptions.contains((byte)(i + 1)))
-							curPaint = oldExPaint;
-						else
-							curPaint = newExPaint;
-						canvas.drawText("X", xPixel, yPixel, curPaint);
+						float theta = (float)(i) * 360 / SudokuBoard.BoardSize - 90;
+						
+						int xPixel = (int)(xCenter + radius * Math.cos(theta / 180 * Math.PI));
+						int yPixel = (int)(yCenter + radius * Math.sin(theta / 180 * Math.PI));
+						
+						canvas.drawText(String.format("%d", i + 1), xPixel, yPixel, numberPaint);
+						if(!newOptions.contains((byte)(i + 1)))
+						{
+							Paint curPaint = null;
+							if(!oldOptions.contains((byte)(i + 1)))
+								curPaint = oldExPaint;
+							else
+								curPaint = newExPaint;
+							canvas.drawText("X", xPixel, yPixel, curPaint);
+						}
 					}
 				}
 			}

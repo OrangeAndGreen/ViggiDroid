@@ -22,11 +22,12 @@ namespace TwodokuServer
             mPort = port;
             mDB = new DBHelper(@".\SQLEXPRESS", @"Twodoku");
             Console.WriteLine(mDB.Open());
+            Console.WriteLine(string.Format("Server is listening on port {0}", port));
         }
 
         public void listen()
         {
-            TcpListener listener = new TcpListener(IPAddress.Loopback, mPort);
+            TcpListener listener = new TcpListener(IPAddress.Any, mPort);
             listener.Start();
             while (mActive)
             {
@@ -92,6 +93,7 @@ namespace TwodokuServer
             {
                 //Parse the request
                 String request = StreamReadLine(inputStream);
+                //Console.WriteLine(request);
                 string[] tokens = request.Split(' ');
                 if (tokens.Length != 3)
                 {
@@ -156,7 +158,7 @@ namespace TwodokuServer
 
                 string value = line.Substring(pos, line.Length - pos);
                 //Console.WriteLine("header: {0}:{1}", name, value);
-                HttpHeaders[name] = value;
+                HttpHeaders[name.ToLower()] = value.ToLower();
             }
         }
 
@@ -176,7 +178,7 @@ namespace TwodokuServer
 
             string player = (string)HttpHeaders["player"];
             
-            if (method.Equals("Gamelist"))
+            if (method.Equals("gamelist"))
             {
                 Console.WriteLine(string.Format("Sending game list to {0}", player));
                 string qualifier = DBHelper.ColumnPlayer1 + "='" + player + "' OR " + DBHelper.ColumnPlayer2 + "='" + player + "'";
@@ -195,7 +197,7 @@ namespace TwodokuServer
                 else
                     outputStream.WriteLine("No games");
             }
-            else if(method.Equals("Game"))
+            else if(method.Equals("game"))
             {
                 int gameId = -1;
                 if (HttpHeaders.ContainsKey("gameid"))
@@ -209,17 +211,19 @@ namespace TwodokuServer
             }
             else
             {
+                Console.WriteLine("Sending default response (test page)");
+
                 //TODO: Write a failure response here
 
                 //Sample code for default response
-                outputStream.WriteLine("<html><body><h1>test server</h1>");
-                outputStream.WriteLine("Current Time: " + DateTime.Now.ToString());
-                outputStream.WriteLine("url : {0}", HttpUrl);
+                outputStream.WriteLine("<html><body><h1>Twodoku default response page</h1>");
+                outputStream.WriteLine("Current Server Time: " + DateTime.Now.ToString());
+                //outputStream.WriteLine("url : {0}", HttpUrl);
 
-                outputStream.WriteLine("<form method=post action=/form>");
-                outputStream.WriteLine("<input type=text name=foo value=foovalue>");
-                outputStream.WriteLine("<input type=submit name=bar value=barvalue>");
-                outputStream.WriteLine("</form>");
+                //outputStream.WriteLine("<form method=post action=/form>");
+                //outputStream.WriteLine("<input type=text name=foo value=foovalue>");
+                //outputStream.WriteLine("<input type=submit name=bar value=barvalue>");
+                //outputStream.WriteLine("</form>");
             }
         }
 
