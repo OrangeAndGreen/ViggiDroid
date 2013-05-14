@@ -40,14 +40,16 @@ CREATE TABLE [dbo].[Games] (
     [PLAYER2SCORE] int  NOT NULL,
     [STARTDATE] datetime  NOT NULL,
     [PLAYDATE] datetime  NOT NULL,
-	[ACTIVE] int  NOT NULL,
+	[STATUS] int  NOT NULL,
 	[TURN] int  NOT NULL,
 	[HANDSYSTEM] varchar(max)  NOT NULL,
 	[HANDSIZE] int  NOT NULL,
 	[SCORINGSYSTEM] varchar(max)  NOT NULL,
 	[STARTINGBOARD] varchar(max)  NOT NULL,
 	[PLAYERBOARD] varchar(max)  NOT NULL,
-	[MULTIPLIERS] varchar(max)  NOT NULL
+	[MULTIPLIERS] varchar(max)  NOT NULL,
+	[LASTMOVE] varchar(max) NOT NULL,
+	[HAND] varchar(max) NOT NULL
 );
 GO
 

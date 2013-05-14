@@ -10,17 +10,8 @@ namespace TwodokuServer
     {
         static void Main(string[] args)
         {
-            TwodokuServer httpServer;
-            if (args.GetLength(0) > 0)
-            {
-                httpServer = new TwodokuServer(Convert.ToInt16(args[0]));
-            }
-            else
-            {
-                httpServer = new TwodokuServer(8080);
-            }
-            Thread thread = new Thread(new ThreadStart(httpServer.listen));
-            thread.Start();
+            TwodokuServer httpServer = new TwodokuServer(args);
+            
         }
     }
 }

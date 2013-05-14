@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DateStrings.cs" />
     <Compile Include="DBHelper.cs" />
     <Compile Include="LogFile.cs" />
     <Compile Include="Program.cs" />

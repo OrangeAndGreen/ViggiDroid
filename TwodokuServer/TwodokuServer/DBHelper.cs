@@ -17,7 +17,7 @@ namespace TwodokuServer
         public const string ColumnPlayer2Score = "PLAYER2SCORE";
         public const string ColumnStartDate = "STARTDATE";
         public const string ColumnPlayDate = "PLAYDATE";
-        public const string ColumnActive = "ACTIVE";
+        public const string ColumnStatus = "STATUS";
         public const string ColumnTurn = "TURN";
         public const string ColumnHandSystem = "HANDSYSTEM";
         public const string ColumnHandSize = "HANDSIZE";
@@ -25,6 +25,7 @@ namespace TwodokuServer
         public const string ColumnStartingBoard = "STARTINGBOARD";
         public const string ColumnPlayerBoard = "PLAYERBOARD";
         public const string ColumnMultipliers = "MULTIPLIERS";
+        public const string ColumnLastMove = "LASTMOVE";
 
         public string Server = null;
         public string Database = null;
@@ -382,14 +383,16 @@ namespace TwodokuServer
             values += "'" + gameInfo.Player2Score + "',";
             values += "'" + DateTime.Now.ToString() + "',";
             values += "'" + DateTime.Now.ToString() + "',";
-            values += "'" + gameInfo.Active + "',";
+            values += "'" + gameInfo.Status + "',";
             values += "'" + gameInfo.Turn + "',";
             values += "'" + gameInfo.HandSystem + "',";
             values += "'" + gameInfo.HandSize + "',";
             values += "'" + gameInfo.ScoringSystem + "',";
             values += "'" + gameInfo.InitialBoard + "',";
             values += "'" + gameInfo.PlayerBoard + "',";
-            values += "'" + gameInfo.Multipliers + "'";
+            values += "'" + gameInfo.Multipliers + "',";
+            values += "'" + gameInfo.LastMove + "',";
+            values += "'" + gameInfo.Hand + "'";
 
             return Insert(TableGames, values);
         }
@@ -401,14 +404,17 @@ namespace TwodokuServer
             if (existingGame == null || !existingGame.IsSameGame(gameInfo))
                 return false;
 
-            //Update: Scores, PlayDate, Active, Turn, PlayerBoard
+            //Update: Scores, PlayDate, Active, Turn, PlayerBoard, LastMove
             string update = "";
             update += string.Format("{0}='{1}',", ColumnPlayer1Score, gameInfo.Player1Score);
             update += string.Format("{0}='{1}',", ColumnPlayer2Score, gameInfo.Player2Score);
             update += string.Format("{0}='{1}',", ColumnPlayDate, gameInfo.PlayDate);
-            update += string.Format("{0}='{1}',", ColumnActive, gameInfo.Active);
+            update += string.Format("{0}='{1}',", ColumnStatus, gameInfo.Status);
             update += string.Format("{0}='{1}',", ColumnTurn, gameInfo.Turn);
-            update += string.Format("{0}='{1}'", ColumnPlayerBoard, gameInfo.PlayerBoard);
+            update += string.Format("{0}='{1}',", ColumnPlayerBoard, gameInfo.PlayerBoard);
+            update += string.Format("{0}='{1}'", ColumnLastMove, gameInfo.LastMove);
+
+            //TODO here: Create next hand and store it
 
             string qualifier = string.Format("{0}='{1}'", ColumnGameId, gameInfo.GameId);
             return Update(TableGames, update, qualifier);

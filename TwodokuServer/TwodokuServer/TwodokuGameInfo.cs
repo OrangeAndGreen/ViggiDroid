@@ -19,7 +19,7 @@ namespace TwodokuServer
         public DateTime StartDate;
         public DateTime PlayDate;
 
-        public int Active = 0;
+        public int Status = 0;
         public int Turn = 0;
 
         public string InitialBoard = null;
@@ -30,8 +30,12 @@ namespace TwodokuServer
         public int HandSize = 0;
         public string ScoringSystem = null;
 
+        public string LastMove = null;
+        public string Hand = null;
+
         public static TwodokuGameInfo FromHttpPost(int gameId, Hashtable dataEntries)
         {
+            //TODO here
             TwodokuGameInfo ret = new TwodokuGameInfo();
 
             ret.GameId = gameId;
@@ -40,7 +44,7 @@ namespace TwodokuServer
             int.TryParse((string)dataEntries["Player1Score"], out ret.Player1Score);
             ret.Player2 = (string)dataEntries["Player2"];
             int.TryParse((string)dataEntries["Player2Score"], out ret.Player2Score);
-            int.TryParse((string)dataEntries["Active"], out ret.Active);
+            int.TryParse((string)dataEntries["Active"], out ret.Status);
             int.TryParse((string)dataEntries["Turn"], out ret.Turn);
             ret.PlayerBoard = (string)dataEntries["PlayerBoard"];
             ret.HandSystem = (string)dataEntries["HandSystem"];
@@ -56,6 +60,7 @@ namespace TwodokuServer
 
         public static TwodokuGameInfo FromSqlReader(SqlDataReader reader)
         {
+            //TODO here
             TwodokuGameInfo gameInfo = new TwodokuGameInfo();
 
             gameInfo.GameId = (int)reader[DBHelper.ColumnGameId];
@@ -67,7 +72,7 @@ namespace TwodokuServer
             gameInfo.StartDate = (DateTime)reader[DBHelper.ColumnStartDate];
             gameInfo.PlayDate = (DateTime)reader[DBHelper.ColumnPlayDate];
 
-            gameInfo.Active = (int)reader[DBHelper.ColumnActive];
+            gameInfo.Status = (int)reader[DBHelper.ColumnStatus];
             gameInfo.Turn = (int)reader[DBHelper.ColumnTurn];
 
             gameInfo.InitialBoard = (string)reader[DBHelper.ColumnStartingBoard];
@@ -81,8 +86,42 @@ namespace TwodokuServer
             return gameInfo;
         }
 
+        public static TwodokuGameInfo FromString(string input)
+        {
+            string[] parts = input.Split(',');
+
+            TwodokuGameInfo ret = new TwodokuGameInfo();
+
+            int.TryParse(parts[0], out ret.GameId);
+            ret.Player1 = parts[1];
+            int.TryParse(parts[2], out ret.Player1Score);
+            ret.Player2 = parts[3];
+            int.TryParse(parts[4], out ret.Player2Score);
+
+            ret.StartDate = DateStrings.FromString(parts[5]);
+            ret.PlayDate = DateStrings.FromString(parts[6]);
+
+            int.TryParse(parts[7], out ret.Status);
+            int.TryParse(parts[8], out ret.Turn);
+
+            ret.InitialBoard = parts[9];
+            ret.PlayerBoard = parts[10];
+            ret.Multipliers = parts[11];
+
+            ret.HandSystem = parts[12];
+            int.TryParse(parts[13], out ret.HandSize);
+            ret.ScoringSystem = parts[14];
+            if(parts.Length > 15)
+                ret.LastMove = parts[15];
+            if (parts.Length > 16)
+                ret.Hand = parts[16];
+            return ret;
+        }
+
         public string ToPacket(bool infoOnly)
         {
+            //This is sent to the user
+            //TODO here
             string ret = "";
 
             DateTime timestamp = StartDate;
@@ -90,15 +129,28 @@ namespace TwodokuServer
             timestamp = PlayDate;
             string playDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
 
-            ret = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+            ret = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
                     GameId, Player1, Player1Score, Player2, Player2Score,
-                    startDate, playDate, Turn, Active);
+                    startDate, playDate, Turn, Status, LastMove, Hand);
 
             if (!infoOnly)
             {
                 ret += string.Format(",{0},{1},{2},{3},{4},{5}",
                     HandSystem, HandSize, ScoringSystem, InitialBoard, PlayerBoard, Multipliers);
             }
+
+            return ret;
+        }
+
+        
+        public override string ToString()
+        {
+            string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}",
+                GameId, Player1, Player1Score, Player2, Player2Score, DateStrings.ToString(StartDate), DateStrings.ToString(PlayDate), Status, Turn,
+                HandSystem, HandSize, ScoringSystem, InitialBoard, PlayerBoard, Multipliers);
+            
+            //TODO here (enable this after one last export)
+            ret += string.Format(",{0},{1}", LastMove, Multipliers);
 
             return ret;
         }

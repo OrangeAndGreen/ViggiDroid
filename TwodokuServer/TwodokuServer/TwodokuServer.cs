@@ -17,16 +17,51 @@ namespace TwodokuServer
         protected int mPort;
         bool mActive = true;
 
-        public TwodokuServer(int port)
+        public TwodokuServer(string[] args)
         {
-            mPort = port;
+            bool startServer = true;
+            mPort = 35000;
+            
+            //Create the database helper and open the database
             mDB = new DBHelper(@".\SQLEXPRESS", @"Twodoku");
             Console.WriteLine(mDB.Open());
-            Console.WriteLine(string.Format("Server is listening on port {0}", port));
+            
+            //Parse the command line arguments
+            if (args.Length > 1)
+                Console.WriteLine("Confused by command line arguments, starting up with defaults (too many args)");
+            else if (args.Length > 0)
+            {
+                string[] parts = args[0].Split(':');
+                if(parts.Length != 2)
+                    Console.WriteLine("Confused by command line arguments, starting up with defaults (too many parts)");
+                else if (parts[0].ToLower().Equals("export"))
+                {
+                    startServer = false;
+                    ExportDB(parts[1]);
+                }
+                else if (parts[0].ToLower().Equals("import"))
+                {
+                    startServer = false;
+                    ImportDB(parts[1]);
+                }
+                else if(parts[0].ToLower().Equals("port"))
+                {
+                    int.TryParse(parts[1], out mPort);
+                }
+                else
+                    Console.WriteLine("Confused by command line arguments, starting up with defaults (unknown command)");
+            }
+
+            if (startServer)
+            {
+                Thread thread = new Thread(new ThreadStart(listen));
+                thread.Start();
+            }
         }
 
-        public void listen()
+        private void listen()
         {
+            Console.WriteLine(string.Format("Server is listening on port {0}", mPort));
             TcpListener listener = new TcpListener(IPAddress.Any, mPort);
             listener.Start();
             while (mActive)
@@ -37,6 +72,48 @@ namespace TwodokuServer
                 thread.Start();
                 Thread.Sleep(1);
             }
+        }
+
+        private void ExportDB(string filename)
+        {
+            StreamWriter writer = File.CreateText(filename);
+
+            Console.WriteLine("Exporting database to " + filename);
+            string query = String.Format("select {0} from {1} order by {2}", "*", DBHelper.TableGames, "STARTDATE");
+            SqlDataReader reader = mDB.Query(query);
+
+            if (reader != null)
+            {
+                while (reader.Read())
+                {
+                    TwodokuGameInfo gameInfo = TwodokuGameInfo.FromSqlReader(reader);
+                    writer.WriteLine(gameInfo.ToString());
+                    //outputStream.WriteLine(gameInfo.ToPacket(true));
+                }
+                reader.Close();
+            }
+            else
+                Console.WriteLine("No games");
+
+            writer.Close();
+        }
+
+        private void ImportDB(string filename)
+        {
+            StreamReader reader = File.OpenText(filename);
+            mDB.Reset("ERASE IT ALL");
+
+            string line = reader.ReadLine();
+            while (line != null)
+            {
+                TwodokuGameInfo gameInfo = TwodokuGameInfo.FromString(line);
+
+                mDB.AddGame(gameInfo);
+
+                reader.ReadLine();
+            }
+
+            reader.Close();
         }
     }
 
@@ -104,7 +181,7 @@ namespace TwodokuServer
                 HttpProtocolVersionString = tokens[2];
 
                 DateTime now = DateTime.Now;
-                Console.Write(string.Format("{0} {1}: ", now.ToShortDateString(), now.ToShortTimeString()));
+                //Console.Write(string.Format("{0} {1}: ", now.ToShortDateString(), now.ToShortTimeString()));
 
                 ReadHeaders(inputStream);
                 if (HttpMethod.Equals("GET"))
@@ -180,7 +257,7 @@ namespace TwodokuServer
             
             if (method.Equals("gamelist"))
             {
-                Console.WriteLine(string.Format("Sending game list to {0}", player));
+                Console.WriteLine(string.Format("{0}: Sending game list to {1}", DateStrings.ToString(DateTime.Now), player));
                 string qualifier = DBHelper.ColumnPlayer1 + "='" + player + "' OR " + DBHelper.ColumnPlayer2 + "='" + player + "'";
                 string query = String.Format("select {0} from {1} where {2} order by {3}", "*", DBHelper.TableGames, qualifier, "STARTDATE");
                 SqlDataReader reader = mDB.Query(query);
@@ -203,7 +280,7 @@ namespace TwodokuServer
                 if (HttpHeaders.ContainsKey("gameid"))
                     int.TryParse((string)HttpHeaders["gameid"], out gameId);
 
-                Console.WriteLine(string.Format("Sending game {0} to {1}", gameId, player));
+                Console.WriteLine(string.Format("{0}: Sending game {1} to {2}", DateStrings.ToString(DateTime.Now), gameId, player));
 
                 TwodokuGameInfo gameInfo = mDB.GetGame(gameId);
 
@@ -211,7 +288,7 @@ namespace TwodokuServer
             }
             else
             {
-                Console.WriteLine("Sending default response (test page)");
+                Console.WriteLine(string.Format("{0}: Sending default response (test page)", DateStrings.ToString(DateTime.Now)));
 
                 //TODO: Write a failure response here
 
@@ -301,14 +378,14 @@ namespace TwodokuServer
             if (gameId <= 0)
             {
                 //Add new game
-                Console.WriteLine(string.Format("Adding new game for {0}", player));
+                Console.WriteLine(string.Format("{0}: Adding new game for {1}", DateStrings.ToString(DateTime.Now), player));
                 gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
                 success = mDB.AddGame(gameInfo);
             }
             else
             {
                 //Update existing game
-                Console.WriteLine(string.Format("Updating game {0} for {1}", gameId, player));
+                Console.WriteLine(string.Format("{0}: Updating game {1} for {2}", DateStrings.ToString(DateTime.Now), gameId, player));
                 success = mDB.UpdateGame(gameInfo);
             }
             
