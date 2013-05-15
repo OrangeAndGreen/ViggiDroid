@@ -35,7 +35,6 @@ namespace TwodokuServer
 
         public static TwodokuGameInfo FromHttpPost(int gameId, Hashtable dataEntries)
         {
-            //TODO here
             TwodokuGameInfo ret = new TwodokuGameInfo();
 
             ret.GameId = gameId;
@@ -44,8 +43,9 @@ namespace TwodokuServer
             int.TryParse((string)dataEntries["Player1Score"], out ret.Player1Score);
             ret.Player2 = (string)dataEntries["Player2"];
             int.TryParse((string)dataEntries["Player2Score"], out ret.Player2Score);
-            int.TryParse((string)dataEntries["Active"], out ret.Status);
+            int.TryParse((string)dataEntries["Status"], out ret.Status);
             int.TryParse((string)dataEntries["Turn"], out ret.Turn);
+            ret.LastMove = (string)dataEntries["LastMove"];
             ret.PlayerBoard = (string)dataEntries["PlayerBoard"];
             ret.HandSystem = (string)dataEntries["HandSystem"];
             int.TryParse((string)dataEntries["HandSize"], out ret.HandSize);
@@ -58,9 +58,13 @@ namespace TwodokuServer
             return ret;
         }
 
+        /// <summary>
+        /// This is used for retrieving a game from the database
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
         public static TwodokuGameInfo FromSqlReader(SqlDataReader reader)
         {
-            //TODO here
             TwodokuGameInfo gameInfo = new TwodokuGameInfo();
 
             gameInfo.GameId = (int)reader[DBHelper.ColumnGameId];
@@ -75,17 +79,26 @@ namespace TwodokuServer
             gameInfo.Status = (int)reader[DBHelper.ColumnStatus];
             gameInfo.Turn = (int)reader[DBHelper.ColumnTurn];
 
-            gameInfo.InitialBoard = (string)reader[DBHelper.ColumnStartingBoard];
-            gameInfo.PlayerBoard = (string)reader[DBHelper.ColumnPlayerBoard];
-            gameInfo.Multipliers = (string)reader[DBHelper.ColumnMultipliers];
-
             gameInfo.HandSystem = (string)reader[DBHelper.ColumnHandSystem];
             gameInfo.HandSize = (int)reader[DBHelper.ColumnHandSize];
             gameInfo.ScoringSystem = (string)reader[DBHelper.ColumnScoringSystem];
 
+            //TODO: Comment these out for one last desktop DB export
+            gameInfo.LastMove = "";// (string)reader[DBHelper.ColumnLastMove];
+            gameInfo.Hand = "";// (string)reader[DBHelper.ColumnHand];
+            
+            gameInfo.InitialBoard = (string)reader[DBHelper.ColumnStartingBoard];
+            gameInfo.PlayerBoard = (string)reader[DBHelper.ColumnPlayerBoard];
+            gameInfo.Multipliers = (string)reader[DBHelper.ColumnMultipliers];
+
             return gameInfo;
         }
 
+        /// <summary>
+        /// This is used for importing the database from a text file
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public static TwodokuGameInfo FromString(string input)
         {
             string[] parts = input.Split(',');
@@ -104,24 +117,27 @@ namespace TwodokuServer
             int.TryParse(parts[7], out ret.Status);
             int.TryParse(parts[8], out ret.Turn);
 
-            ret.InitialBoard = parts[9];
-            ret.PlayerBoard = parts[10];
-            ret.Multipliers = parts[11];
+            ret.HandSystem = parts[9];
+            int.TryParse(parts[10], out ret.HandSize);
+            ret.ScoringSystem = parts[11];
 
-            ret.HandSystem = parts[12];
-            int.TryParse(parts[13], out ret.HandSize);
-            ret.ScoringSystem = parts[14];
-            if(parts.Length > 15)
-                ret.LastMove = parts[15];
-            if (parts.Length > 16)
-                ret.Hand = parts[16];
+            ret.LastMove = parts[12];
+            ret.Hand = parts[13];
+
+            ret.InitialBoard = parts[14];
+            ret.PlayerBoard = parts[15];
+            ret.Multipliers = parts[16];
+            
             return ret;
         }
 
+        /// <summary>
+        /// This is sent to the client
+        /// </summary>
+        /// <param name="infoOnly"></param>
+        /// <returns></returns>
         public string ToPacket(bool infoOnly)
         {
-            //This is sent to the user
-            //TODO here
             string ret = "";
 
             DateTime timestamp = StartDate;
@@ -129,28 +145,28 @@ namespace TwodokuServer
             timestamp = PlayDate;
             string playDate = string.Format("{0}:{1}:{2}:{3}:{4}:{5}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
 
-            ret = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
+            ret = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
                     GameId, Player1, Player1Score, Player2, Player2Score,
-                    startDate, playDate, Turn, Status, LastMove, Hand);
+                    startDate, playDate, Status, Turn);
 
             if (!infoOnly)
             {
-                ret += string.Format(",{0},{1},{2},{3},{4},{5}",
-                    HandSystem, HandSize, ScoringSystem, InitialBoard, PlayerBoard, Multipliers);
+                ret += string.Format(",{0},{1},{2},{3},{4},{5},{6},{7}",
+                    HandSystem, HandSize, ScoringSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
             }
 
             return ret;
         }
 
-        
+        /// <summary>
+        /// This is used to export the database to a text file
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}",
                 GameId, Player1, Player1Score, Player2, Player2Score, DateStrings.ToString(StartDate), DateStrings.ToString(PlayDate), Status, Turn,
-                HandSystem, HandSize, ScoringSystem, InitialBoard, PlayerBoard, Multipliers);
-            
-            //TODO here (enable this after one last export)
-            ret += string.Format(",{0},{1}", LastMove, Multipliers);
+                HandSystem, HandSize, ScoringSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
 
             return ret;
         }

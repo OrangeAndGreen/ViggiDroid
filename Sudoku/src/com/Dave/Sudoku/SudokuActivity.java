@@ -54,6 +54,7 @@ import android.widget.Toast;
 
 public class SudokuActivity extends Activity
 {
+	//Local IP: "http://10.0.2.2:8080";
 	private String mServer = "http://orangeandgreen.no-ip.biz:8080";
 	private HttpClient mClient = null;
 	private SharedPreferences mPreferences = null;
@@ -297,6 +298,8 @@ public class SudokuActivity extends Activity
     	mConfirmButton.setVisibility(Button.VISIBLE);
     	mShowButton.setVisibility(Button.VISIBLE);
     	
+    	DrawHand();
+    	
     	DisablePendingButtons();
     }
     
@@ -369,6 +372,8 @@ public class SudokuActivity extends Activity
     {
     	DebugLog.Write(String.format("Committing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
     	
+    	int oldPlayer = mGame.GetCurrentPlayer();
+    	
     	AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mPendingPoint, mPendingValue);
     	if(builder != null)
     	{
@@ -396,19 +401,32 @@ public class SudokuActivity extends Activity
     	
     	//Toast t = Toast.makeText(mContext, "Uploading game to server", Toast.LENGTH_SHORT);
 		//t.show();
-		
-    	mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
-    	{
-			public void OnGameUpdated(boolean success)
-			{
-				String successStr = "Update failed";
-				if(success)
-					successStr = "Update complete";
-				Toast t = Toast.makeText(mContext, successStr, Toast.LENGTH_SHORT);
-				t.show();
-			}
-    		
-    	});
+		if(mGame.GetCurrentPlayer() != oldPlayer)
+		{
+			Log.i("", "Sending game to server");
+	    	mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
+	    	{
+				public void OnGameUpdated(boolean success)
+				{
+					String successStr = null;
+					if(success)
+					{
+						Log.i("", "Update complete");
+						successStr = "Update complete";
+					}
+					else
+					{
+						Log.i("", "Update failed");
+						successStr = "Update failed";
+					}
+					Toast t = Toast.makeText(mContext, successStr, Toast.LENGTH_SHORT);
+					t.show();
+				}
+	    		
+	    	});
+		}
+    	
+    	
     }
     
     private void UpdateBoard()

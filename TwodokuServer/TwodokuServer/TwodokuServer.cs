@@ -20,7 +20,7 @@ namespace TwodokuServer
         public TwodokuServer(string[] args)
         {
             bool startServer = true;
-            mPort = 35000;
+            mPort = 8080;
             
             //Create the database helper and open the database
             mDB = new DBHelper(@".\SQLEXPRESS", @"Twodoku");
@@ -87,7 +87,9 @@ namespace TwodokuServer
                 while (reader.Read())
                 {
                     TwodokuGameInfo gameInfo = TwodokuGameInfo.FromSqlReader(reader);
-                    writer.WriteLine(gameInfo.ToString());
+                    string output = gameInfo.ToString();
+                    Console.WriteLine("Exporting " + output);
+                    writer.WriteLine(output);
                     //outputStream.WriteLine(gameInfo.ToPacket(true));
                 }
                 reader.Close();
@@ -95,24 +97,26 @@ namespace TwodokuServer
             else
                 Console.WriteLine("No games");
 
+            Console.WriteLine("Finished");
             writer.Close();
         }
 
         private void ImportDB(string filename)
         {
             StreamReader reader = File.OpenText(filename);
+            Console.WriteLine("Importing database from " + filename);
             mDB.Reset("ERASE IT ALL");
 
             string line = reader.ReadLine();
             while (line != null)
             {
+                Console.WriteLine("Importing " + line);
                 TwodokuGameInfo gameInfo = TwodokuGameInfo.FromString(line);
-
                 mDB.AddGame(gameInfo);
-
-                reader.ReadLine();
+                line = reader.ReadLine();
             }
 
+            Console.WriteLine("Finished");
             reader.Close();
         }
     }

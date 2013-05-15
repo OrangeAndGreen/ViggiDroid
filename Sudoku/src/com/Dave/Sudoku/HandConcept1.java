@@ -14,6 +14,21 @@ public class HandConcept1 implements IHand
 	private List<Byte> mCurrentHand = null;
 	private int mCurrentPlayer = -1;
 	
+	private List<Byte> mRandomSequence = null;
+	
+	public HandConcept1(String randomString)
+	{
+		if(randomString != null && randomString.length() > 0)
+		{
+			mRandomSequence = new ArrayList<Byte>();
+			
+			for(int i=0; i<randomString.length(); i++)
+			{
+				mRandomSequence.add((byte)Integer.parseInt(randomString.substring(i, i+1)));
+			}
+		}
+	}
+	
 	public String GetName()
 	{
 		return "Concept 1";
@@ -61,8 +76,22 @@ public class HandConcept1 implements IHand
 				int numOptions = allOptions.size();
 				if(numOptions == 0)
 					break;
-				int index = MyRandom.Get(0, numOptions - 1);
-				Byte value = allOptions.remove(index);
+				
+				Byte value = 0;
+				if(mRandomSequence != null && mRandomSequence.size() > 0)
+				{
+					while(true)
+					{
+						value = mRandomSequence.remove(0);
+						if(allOptions.contains(value))
+							break;
+					}
+				}
+				else
+				{
+					int index = MyRandom.Get(0, numOptions - 1);
+					value = allOptions.remove(index);
+				}
 				mCurrentHand.add(value);
 			}
 			

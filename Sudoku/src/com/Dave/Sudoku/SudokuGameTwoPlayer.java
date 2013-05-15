@@ -39,11 +39,13 @@ public class SudokuGameTwoPlayer
 	public int GameId = -1;
 	public Calendar StartDate = null;
 	public Calendar PlayDate = null;
-	public int Active = 0;
+	public int Status = 0;
 	
 	//public String HandSystem = null;
 	public int HandSize = 0;
 	//public String ScoringSystem = null;
+	
+	public String CurrentMove = null;
 	
 	private SudokuGameTwoPlayer()
 	{
@@ -55,18 +57,24 @@ public class SudokuGameTwoPlayer
 		Player1Name = player1Name;
 		Player2Name = player2Name;
 		
+		if(fillCenter)
+			GamePhase = 1;
+		
+		CurrentMove = "";
+		
 		Board = SudokuBoard.Create(fillCenter, cellsToFill, true, bonusCells);
 		//Board = SudokuBoard.Create(-1, true);
 		
 		mScoring = CreateScoring(scoringSystem);
     	DebugLog.Write("Scoring: " + mScoring.GetName(), null);
 		
-    	mHand = CreateHand(handSystem, handSize);
+    	mHand = CreateHand(handSystem, handSize, null);
     	DebugLog.Write("Hand: " + mHand.GetName(), null);
     	
 		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
 	}
 	
+	//Called when retrieving a game from the server
 	public static SudokuGameTwoPlayer FromString(String input, boolean infoOnly)
 	{
 		SudokuGameTwoPlayer game = new SudokuGameTwoPlayer();
@@ -75,6 +83,8 @@ public class SudokuGameTwoPlayer
 		
 		String[] parts = input.split(",");
 		
+		game.CurrentMove = "";
+		
 		game.GameId = Integer.parseInt(parts[0]);
 		game.Player1Name = parts[1];
 		game.Player1Score = Integer.parseInt(parts[2]);
@@ -82,24 +92,30 @@ public class SudokuGameTwoPlayer
 		game.Player2Score = Integer.parseInt(parts[4]);
 		game.StartDate = ParseCalendar(parts[5]);
 		game.PlayDate = ParseCalendar(parts[6]);
-		game.PlayerTurn = Integer.parseInt(parts[7].trim());
-		game.Active = Integer.parseInt(parts[8].trim());
+		game.Status = Integer.parseInt(parts[7].trim());
+		game.PlayerTurn = Integer.parseInt(parts[8].trim());
+		
 		
 		if(!infoOnly)
-		{
-			//game.HandSystem = parts[9];
-			game.HandSize = Integer.parseInt(parts[10].trim());
-			//game.ScoringSystem = parts[11];
+		{	
+			//Get the extra values
+			String handSystem = parts[9];
+			int handSize = Integer.parseInt(parts[10].trim());
+			String scoringSystem = parts[11];
+			String lastMove = parts[12];
+			String hand = parts[13];
+			String startingBoard = parts[14];
+			String playerBoard = parts[15];
+			String multipliers = parts[16];
 			
-			String startingBoard = parts[12];
-			String playerBoard = parts[13];
-			String multipliers = parts[14];
-			
+			//Setup the board and other game inputs
 			game.Board = new SudokuBoard(startingBoard, playerBoard, multipliers);
 			if(game.Board.GetSquareOptions(new Point(1, 1), true).size() == 0)
 				game.GamePhase = 1;
-			game.mScoring = CreateScoring(parts[11]);
-			game.mHand = CreateHand(parts[9], game.HandSize);
+			game.Board.SetLastMove(lastMove);
+			
+			game.mScoring = CreateScoring(scoringSystem);
+			game.mHand = CreateHand(handSystem, handSize, hand);
 		}
 		
 		return game;
@@ -129,12 +145,12 @@ public class SudokuGameTwoPlayer
 		return ret;
 	}
 	
-	public static IHand CreateHand(String handSystem, int handSize)
+	public static IHand CreateHand(String handSystem, int handSize, String randomSequence)
 	{
 		IHand ret = null;
 		
 		if(handSystem != null && handSystem.equals("Concept 1"))
-			ret = new HandConcept1();
+			ret = new HandConcept1(randomSequence);
     	else
     		ret = new HandVanilla();
     	
@@ -328,6 +344,8 @@ public class SudokuGameTwoPlayer
     		mHand.TakeNumber(GetBoard(), GetCurrentPlayer(), number);
     	}
 		
+		CurrentMove += String.format("(%d%d%d)", point.x, point.y, number);
+		
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
@@ -375,7 +393,7 @@ public class SudokuGameTwoPlayer
 		//See if the game is over
 		if(Board.CheckBoard(false))
 		{
-			Active = 0;
+			Status = 0;
 			return CreateEnding(context);
 		}
 		

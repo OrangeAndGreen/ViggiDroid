@@ -15,6 +15,8 @@ public class SudokuBoard
 	private byte[][] mPlayer1Board = null;
 	private byte[][] mPlayer2Board = null;
 	
+	private byte[][] mLastMove = null;
+	
 	private byte[][] mCellMultipliers = null;
 	
 	private byte[][] mPendingMove = null;
@@ -60,6 +62,8 @@ public class SudokuBoard
 	public SudokuBoard(String initialBoard, String playerBoard, String multipliers)
 	{
 		this();
+		
+		//TODO: Make sure the boards are all exactly 81 characters
 		
 		int index = 0;
 		for(int x=0; x<BoardSize; x++)
@@ -291,6 +295,30 @@ public class SudokuBoard
         	}
         
         return output;
+    }
+    
+    public void SetLastMove(String lastMoveString)
+    {
+    	mLastMove = CreateBoard();
+    	
+    	if(lastMoveString != null && lastMoveString.length() > 0)
+    	{
+	    	String[] moves = lastMoveString.split("\\)");
+		    for(int i=0; i<moves.length; i++)
+		    {
+		    	String move = moves[i];
+		    	int x = Integer.parseInt(move.substring(1, 2));
+		    	int y = Integer.parseInt(move.substring(2, 3));
+		    	int value = Integer.parseInt(move.substring(3, 4));
+		    		
+		    	mLastMove[x][y] = (byte)value;
+		    }
+    	}
+    }
+    
+    public byte[][] GetLastMove()
+    {
+    	return mLastMove;
     }
     
     public static Point GetSquare(Point cell)

@@ -26,11 +26,13 @@ namespace TwodokuServer
         public const string ColumnPlayerBoard = "PLAYERBOARD";
         public const string ColumnMultipliers = "MULTIPLIERS";
         public const string ColumnLastMove = "LASTMOVE";
+        public const string ColumnHand = "HAND";
 
         public string Server = null;
         public string Database = null;
 
         private SqlConnection mSQL = null;
+        private Random mRandom = new Random();
 
         public DBHelper(string server, string database)
         {
@@ -70,7 +72,8 @@ namespace TwodokuServer
         {
             if (pass != null && pass.Equals("ERASE IT ALL"))
             {
-                Query(String.Format("truncate table {0}", TableGames));
+                SqlDataReader reader = Query(String.Format("truncate table {0}", TableGames));
+                reader.Close();
             }
         }
 
@@ -383,16 +386,16 @@ namespace TwodokuServer
             values += "'" + gameInfo.Player2Score + "',";
             values += "'" + DateTime.Now.ToString() + "',";
             values += "'" + DateTime.Now.ToString() + "',";
-            values += "'" + gameInfo.Status + "',";
             values += "'" + gameInfo.Turn + "',";
+            values += "'" + gameInfo.Status + "',";
             values += "'" + gameInfo.HandSystem + "',";
             values += "'" + gameInfo.HandSize + "',";
             values += "'" + gameInfo.ScoringSystem + "',";
+            values += "'" + gameInfo.LastMove + "',";
+            values += "'" + GetHand() + "',";
             values += "'" + gameInfo.InitialBoard + "',";
             values += "'" + gameInfo.PlayerBoard + "',";
-            values += "'" + gameInfo.Multipliers + "',";
-            values += "'" + gameInfo.LastMove + "',";
-            values += "'" + gameInfo.Hand + "'";
+            values += "'" + gameInfo.Multipliers + "'";
 
             return Insert(TableGames, values);
         }
@@ -404,7 +407,7 @@ namespace TwodokuServer
             if (existingGame == null || !existingGame.IsSameGame(gameInfo))
                 return false;
 
-            //Update: Scores, PlayDate, Active, Turn, PlayerBoard, LastMove
+            //Update: Scores, PlayDate, Status, Turn, PlayerBoard, LastMove
             string update = "";
             update += string.Format("{0}='{1}',", ColumnPlayer1Score, gameInfo.Player1Score);
             update += string.Format("{0}='{1}',", ColumnPlayer2Score, gameInfo.Player2Score);
@@ -412,12 +415,28 @@ namespace TwodokuServer
             update += string.Format("{0}='{1}',", ColumnStatus, gameInfo.Status);
             update += string.Format("{0}='{1}',", ColumnTurn, gameInfo.Turn);
             update += string.Format("{0}='{1}',", ColumnPlayerBoard, gameInfo.PlayerBoard);
-            update += string.Format("{0}='{1}'", ColumnLastMove, gameInfo.LastMove);
+            update += string.Format("{0}='{1}',", ColumnLastMove, gameInfo.LastMove);
 
-            //TODO here: Create next hand and store it
+            //Create a new hand for the next turn
+            string hand = GetHand();
+            //Console.WriteLine("Hand: " + hand);
+            update += string.Format("{0}='{1}'", ColumnHand, hand);
 
             string qualifier = string.Format("{0}='{1}'", ColumnGameId, gameInfo.GameId);
             return Update(TableGames, update, qualifier);
+        }
+
+        private string GetHand()
+        {
+            string ret = "";
+
+            for(int i=0; i<20; i++)
+            {
+                int number = mRandom.Next(1, 10);
+                ret += number.ToString();
+            }
+
+            return ret;
         }
 
         public TwodokuGameInfo GetGame(int gameId)

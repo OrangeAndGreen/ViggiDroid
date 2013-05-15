@@ -180,7 +180,7 @@ public class SudokuView extends View
 		{
 			DrawValues(canvas, mBoard.GetSubBoard(1), Color.WHITE);
 			DrawValues(canvas, mBoard.GetPendingMoves(), Color.GREEN);
-			
+			DrawValues(canvas, mBoard.GetLastMove(), Color.MAGENTA);
 		}
 	}
 	
