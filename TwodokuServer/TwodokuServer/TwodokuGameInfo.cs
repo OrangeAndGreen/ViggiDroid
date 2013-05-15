@@ -83,9 +83,8 @@ namespace TwodokuServer
             gameInfo.HandSize = (int)reader[DBHelper.ColumnHandSize];
             gameInfo.ScoringSystem = (string)reader[DBHelper.ColumnScoringSystem];
 
-            //TODO: Comment these out for one last desktop DB export
-            gameInfo.LastMove = "";// (string)reader[DBHelper.ColumnLastMove];
-            gameInfo.Hand = "";// (string)reader[DBHelper.ColumnHand];
+            gameInfo.LastMove = (string)reader[DBHelper.ColumnLastMove];
+            gameInfo.Hand = (string)reader[DBHelper.ColumnHand];
             
             gameInfo.InitialBoard = (string)reader[DBHelper.ColumnStartingBoard];
             gameInfo.PlayerBoard = (string)reader[DBHelper.ColumnPlayerBoard];
@@ -164,7 +163,7 @@ namespace TwodokuServer
         /// <returns></returns>
         public override string ToString()
         {
-            string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}",
+            string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}",
                 GameId, Player1, Player1Score, Player2, Player2Score, DateStrings.ToString(StartDate), DateStrings.ToString(PlayDate), Status, Turn,
                 HandSystem, HandSize, ScoringSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
 

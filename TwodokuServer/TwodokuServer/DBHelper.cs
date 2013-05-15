@@ -17,6 +17,7 @@ namespace TwodokuServer
         public const string ColumnPlayer2Score = "PLAYER2SCORE";
         public const string ColumnStartDate = "STARTDATE";
         public const string ColumnPlayDate = "PLAYDATE";
+        
         public const string ColumnStatus = "STATUS";
         public const string ColumnTurn = "TURN";
         public const string ColumnHandSystem = "HANDSYSTEM";

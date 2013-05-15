@@ -128,10 +128,9 @@ namespace TwodokuServer
         private TcpClient mSocket;
         private DBHelper mDB = null;
 
-        //TODO: Do these all need to be globals?
         public String HttpMethod;
         public String HttpUrl;
-        public String HttpProtocolVersionString;
+        private String HttpProtocolVersionString;
         public Hashtable HttpHeaders = new Hashtable();
 
         private static int MAX_POST_SIZE = 10 * 1024 * 1024; // 10MB
