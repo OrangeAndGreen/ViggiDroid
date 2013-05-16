@@ -328,7 +328,7 @@ public class SudokuActivity extends Activity
 		    	
 		    	DisablePendingButtons();
 		    	
-		    	mSudoku.InitializeBoard(mGame.GetBoard(), mGame.GetPlayer1Color(), mGame.GetPlayer2Color());
+		    	mSudoku.InitializeBoard(mGame.GetBoard(), mGame.GetPlayer1Color(mPlayerName), mGame.GetPlayer2Color(mPlayerName));
 		    	
 		    	DrawHand();
 			}

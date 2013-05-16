@@ -66,17 +66,26 @@ public class SudokuBoard
 		//TODO: Make sure the boards are all exactly 81 characters
 		
 		int index = 0;
+		int playerIndex = 0;
 		for(int x=0; x<BoardSize; x++)
 			for(int y=0; y<BoardSize; y++)
 			{
 				mInitialBoard[x][y] = Byte.parseByte(initialBoard.substring(index, index + 1));
 				mCellMultipliers[x][y] = Byte.parseByte(multipliers.substring(index, index + 1));
 				
-				if(GetPlayerTerritory(new Point(x, y)) == 0)
-					mPlayer1Board[x][y] = Byte.parseByte(playerBoard.substring(index, index + 1));
-				else
-					mPlayer2Board[x][y] = Byte.parseByte(playerBoard.substring(index, index + 1));
+				String value = playerBoard.substring(playerIndex, playerIndex + 1);
+				if(value.equals("-"))
+				{
+					playerIndex++;
+					value += playerBoard.substring(playerIndex, playerIndex + 1);
+				}
 				
+				if(GetPlayerTerritory(new Point(x, y)) == 0)
+					mPlayer1Board[x][y] = Byte.parseByte(value);
+				else
+					mPlayer2Board[x][y] = Byte.parseByte(value);
+				
+				playerIndex++;
 				index++;
 			}
 	}

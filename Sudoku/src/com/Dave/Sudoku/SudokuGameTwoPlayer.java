@@ -71,7 +71,7 @@ public class SudokuGameTwoPlayer
     	mHand = CreateHand(handSystem, handSize, null);
     	DebugLog.Write("Hand: " + mHand.GetName(), null);
     	
-		view.InitializeBoard(Board, GetPlayer1Color(), GetPlayer2Color());
+		view.InitializeBoard(Board, GetPlayer1Color(player1Name), GetPlayer2Color(player1Name));
 	}
 	
 	//Called when retrieving a game from the server
@@ -208,9 +208,9 @@ public class SudokuGameTwoPlayer
 		return Player1Score;
 	}
 	
-	public int GetPlayer1Color()
+	public int GetPlayer1Color(String localPlayerName)
 	{
-		if(IsLocalPlayerTurn(GetPlayer1Name()))
+		if(GetPlayer1Name().equals(localPlayerName))
 			return mBlue;
 		else
 			return mRed;
@@ -231,9 +231,9 @@ public class SudokuGameTwoPlayer
 		return Player2Score;
 	}
 	
-	public int GetPlayer2Color()
+	public int GetPlayer2Color(String localPlayerName)
 	{
-		if(IsLocalPlayerTurn(GetPlayer2Name()))
+		if(GetPlayer2Name().equals(localPlayerName))
 			return mBlue;
 		else
 			return mRed;
