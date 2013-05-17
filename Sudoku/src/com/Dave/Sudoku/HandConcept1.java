@@ -64,11 +64,22 @@ public class HandConcept1 implements IHand
 					{
 						Point cell = new Point(squares.get(i).x * SudokuBoard.SquareSize + x, squares.get(i).y * SudokuBoard.SquareSize + y);
 						List<Byte> cellOptions = board.GetCellOptions(cell, false);
+						
+						//String cellOptionsStr = String.format("Cell (%d,%d) options: ", cell.x, cell.y);
+						//for(Byte b : cellOptions)
+						//	cellOptionsStr += String.format("%d", b);
+						//Log.i("", cellOptionsStr);
+						
 						for(int n = 0; n<cellOptions.size(); n++)
 							if(!allOptions.contains(cellOptions.get(n)))
 								allOptions.add(cellOptions.get(n));
 					}
 			}
+			
+			String optionsString = "";
+			for(int i=0; i<allOptions.size(); i++)
+				optionsString += String.format("%d", allOptions.get(i));
+			DebugLog.Write("Hand options: " + optionsString, null);
 			
 			//Randomly select the required number of values from the available list
 			for(int i=mCurrentHand.size(); i<mHandSize; i++)

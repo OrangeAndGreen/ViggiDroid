@@ -468,6 +468,10 @@ public class SudokuBoard
     {
     	byte[][] fullBoard = GetFullBoard(includePending);
     	
+    	//If the cell is filled, there are no options
+    	if(fullBoard[cell.x][cell.y] > 0)
+    		return new ArrayList<Byte>();
+    	
     	//Start by assuming all options are true
     	boolean[] options = new boolean[BoardSize + 1];
     	for(int i=1; i<BoardSize + 1; i++)
