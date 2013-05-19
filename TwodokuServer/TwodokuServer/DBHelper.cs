@@ -9,6 +9,7 @@ namespace TwodokuServer
     public class DBHelper
     {
         public const string TableGames = "Games";
+        public const string TablePlayers = "Players";
 
         public const string ColumnGameId = "GAMEID";
         public const string ColumnPlayer1 = "PLAYER1";
@@ -28,6 +29,11 @@ namespace TwodokuServer
         public const string ColumnMultipliers = "MULTIPLIERS";
         public const string ColumnLastMove = "LASTMOVE";
         public const string ColumnHand = "HAND";
+
+        public const string ColumnPlayerId = "PLAYERID";
+        public const string ColumnName = "NAME";
+        public const string ColumnPassword = "PASSWORD";
+        public const string ColumnGcmId = "GCMID";
 
         public string Server = null;
         public string Database = null;
@@ -377,6 +383,11 @@ namespace TwodokuServer
             return lastID + 1;
         }
 
+
+
+        /////////////////////     Game Helpers       ////////////////////////////////
+
+
         public bool AddGame(TwodokuGameInfo gameInfo)
         {
             string values = "";
@@ -408,6 +419,9 @@ namespace TwodokuServer
             if (existingGame == null || !existingGame.IsSameGame(gameInfo))
                 return false;
 
+            gameInfo.Player1 = existingGame.Player1;
+            gameInfo.Player2 = existingGame.Player2;
+
             //Update: Scores, PlayDate, Status, Turn, PlayerBoard, LastMove
             string update = "";
             update += string.Format("{0}='{1}',", ColumnPlayer1Score, gameInfo.Player1Score);
@@ -431,7 +445,7 @@ namespace TwodokuServer
         {
             string ret = "";
 
-            for(int i=0; i<20; i++)
+            for(int i=0; i<50; i++)
             {
                 int number = mRandom.Next(1, 10);
                 ret += number.ToString();
@@ -444,7 +458,7 @@ namespace TwodokuServer
         {
             TwodokuGameInfo gameInfo = null;
             string qualifier = ColumnGameId + "='" + gameId + "'";
-            string query = String.Format("select {0} from {1} where {2}", "*", DBHelper.TableGames, qualifier);
+            string query = String.Format("select {0} from {1} where {2}", "*", TableGames, qualifier);
             SqlDataReader reader = Query(query);
 
             if (reader != null)
@@ -454,6 +468,53 @@ namespace TwodokuServer
                 reader.Close();
             }
             return gameInfo;
+        }
+
+
+
+        /////////////////////     Game Helpers       ////////////////////////////////
+
+
+        public bool AddPlayer(TwodokuPlayer player)
+        {
+            string values = "";
+            values += "'" + player.PlayerId + "',";
+            values += "'" + player.Name + "',";
+            values += "'" + player.Password + "',";
+            values += "'" + player.GcmId + "'";
+
+            return Insert(TablePlayers, values);
+        }
+
+        public bool UpdatePlayerGcmId(TwodokuPlayer player)
+        {
+            //Retrieve the game and make sure everything matches (players, etc.)
+            TwodokuPlayer existingPlayer = GetPlayer(player.Name);
+            if (existingPlayer == null)
+                return false;
+
+            //Update: Scores, PlayDate, Status, Turn, PlayerBoard, LastMove
+            string update = "";
+            update += string.Format("{0}='{1}'", ColumnGcmId, player.GcmId);
+
+            string qualifier = string.Format("{0}='{1}'", ColumnName, player.Name);
+            return Update(TablePlayers, update, qualifier);
+        }
+
+        public TwodokuPlayer GetPlayer(string name)
+        {
+            TwodokuPlayer player = null;
+            string qualifier = ColumnName + "='" + name + "'";
+            string query = String.Format("select {0} from {1} where {2}", "*", TablePlayers, qualifier);
+            SqlDataReader reader = Query(query);
+
+            if (reader != null)
+            {
+                if(reader.Read())
+                    player = TwodokuPlayer.FromSqlReader(reader);
+                reader.Close();
+            }
+            return player;
         }
     }
 }

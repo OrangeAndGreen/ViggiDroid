@@ -169,6 +169,7 @@ namespace TwodokuServer
 
             // we probably shouldn't be using a streamwriter for all output from handlers either
             StreamWriter outputStream = new StreamWriter(new BufferedStream(mSocket.GetStream()));
+            string postPlayer = null;
             try
             {
                 //Parse the request
@@ -193,7 +194,7 @@ namespace TwodokuServer
                 }
                 else if (HttpMethod.Equals("POST"))
                 {
-                    HandlePOSTRequest(inputStream, outputStream);
+                    postPlayer = HandlePOSTRequest(inputStream, outputStream);
                 }
             }
             catch (Exception e)
@@ -210,6 +211,17 @@ namespace TwodokuServer
             inputStream = null;
             outputStream = null;
             mSocket.Close();
+
+            if (postPlayer != null)
+            {
+                //Send a test ping to the player
+                string url = "https://android.googleapis.com/gcm/send";
+                TwodokuPlayer player = mDB.GetPlayer(postPlayer);
+                string data = "registration_id=" + player.GcmId;
+                Console.WriteLine(string.Format("Attempting to ping user {0}", player.Name));
+                Console.WriteLine(SendPost(url, data));
+                Console.WriteLine("Done");
+            }
         }
 
         public void ReadHeaders(Stream inputStream)
@@ -238,11 +250,11 @@ namespace TwodokuServer
 
                 string value = line.Substring(pos, line.Length - pos);
                 //Console.WriteLine("header: {0}:{1}", name, value);
-                HttpHeaders[name.ToLower()] = value.ToLower();
+                HttpHeaders[name.ToLower()] = value;
             }
         }
 
-        public void HandleGETRequest(StreamWriter outputStream)
+        public TwodokuPlayer HandleGETRequest(StreamWriter outputStream)
         {
             //Console.WriteLine("request: {0}", HttpUrl);
 
@@ -256,12 +268,28 @@ namespace TwodokuServer
             if (HttpHeaders.ContainsKey("method"))
                 method = (string)HttpHeaders["method"];
 
-            string player = (string)HttpHeaders["player"];
+            string name = (string)HttpHeaders["player"];
+            string gcmId = (string)HttpHeaders["gcmid"];
+
+            //Console.WriteLine(string.Format("GCM ID: {0}", gcmId));
             
-            if (method.Equals("gamelist"))
+            TwodokuPlayer player = mDB.GetPlayer(name);
+            if (player == null)
             {
-                Console.WriteLine(string.Format("{0}: Sending game list to {1}", DateStrings.ToString(DateTime.Now), player));
-                string qualifier = DBHelper.ColumnPlayer1 + "='" + player + "' OR " + DBHelper.ColumnPlayer2 + "='" + player + "'";
+                player = new TwodokuPlayer(-1, name, "", gcmId);
+                player.PlayerId = mDB.GetNextKey(DBHelper.TablePlayers, DBHelper.ColumnPlayerId);
+                mDB.AddPlayer(player);
+            }
+            else
+            {
+                player.GcmId = gcmId;
+                mDB.UpdatePlayerGcmId(player);
+            }
+
+            if (method.Equals("Gamelist"))
+            {
+                Console.WriteLine(string.Format("{0}: Sending game list to {1}", DateStrings.ToString(DateTime.Now), name));
+                string qualifier = DBHelper.ColumnPlayer1 + "='" + name + "' OR " + DBHelper.ColumnPlayer2 + "='" + name + "'";
                 string query = String.Format("select {0} from {1} where {2} order by {3}", "*", DBHelper.TableGames, qualifier, "STARTDATE");
                 SqlDataReader reader = mDB.Query(query);
 
@@ -277,13 +305,13 @@ namespace TwodokuServer
                 else
                     outputStream.WriteLine("No games");
             }
-            else if(method.Equals("game"))
+            else if(method.Equals("Game"))
             {
                 int gameId = -1;
                 if (HttpHeaders.ContainsKey("gameid"))
                     int.TryParse((string)HttpHeaders["gameid"], out gameId);
 
-                Console.WriteLine(string.Format("{0}: Sending game {1} to {2}", DateStrings.ToString(DateTime.Now), gameId, player));
+                Console.WriteLine(string.Format("{0}: Sending game {1} to {2}", DateStrings.ToString(DateTime.Now), gameId, name));
 
                 TwodokuGameInfo gameInfo = mDB.GetGame(gameId);
 
@@ -305,10 +333,12 @@ namespace TwodokuServer
                 //outputStream.WriteLine("<input type=submit name=bar value=barvalue>");
                 //outputStream.WriteLine("</form>");
             }
+
+            return player;
         }
 
         private const int BUF_SIZE = 4096;
-        public void HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
+        public string HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
         {
             // this post data processing just reads everything into a memory stream.
             // this is fine for smallish things, but for large stuff we should really
@@ -409,6 +439,49 @@ namespace TwodokuServer
                 outputStream.WriteLine("Connection: close");
                 outputStream.WriteLine("");
             }
+
+            string otherPlayer = gameInfo.Player2;
+            if (player.Equals(otherPlayer))
+                otherPlayer = gameInfo.Player1;
+
+            return otherPlayer;
+        }
+
+        public string SendPost(string url, string postData)
+        {
+            string webpageContent = string.Empty;
+
+            try
+            {
+                byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
+                webRequest.Method = "POST";
+                webRequest.ContentType = "application/x-www-form-urlencoded";
+                webRequest.ContentLength = byteArray.Length;
+
+                string regId = "AIzaSyDZwlIo0uQ90PvRac272_vAyllnW9eok38";
+                webRequest.Headers.Add("Authorization", "key=" + regId);
+
+                using (Stream webpageStream = webRequest.GetRequestStream())
+                {
+                    webpageStream.Write(byteArray, 0, byteArray.Length);
+                }
+
+                using (HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse())
+                {
+                    using (StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
+                    {
+                        webpageContent = reader.ReadToEnd();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return webpageContent;
         }
     }
 }

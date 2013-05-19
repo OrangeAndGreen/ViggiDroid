@@ -15,28 +15,37 @@ import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class HttpClient {
+public class HttpClient
+{
 	private Context mContext = null;
+	public boolean Failed = false;
 
-	public HttpClient(Context context) {
+	public HttpClient(Context context)
+	{
 		mContext = context;
 	}
 
-	private class Header {
+	private class Header
+	{
 		public String Key = null;
 		public String Value = null;
 
-		public Header(String key, String value) {
+		public Header(String key, String value)
+		{
 			Key = key;
 			Value = value;
 		}
 	}
 
 	private boolean OpenHttpPostConnection(String urlString,
-			List<Header> headers, List<Header> postData) throws IOException {
-		try {
+			List<Header> headers, List<Header> postData) throws IOException
+	{
+		Failed = false;
+		try
+		{
 			String dataString = "";
-			for (int i = 0; i < postData.size(); i++) {
+			for (int i = 0; i < postData.size(); i++)
+			{
 				// Add the POST data to the string
 				if (i > 0)
 					dataString += "&";
@@ -62,7 +71,8 @@ public class HttpClient {
 			httpConnection.setDoInput(true);
 			httpConnection.setDoOutput(true);
 
-			for (int i = 0; i < headers.size(); i++) {
+			for (int i = 0; i < headers.size(); i++)
+			{
 				httpConnection.setRequestProperty(headers.get(i).Key,
 						headers.get(i).Value);
 			}
@@ -78,7 +88,9 @@ public class HttpClient {
 			int response = httpConnection.getResponseCode();
 			if (response == HttpURLConnection.HTTP_OK)
 				return true;
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
+			Failed = true;
 			e.printStackTrace();
 			throw new IOException("Error connecting");
 		}
@@ -87,11 +99,14 @@ public class HttpClient {
 	}
 
 	private InputStream OpenHttpGetConnection(String urlString,
-			List<Header> headers) throws IOException {
+			List<Header> headers) throws IOException
+	{
+		Failed = false;
 		InputStream stream = null;
 		int response = -1;
 
-		try {
+		try
+		{
 			URL url = new URL(urlString);
 			URLConnection connection = url.openConnection();
 
@@ -103,7 +118,8 @@ public class HttpClient {
 			httpConnection.setInstanceFollowRedirects(true);
 			httpConnection.setRequestMethod("GET");
 
-			for (int i = 0; i < headers.size(); i++) {
+			for (int i = 0; i < headers.size(); i++)
+			{
 				httpConnection.setRequestProperty(headers.get(i).Key,
 						headers.get(i).Value);
 			}
@@ -115,7 +131,9 @@ public class HttpClient {
 			response = httpConnection.getResponseCode();
 			if (response == HttpURLConnection.HTTP_OK)
 				stream = httpConnection.getInputStream();
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
+			Failed = true;
 			e.printStackTrace();
 			throw new IOException("Error connecting");
 		}
@@ -123,14 +141,17 @@ public class HttpClient {
 		return stream;
 	}
 
-	private String DownloadText(String urlString, List<Header> headers) {
+	private String DownloadText(String urlString, List<Header> headers)
+	{
 		int bufferSize = 2000;
 		InputStream stream = null;
 
 		// Send the request
-		try {
+		try
+		{
 			stream = OpenHttpGetConnection(urlString, headers);
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			return "";
 		}
@@ -140,16 +161,19 @@ public class HttpClient {
 		String str = "";
 		char[] inputBuffer = new char[bufferSize];
 
-		try {
+		try
+		{
 			// Read the response data
-			while ((charRead = reader.read(inputBuffer)) > 0) {
+			while ((charRead = reader.read(inputBuffer)) > 0)
+			{
 				String readString = String
 						.copyValueOf(inputBuffer, 0, charRead);
 				str += readString;
 				inputBuffer = new char[bufferSize];
 			}
 			stream.close();
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 			return "";
 		}
@@ -159,131 +183,151 @@ public class HttpClient {
 
 	// /// Get game list /////
 
-	public void GetGameList(String server, String player,
-			GameListReadyListener listener) {
-		GetGameListTask task = new GetGameListTask(player, listener);
+	public void GetGameList(String server, String player, String gcmId,
+			GameListReadyListener listener)
+	{
+		GetGameListTask task = new GetGameListTask(player, gcmId, listener);
 		task.execute(server);
 	}
 
 	private class GetGameListTask extends
-			AsyncTask<String, Void, List<SudokuGameTwoPlayer>> {
+			AsyncTask<String, Void, List<SudokuGameTwoPlayer>>
+	{
 		private String mPlayer = null;
 		private GameListReadyListener mListener = null;
+		String mGcmId = null;
 
-		public GetGameListTask(String player, GameListReadyListener listener) {
+		public GetGameListTask(String player, String gcmId, GameListReadyListener listener)
+		{
 			mPlayer = player;
+			mGcmId = gcmId;
 			mListener = listener;
 		}
 
 		@Override
-		protected List<SudokuGameTwoPlayer> doInBackground(String... urls) {
+		protected List<SudokuGameTwoPlayer> doInBackground(String... urls)
+		{
 			List<SudokuGameTwoPlayer> result = new ArrayList<SudokuGameTwoPlayer>();
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("Method", "Gamelist"));
 			headers.add(new Header("Player", mPlayer));
-			try {
+			headers.add(new Header("GcmId", mGcmId));
+			try
+			{
 				String strResult = DownloadText(urls[0], headers);
 				String[] lines = strResult.split("\n");
 				for (String line : lines)
 					result.add(SudokuGameTwoPlayer.FromString(line, true));
-			} catch (Exception e) {
-				Log.e("HttpClient",
-						"Error communicating with server: "
+			} catch (Exception e)
+			{
+				Log.e("HttpClient", "Error communicating with server: "
 								+ e.getLocalizedMessage());
 			}
 			return result;
 		}
 
 		@Override
-		protected void onPostExecute(List<SudokuGameTwoPlayer> result) {
+		protected void onPostExecute(List<SudokuGameTwoPlayer> result)
+		{
 			mListener.OnGameListReady(result);
 		}
 	}
 
-	public interface GameListReadyListener {
+	public interface GameListReadyListener
+	{
 		public void OnGameListReady(List<SudokuGameTwoPlayer> gameList);
 	}
 
 	// /// Get game /////
 
 	public void GetGame(String server, int gameId, String player,
-			GameReadyListener listener) {
+			GameReadyListener listener)
+	{
 		GetGameTask task = new GetGameTask(gameId, player, listener);
 		task.execute(server);
 	}
 
 	private class GetGameTask extends
-			AsyncTask<String, Void, SudokuGameTwoPlayer> {
+			AsyncTask<String, Void, SudokuGameTwoPlayer>
+	{
 		private Integer mGameId = 0;
 		private GameReadyListener mListener = null;
 		private String mPlayer = null;
 
-		public GetGameTask(int gameId, String player, GameReadyListener listener) {
+		public GetGameTask(int gameId, String player, GameReadyListener listener)
+		{
 			mGameId = gameId;
 			mPlayer = player;
 			mListener = listener;
 		}
 
 		@Override
-		protected SudokuGameTwoPlayer doInBackground(String... server) {
+		protected SudokuGameTwoPlayer doInBackground(String... server)
+		{
 			SudokuGameTwoPlayer result = null;
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("Method", "Game"));
 			headers.add(new Header("GameId", Integer.toString(mGameId)));
 			headers.add(new Header("Player", mPlayer));
-			try {
+			try
+			{
 				String strResult = DownloadText(server[0], headers);
 				result = SudokuGameTwoPlayer.FromString(strResult, false);
-			} catch (Exception e) {
-				Log.e("HttpClient",
-						"Error communicating with server: "
-								+ e.getLocalizedMessage());
+			} catch (Exception e)
+			{
+				Log.e("HttpClient", "Error communicating with server: " + e.getLocalizedMessage());
 				StackTraceElement[] trace = e.getStackTrace();
-				for (StackTraceElement element : trace) {
-					Log.e("",
-							element.getClassName() + " "
-									+ element.getLineNumber());
+				for (StackTraceElement element : trace)
+				{
+					Log.e("", element.getClassName() + " " + element.getLineNumber());
 				}
 			}
 			return result;
 		}
 
 		@Override
-		protected void onPostExecute(SudokuGameTwoPlayer game) {
+		protected void onPostExecute(SudokuGameTwoPlayer game)
+		{
 			mListener.OnGameReady(game);
 		}
 	}
 
-	public interface GameReadyListener {
+	public interface GameReadyListener
+	{
 		public void OnGameReady(SudokuGameTwoPlayer game);
 	}
 
 	// /// Update game /////
 
 	public void UpdateGame(String server, SudokuGameTwoPlayer game,
-			String player, GameUpdatedListener listener) {
+			String player, GameUpdatedListener listener)
+	{
 		UpdateGameTask task = new UpdateGameTask(game, player, listener);
 		task.execute(server);
 	}
 
-	private class UpdateGameTask extends AsyncTask<String, Void, Boolean> {
+	private class UpdateGameTask extends AsyncTask<String, Void, Boolean>
+	{
 		private SudokuGameTwoPlayer mGame = null;
 		private String mPlayer = null;
 		private GameUpdatedListener mListener = null;
 
 		public UpdateGameTask(SudokuGameTwoPlayer game, String player,
-				GameUpdatedListener listener) {
+				GameUpdatedListener listener)
+		{
 			mGame = game;
 			mPlayer = player;
 			mListener = listener;
 		}
 
 		@Override
-		protected Boolean doInBackground(String... server) {
+		protected Boolean doInBackground(String... server)
+		{
 			boolean success = false;
-			try {
+			try
+			{
 				List<Header> headers = new ArrayList<Header>();
-				headers.add(new Header("GameID", Integer.toString(mGame.GameId)));
+				headers.add(new Header("GameId", Integer.toString(mGame.GameId)));
 				headers.add(new Header("Player", mPlayer));
 
 				List<Header> data = new ArrayList<Header>();
@@ -302,7 +346,8 @@ public class HttpClient {
 				String startingBoard = "";
 				String multipliers = "";
 				for (int x = 0; x < SudokuBoard.BoardSize; x++)
-					for (int y = 0; y < SudokuBoard.BoardSize; y++) {
+					for (int y = 0; y < SudokuBoard.BoardSize; y++)
+					{
 						byte cell = mGame.GetBoard().GetSubBoard(-1)[x][y];
 						startingBoard += Integer.toString(cell);
 						if (cell > 0)
@@ -319,7 +364,8 @@ public class HttpClient {
 				data.add(new Header("LastMove", mGame.CurrentMove));
 				data.add(new Header("PlayerBoard", playerBoard));
 
-				if (mGame.GameId <= 0) {
+				if (mGame.GameId <= 0)
+				{
 					// This data only needs to be sent the first time a game is
 					// sent to the server
 					data.add(new Header("HandSystem", mGame.GetHandSystem()));
@@ -332,7 +378,8 @@ public class HttpClient {
 				}
 
 				success = OpenHttpPostConnection(server[0], headers, data);
-			} catch (IOException e) {
+			} catch (IOException e)
+			{
 				Log.e("HttpClient",
 						"Error communicating with server"
 								+ e.getLocalizedMessage());
@@ -341,12 +388,14 @@ public class HttpClient {
 		}
 
 		@Override
-		protected void onPostExecute(Boolean success) {
+		protected void onPostExecute(Boolean success)
+		{
 			mListener.OnGameUpdated(success);
 		}
 	}
 
-	public interface GameUpdatedListener {
+	public interface GameUpdatedListener
+	{
 		public void OnGameUpdated(boolean success);
 	}
 }

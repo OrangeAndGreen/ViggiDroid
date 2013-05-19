@@ -41,6 +41,38 @@ public class HandConcept1 implements IHand
 			mHandSize = 9;
 	}
 
+	private List<Byte> GetHandOptions(SudokuBoard board, int playerTurn)
+	{
+		//Build a list of all the options for every cell in the player's territory
+		List<Byte> allOptions = new ArrayList<Byte>();
+		List<Point> squares = SudokuBoard.GetPlayerSquares(playerTurn);
+		for(int i=0; i<squares.size(); i++)
+		{
+			for(int x=0; x<SudokuBoard.SquareSize; x++)
+				for(int y=0; y<SudokuBoard.SquareSize; y++)
+				{
+					Point cell = new Point(squares.get(i).x * SudokuBoard.SquareSize + x, squares.get(i).y * SudokuBoard.SquareSize + y);
+					List<Byte> cellOptions = board.GetCellOptions(cell, true);
+					
+					//String cellOptionsStr = String.format("Cell (%d,%d) options: ", cell.x, cell.y);
+					//for(Byte b : cellOptions)
+					//	cellOptionsStr += String.format("%d", b);
+					//Log.i("", cellOptionsStr);
+					
+					for(int n = 0; n<cellOptions.size(); n++)
+						if(!allOptions.contains(cellOptions.get(n)))
+							allOptions.add(cellOptions.get(n));
+				}
+		}
+		
+		String optionsString = "";
+		for(int i=0; i<allOptions.size(); i++)
+			optionsString += String.format("%d", allOptions.get(i));
+		DebugLog.Write("Hand options: " + optionsString, null);
+		
+		return allOptions;
+	}
+	
 	public List<Byte> GetHand(SudokuBoard board, int playerTurn)
 	{
 		if(mCurrentHand == null || mCurrentHand.size() < mHandSize || mCurrentPlayer != playerTurn)
@@ -55,31 +87,7 @@ public class HandConcept1 implements IHand
 			DebugLog.Write(String.format("Getting %d new values for hand", mHandSize - mCurrentHand.size()), null);
 			
 			//Build a list of all the options for every cell in the player's territory
-			List<Byte> allOptions = new ArrayList<Byte>();
-			List<Point> squares = SudokuBoard.GetPlayerSquares(playerTurn);
-			for(int i=0; i<squares.size(); i++)
-			{
-				for(int x=0; x<SudokuBoard.SquareSize; x++)
-					for(int y=0; y<SudokuBoard.SquareSize; y++)
-					{
-						Point cell = new Point(squares.get(i).x * SudokuBoard.SquareSize + x, squares.get(i).y * SudokuBoard.SquareSize + y);
-						List<Byte> cellOptions = board.GetCellOptions(cell, false);
-						
-						//String cellOptionsStr = String.format("Cell (%d,%d) options: ", cell.x, cell.y);
-						//for(Byte b : cellOptions)
-						//	cellOptionsStr += String.format("%d", b);
-						//Log.i("", cellOptionsStr);
-						
-						for(int n = 0; n<cellOptions.size(); n++)
-							if(!allOptions.contains(cellOptions.get(n)))
-								allOptions.add(cellOptions.get(n));
-					}
-			}
-			
-			String optionsString = "";
-			for(int i=0; i<allOptions.size(); i++)
-				optionsString += String.format("%d", allOptions.get(i));
-			DebugLog.Write("Hand options: " + optionsString, null);
+			List<Byte> allOptions = GetHandOptions(board, playerTurn);
 			
 			//Randomly select the required number of values from the available list
 			for(int i=mCurrentHand.size(); i<mHandSize; i++)
@@ -132,23 +140,8 @@ public class HandConcept1 implements IHand
 			}
 		}
 		
-		List<Point> squares = SudokuBoard.GetPlayerSquares(playerTurn);
-		
 		//Get the valid options on the board for this player
-		List<Byte> boardOptions = new ArrayList<Byte>();
-		for(int i=0; i<squares.size(); i++)
-		{
-			List<Byte> squareOptions = board.GetSquareOptions(squares.get(i), false);
-			
-			String message = String.format("Options for (%d,%d): ", squares.get(i).x, squares.get(i).y);
-			for(int n=0; n<squareOptions.size(); n++)
-				message += String.format("%d", squareOptions.get(n));
-			DebugLog.Write(message, null);
-			
-			for(int num = 0; num < squareOptions.size(); num++)
-				if(!boardOptions.contains(squareOptions.get(num)))
-					boardOptions.add(squareOptions.get(num));
-		}
+		List<Byte> boardOptions = GetHandOptions(board, playerTurn);
 		
 		//Remove any other numbers in the hand that are no longer valid
 		for(int i=mCurrentHand.size() - 1; i >= 0; i--)

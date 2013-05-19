@@ -25,6 +25,9 @@ GO
 IF OBJECT_ID(N'[dbo].[Games]', 'U') IS NOT NULL
     DROP TABLE [dbo].[Games];
 GO
+IF OBJECT_ID(N'[dbo].[Players]', 'U') IS NOT NULL
+    DROP TABLE [dbo].[Players];
+GO
 
 
 -- --------------------------------------------------
@@ -53,6 +56,14 @@ CREATE TABLE [dbo].[Games] (
 );
 GO
 
+CREATE TABLE [dbo].[Players] (
+    [PLAYERID] int  NOT NULL,
+    [NAME] varchar(max)  NOT NULL,
+    [PASSWORD] varchar(max) NOT NULL,
+	[GCMID] varchar(max)  NOT NULL
+);
+GO
+
 -- --------------------------------------------------
 -- Creating all PRIMARY KEY constraints
 -- --------------------------------------------------
@@ -61,6 +72,11 @@ GO
 ALTER TABLE [dbo].[Games]
 ADD CONSTRAINT [PK_Games]
     PRIMARY KEY CLUSTERED ([GAMEID] ASC);
+GO
+
+ALTER TABLE [dbo].[Players]
+ADD CONSTRAINT [PK_Players]
+    PRIMARY KEY CLUSTERED ([PLAYERID] ASC);
 GO
 
 -- --------------------------------------------------
