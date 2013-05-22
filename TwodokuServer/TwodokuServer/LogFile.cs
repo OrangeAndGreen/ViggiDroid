@@ -24,12 +24,12 @@ namespace TwodokuServer
             string filename = "Errors.txt";
             string entry = DateTime.Now.ToString() + ": " + error;
 
+            Console.WriteLine(entry);
+            
             TextWriter writer = null;
             writer = System.IO.File.AppendText(filename);
             writer.Write(entry + "\n");
             writer.Close();
-
-            Console.WriteLine(entry);
         }
     }
 }

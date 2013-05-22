@@ -2,6 +2,7 @@ package com.Dave.Sudoku;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import android.graphics.Point;
 import android.util.Log;
@@ -360,7 +361,7 @@ public class SudokuBoard
     				
     				if(GetCell(cell, true) <= 0 && mCellMultipliers[x][y] <= 1)
     				{
-    					DebugLog.Write(String.format("Setting multiplier in cell (%d,%d)", x, y), null);
+    					DebugLog.Write(String.format(Locale.US, "Setting multiplier in cell (%d,%d)", x, y), null);
     					mCellMultipliers[x][y] = 2;
     					squares.remove(square);
     					break;
@@ -409,8 +410,8 @@ public class SudokuBoard
 	    		for(int y=0; y<BoardSize; y++)
 	    			if(GetFullBoard(true)[x][y] == 0 && !IsCellValid(new Point(x, y)))
 	    				{
-	    					DebugLog.Write(String.format("Cetting cell (%d, %d) invalid", x, y), null);
-	    					Log.i("SudokuBoard", String.format("Setting cell (%d, %d) invalid", x, y));
+	    					DebugLog.Write(String.format(Locale.US, "Cetting cell (%d, %d) invalid", x, y), null);
+	    					Log.i("SudokuBoard", String.format(Locale.US, "Setting cell (%d, %d) invalid", x, y));
 	    					mPendingPlayerTurn = playerTurn;
 	    					mPendingMove[x][y] = -1;
 	    				}

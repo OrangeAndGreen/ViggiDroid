@@ -1,6 +1,8 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Scoring;
 
 import java.util.List;
+
+import com.Dave.Sudoku.SudokuBoard;
 
 import android.graphics.Point;
 
@@ -49,10 +51,5 @@ public class ScoringConcept1 implements IScoring
 		}
 		
 		return score;
-	}
-
-	public int GetNextMultiplier(SudokuBoard board, Point point, byte number, int currentMultiplier)
-	{
-		return 0;
 	}
 }

@@ -51,6 +51,9 @@
 	    android:background="#000080"
 		/>
     
+    <!-- ________________________________________________ -->
+    
+    
     <CheckBox
         android:id="@+id/fillCenterCheck"
         android:layout_width="fill_parent"
@@ -60,6 +63,9 @@
         android:layout_alignParentLeft="true"
         />
     
+    <!-- ________________________________________________ -->
+    
+    <!-- Top-left option -->
     <TextView
         android:id="@+id/textCellsToFill"
         android:layout_width="wrap_content"
@@ -77,6 +83,9 @@
   		android:text=""
   		/>
     
+    <!-- ________________________________________________ -->
+    
+    <!-- To the right -->
     <Spinner
   		android:id="@+id/spinnerHandSize"
   		android:layout_width="wrap_content"
@@ -95,6 +104,9 @@
         android:text="@string/handSize"
         />
     
+    <!-- ________________________________________________ -->
+    
+    <!-- Down -->
     <TextView
         android:id="@+id/textBonusCells"
         android:layout_width="wrap_content"
@@ -112,6 +124,9 @@
   		android:text=""
   		/>
     
+    <!-- ________________________________________________ -->
+    
+    <!-- Left -->
     <TextView
         android:id="@+id/textHandSystem"
         android:layout_width="wrap_content"
@@ -129,6 +144,9 @@
   		android:text=""
   		/>
     
+    <!-- ________________________________________________ -->
+    
+    <!-- Down -->
     <TextView
         android:id="@+id/textScoringSystem"
         android:layout_width="wrap_content"
@@ -145,6 +163,29 @@
         android:layout_alignParentLeft="true"
   		android:text=""
   		/>
+    
+    <!-- ________________________________________________ -->
+    
+    <!-- Right -->
+    <TextView
+        android:id="@+id/textMultiplierStrategy"
+        android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/spinnerBonusCells"
+        android:layout_alignParentRight="true"
+        android:text="@string/multiplierstrategy"
+        />
+    
+    <Spinner
+  		android:id="@+id/spinnerMultiplierStrategy"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@+id/textMultiplierStrategy"
+        android:layout_alignParentRight="true"
+  		android:text=""
+  		/>
+
+    <!-- ________________________________________________ -->
 
     <View   
         android:id="@+id/divider3"

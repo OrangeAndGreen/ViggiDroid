@@ -1,4 +1,8 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Game;
+
+import com.Dave.Sudoku.SudokuBoard;
+import com.Dave.Sudoku.SudokuView;
+import com.Dave.Sudoku.Scoring.IScoring;
 
 import android.app.AlertDialog;
 import android.content.Context;

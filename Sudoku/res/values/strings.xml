@@ -2,12 +2,9 @@
 <resources>
 
     <string name="hello">Sudoku Game</string>
-    <string name="app_name">Sudoku</string>
+    <string name="app_name">Twodoku</string>
     
     <string name="title">Welcome to Twodoku!</string>
-    <string name="easy">Easy</string>
-    <string name="hard">Hard</string>
-    <string name="x">X</string>
     <string name="twoplayer">Start new game</string>
     
     <string name="name">Name:</string>
@@ -30,15 +27,14 @@
     <string name="blank"> </string>
     
     <string name="options">Game Options</string>
-    <string name="player1">Player 1 Name:</string>
     <string name="player2">Player 2 Name:</string>
-    <string name="defaultplayer1">Player 1</string>
     <string name="defaultplayer2">Player 2</string>
     <string name="fillCenter">Fill center square</string>
     <string name="cellstofill">Cells to pre-fill:</string>
     <string name="handSize">Hand Size:</string>
     <string name="bonusCells">2x Cells:</string>
     <string name="scoringsystem">Scoring System:</string>
+    <string name="multiplierstrategy">Multipliers:</string>
     <string name="handsystem">Hand System:</string>
     <string name="start">Start Game</string>
 

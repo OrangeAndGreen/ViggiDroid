@@ -10,19 +10,19 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.content.Context;
+import com.Dave.Sudoku.Game.SudokuGameTwoPlayer;
+
+
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
 
 public class HttpClient
 {
-	private Context mContext = null;
 	public boolean Failed = false;
 
-	public HttpClient(Context context)
+	public HttpClient()
 	{
-		mContext = context;
 	}
 
 	private class Header
@@ -373,6 +373,7 @@ public class HttpClient
 							.GetHand().size())));
 					data.add(new Header("ScoringSystem", mGame
 							.GetScoringSystem()));
+					data.add(new Header("MultiplierSystem", mGame.GetMultiplierSystem()));
 					data.add(new Header("StartingBoard", startingBoard));
 					data.add(new Header("Multipliers", multipliers));
 				}

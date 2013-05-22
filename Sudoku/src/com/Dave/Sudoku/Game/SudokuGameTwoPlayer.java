@@ -1,7 +1,24 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Game;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+
+import com.Dave.Sudoku.DebugLog;
+import com.Dave.Sudoku.SudokuBoard;
+import com.Dave.Sudoku.SudokuView;
+import com.Dave.Sudoku.Hand.HandConcept1;
+import com.Dave.Sudoku.Hand.HandVanilla;
+import com.Dave.Sudoku.Hand.IHand;
+import com.Dave.Sudoku.Multipliers.IMultiplier;
+import com.Dave.Sudoku.Multipliers.Multiplier111;
+import com.Dave.Sudoku.Multipliers.Multiplier122;
+import com.Dave.Sudoku.Multipliers.Multiplier123;
+import com.Dave.Sudoku.Scoring.IScoring;
+import com.Dave.Sudoku.Scoring.ScoringConcept1;
+import com.Dave.Sudoku.Scoring.ScoringConcept2;
+import com.Dave.Sudoku.Scoring.ScoringConcept3;
+import com.Dave.Sudoku.Scoring.ScoringVanilla;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -23,12 +40,14 @@ public class SudokuGameTwoPlayer
 	
 	private IScoring mScoring = null;
 	private IHand mHand = null;
+	private IMultiplier mMultiplier = null;
 	
 	private int Player1Score = 0;
 	private int Player2Score = 0;
 	private int mProposedScore = 0;
-	private int mProposedMultiplier = 0;
-	private int mCurrentMultiplier = 0;
+	private boolean mDoesPlayerGoAgain = false;
+	//private int mProposedMultiplier = 0;
+	//private int mCurrentMultiplier = 0;
 	
 	private String Player1Name = null;
 	private String Player2Name = null;
@@ -52,7 +71,8 @@ public class SudokuGameTwoPlayer
 		
 	}
 	
-	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int bonusCells, String scoringSystem, String handSystem, int handSize)
+	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, boolean fillCenter, int cellsToFill,
+			int bonusCells, String scoringSystem, String handSystem, int handSize, String multiplierSystem)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
@@ -70,6 +90,9 @@ public class SudokuGameTwoPlayer
 		
     	mHand = CreateHand(handSystem, handSize, null);
     	DebugLog.Write("Hand: " + mHand.GetName(), null);
+    	
+    	mMultiplier = CreateMultiplier(multiplierSystem);
+    	DebugLog.Write("Multiplier: " + mMultiplier.GetName(), null);
     	
 		view.InitializeBoard(Board, GetPlayer1Color(player1Name), GetPlayer2Color(player1Name));
 	}
@@ -95,18 +118,18 @@ public class SudokuGameTwoPlayer
 		game.Status = Integer.parseInt(parts[7].trim());
 		game.PlayerTurn = Integer.parseInt(parts[8].trim());
 		
-		
 		if(!infoOnly)
 		{	
 			//Get the extra values
 			String handSystem = parts[9];
 			int handSize = Integer.parseInt(parts[10].trim());
 			String scoringSystem = parts[11];
-			String lastMove = parts[12];
-			String hand = parts[13];
-			String startingBoard = parts[14];
-			String playerBoard = parts[15];
-			String multipliers = parts[16];
+			String multiplierStrategy = parts[12];
+			String lastMove = parts[13];
+			String hand = parts[14];
+			String startingBoard = parts[15];
+			String playerBoard = parts[16];
+			String multipliers = parts[17];
 			
 			//Setup the board and other game inputs
 			game.Board = new SudokuBoard(startingBoard, playerBoard, multipliers);
@@ -116,6 +139,7 @@ public class SudokuGameTwoPlayer
 			
 			game.mScoring = CreateScoring(scoringSystem);
 			game.mHand = CreateHand(handSystem, handSize, hand);
+			game.mMultiplier = CreateMultiplier(multiplierStrategy);
 		}
 		
 		return game;
@@ -159,6 +183,20 @@ public class SudokuGameTwoPlayer
     	return ret;
 	}
 	
+	public static IMultiplier CreateMultiplier(String multiplierSystem)
+	{
+		IMultiplier ret = null;
+		
+		if(multiplierSystem != null && multiplierSystem.equals("123"))
+			ret = new Multiplier123();
+		else if(multiplierSystem != null && multiplierSystem.equals("122"))
+			ret = new Multiplier122();
+		else
+			ret = new Multiplier111();
+		
+		return ret;
+	}
+	
 	private static Calendar ParseCalendar(String input)
 	{
 		Calendar ret = Calendar.getInstance();
@@ -183,6 +221,11 @@ public class SudokuGameTwoPlayer
 	public String GetHandSystem()
 	{
 		return mHand.GetName();
+	}
+	
+	public String GetMultiplierSystem()
+	{
+		return mMultiplier.GetName();
 	}
 	
 	public List<Byte> GetHand()
@@ -252,7 +295,7 @@ public class SudokuGameTwoPlayer
 	public boolean IsLocalPlayerTurn(String localPlayer)
 	{
 		int localPlayerIndex = 0;
-		if(localPlayer.toLowerCase().equals(Player2Name.toLowerCase()))
+		if(localPlayer.toLowerCase(Locale.US).equals(Player2Name.toLowerCase(Locale.US)))
 			localPlayerIndex = 1;
 		
 		return PlayerTurn == localPlayerIndex;
@@ -326,12 +369,45 @@ public class SudokuGameTwoPlayer
 		return true;
 	}
 	
+	public boolean DoesPlayerGoAgain(SudokuBoard board, Point point, byte number)
+	{
+		boolean ret = false;
+		
+		if(number > 0)
+		{
+			//For each of the opponent's squares:
+				//Find what values are possible in the square
+				//Apply the move, see if any values are no longer possible
+				//Return true if so
+			
+			int playerTurn = SudokuBoard.GetPlayerTerritory(point);
+			
+			List<Point> enemySquares = SudokuBoard.GetPlayerSquares(1 - playerTurn);
+			
+			for(int i=0; i<enemySquares.size(); i++)
+			{
+				List<Byte> initialSquareOptions = board.GetSquareOptions(enemySquares.get(i), false);
+				
+				board.SetCell(point, number, playerTurn, false);
+				
+				List<Byte> finalSquareOptions = board.GetSquareOptions(enemySquares.get(i), true);
+				for(int n = 0; n < initialSquareOptions.size(); n++)
+					if(!finalSquareOptions.contains(initialSquareOptions.get(n)))
+						ret = true;
+			}
+		}
+		
+		mDoesPlayerGoAgain = ret;
+		return ret;
+	}
+	
 	public void ShowMove(SudokuView view, Point point, byte number)
 	{
 		if(GamePhase == 1)
 		{
-			mProposedScore = mScoring.ScoreMove(Board, point, number, mCurrentMultiplier);
-			mProposedMultiplier = mScoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
+			mProposedScore = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier());
+			DoesPlayerGoAgain(Board, point, number);
+			mMultiplier.UpdateProposedMultiplier(Board, point, number);
 		}
 		
 		UpdateBoard(view, point, number, true);
@@ -349,7 +425,7 @@ public class SudokuGameTwoPlayer
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
-			int score = mScoring.ScoreMove(Board, point, number, mCurrentMultiplier);
+			int score = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier());
 			//DebugLog.Write(String.format("Move scores %d", score), null);
 			if(PlayerTurn == 0)
 				Player1Score += score;
@@ -357,15 +433,14 @@ public class SudokuGameTwoPlayer
 				Player2Score += score;
 		}
 		
-		int oldMultiplier = mCurrentMultiplier;
-		mCurrentMultiplier = mScoring.GetNextMultiplier(Board, point, number, mCurrentMultiplier);
-		DebugLog.Write(String.format("Turn multiplier: %d", mCurrentMultiplier), null);
-		//TODO: Need a better way to tell when the turn is over. The multiplier should be able to stay the same for multiple turns.
-		if(mCurrentMultiplier == 0 || mCurrentMultiplier <= oldMultiplier)
+		mMultiplier.UpdateMultiplier(Board, point, number);
+		DebugLog.Write(String.format(Locale.US, "Turn multiplier: %d", mMultiplier.GetCurrentMultiplier()), null);
+		if(!DoesPlayerGoAgain(Board, point, number))
 		{
 			//Make it the other player's turn
 			PlayerTurn = 1 - PlayerTurn;
-			mCurrentMultiplier = 0;
+			mMultiplier.ResetMultiplier();
+			mDoesPlayerGoAgain = false;
 			
 			//Make sure the other player can move
 			
@@ -373,14 +448,13 @@ public class SudokuGameTwoPlayer
 			{
 				//Go back to the current player's turn
 				PlayerTurn = 1 - PlayerTurn;
-				DebugLog.Write(String.format("Player %d goes again", PlayerTurn + 1), null);
+				DebugLog.Write(String.format(Locale.US, "Player %d goes again", PlayerTurn + 1), null);
 			}
 			else
-				DebugLog.Write(String.format("Now player %d's turn", PlayerTurn + 1), null);
+				DebugLog.Write(String.format(Locale.US, "Now player %d's turn", PlayerTurn + 1), null);
 		}
 		
 		mProposedScore = 0;
-		mProposedMultiplier = 0;
 		UpdateBoard(view, point, number, false);
 		
 		//See if we need to move from the intro phase to the main phase
@@ -490,8 +564,8 @@ public class SudokuGameTwoPlayer
 	
 	public void UpdateScore(TextView view, String localPlayer)
 	{
-		String player1String = String.format("%s: %d", Player1Name, Player1Score);
-		String player2String = String.format("\n%s: %d", Player2Name, Player2Score);
+		String player1String = String.format(Locale.US, "%s: %d", Player1Name, Player1Score);
+		String player2String = String.format(Locale.US, "\n%s: %d", Player2Name, Player2Score);
 		
 		int player1Background = Color.TRANSPARENT;
 		int player2Background = Color.TRANSPARENT;
@@ -500,14 +574,14 @@ public class SudokuGameTwoPlayer
 		if(!IsLocalPlayerTurn(localPlayer))
 			proposedScore = " (their turn";
 		
-		if(mCurrentMultiplier > 1)
-			proposedScore += String.format(" with %dx bonus", mCurrentMultiplier);
+		if(mMultiplier.GetCurrentMultiplier() > 1)
+			proposedScore += String.format(" with %dx bonus", mMultiplier.GetCurrentMultiplier());
 		proposedScore += ")";
 		if(mProposedScore != 0)
 		{
-			proposedScore = String.format(" (+%d", mProposedScore);
-			if(mProposedMultiplier > mCurrentMultiplier)
-				proposedScore += String.format(" and %dx bonus turn", mProposedMultiplier);
+			proposedScore = String.format(Locale.US, " (+%d", mProposedScore);
+			if(mDoesPlayerGoAgain)
+				proposedScore += String.format(" and %dx bonus turn", mMultiplier.GetProposedMultiplier());
 			proposedScore += ")";
 		}
 		

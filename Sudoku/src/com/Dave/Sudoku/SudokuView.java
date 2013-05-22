@@ -174,7 +174,6 @@ public class SudokuView extends View
 			player1Color = Color.WHITE;
 		}
 		DrawValues(canvas, mBoard.GetSubBoard(-1), initialColor);
-		DrawCellMultipliers(canvas);
 		DrawValues(canvas, mBoard.GetSubBoard(0), player1Color);
 		if(mTwoPlayer)
 		{
@@ -194,6 +193,8 @@ public class SudokuView extends View
     	DrawMinorGridLines(canvas);
     	
     	DrawMajorGridLines(canvas);
+    	
+    	DrawCellMultipliers(canvas);
 	}
 	
 	private void DrawTwoPlayerBackground(Canvas canvas)
@@ -250,25 +251,28 @@ public class SudokuView extends View
     	int usableHeight = mTotalHeight - (2 * mMargin);
     	int usableWidth = mTotalWidth - (2 * mMargin);
     	
+    	int strokeWidth = 5;
+    	int pad = strokeWidth / 2;
+    	
 		paint.setColor(Color.WHITE);
 		paint.setStyle(Style.STROKE);
-    	paint.setStrokeWidth(5);
+    	paint.setStrokeWidth(strokeWidth);
     	
     	//Draw the major vertical lines
-    	for(int x = 1; x < SudokuBoard.SquareSize; x++)
+    	for(int x = 0; x <= SudokuBoard.SquareSize; x++)
     	{
     		int offset = (int)((float)x / SudokuBoard.SquareSize * usableWidth + mMargin);
-    		Point start = new Point (offset, mMargin);
-    		Point end = new Point (offset, mTotalHeight - mMargin);
+    		Point start = new Point (offset, mMargin - pad);
+    		Point end = new Point (offset, mTotalHeight - mMargin + pad);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
     	
     	//Draw the major horizontal lines
-    	for(int y = 1; y < SudokuBoard.SquareSize; y++)
+    	for(int y = 0; y <= SudokuBoard.SquareSize; y++)
     	{
     		int offset = (int)((float)y / SudokuBoard.SquareSize * usableHeight + mMargin);
-    		Point start = new Point (mMargin, offset);
-    		Point end = new Point (mTotalWidth - mMargin, offset);
+    		Point start = new Point (mMargin - pad, offset);
+    		Point end = new Point (mTotalWidth - mMargin + pad, offset);
     		canvas.drawLine(start.x, start.y, end.x, end.y, paint);
     	}
 	}
@@ -363,12 +367,29 @@ public class SudokuView extends View
 					{
 						paint.setStyle(Style.FILL);
 						paint.setStrokeWidth(1);
-						canvas.drawText(String.format("%dx", value), xOffset + boxSize / 2, yOffset - 2 * mMargin + boxSize, paint);
+						canvas.drawText(String.format("%dx", value), xOffset + boxSize / 2, yOffset - 2 * mMargin + boxSize - 6, paint);
 					}
 					
+					int strokeWidth = 4;
+					int pad = strokeWidth / 2 + 1;
+					
 					paint.setStyle(Style.STROKE);
-					paint.setStrokeWidth(2);
-					canvas.drawRect(xOffset + 2, yOffset + 2, xOffset + boxSize - 1, yOffset + boxSize - 1, paint);
+					paint.setStrokeWidth(strokeWidth);
+					
+					int xStart = xOffset + pad;
+					if(x % SudokuBoard.SquareSize == 0)
+						xStart++;
+					int xEnd = xOffset + boxSize - pad + 1;
+					if((x+1) % SudokuBoard.SquareSize == 0)
+						xEnd--;
+					int yStart = yOffset + pad;
+					if(y % SudokuBoard.SquareSize == 0)
+						yStart++;
+					int yEnd = yOffset + boxSize - pad + 1;
+					if((y+1) % SudokuBoard.SquareSize == 0)
+						yEnd--;
+					
+					canvas.drawRect(xStart, yStart, xEnd, yEnd, paint);
 				}
 			}
 	}

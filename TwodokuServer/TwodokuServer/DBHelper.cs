@@ -24,6 +24,7 @@ namespace TwodokuServer
         public const string ColumnHandSystem = "HANDSYSTEM";
         public const string ColumnHandSize = "HANDSIZE";
         public const string ColumnScoringSystem = "SCORINGSYSTEM";
+        public const string ColumnMultiplierSystem = "MULTIPLIERSYSTEM";
         public const string ColumnStartingBoard = "STARTINGBOARD";
         public const string ColumnPlayerBoard = "PLAYERBOARD";
         public const string ColumnMultipliers = "MULTIPLIERS";
@@ -398,11 +399,12 @@ namespace TwodokuServer
             values += "'" + gameInfo.Player2Score + "',";
             values += "'" + DateTime.Now.ToString() + "',";
             values += "'" + DateTime.Now.ToString() + "',";
-            values += "'" + gameInfo.Turn + "',";
             values += "'" + gameInfo.Status + "',";
+            values += "'" + gameInfo.Turn + "',";
             values += "'" + gameInfo.HandSystem + "',";
             values += "'" + gameInfo.HandSize + "',";
             values += "'" + gameInfo.ScoringSystem + "',";
+            values += "'" + gameInfo.MultiplierSystem + "',";
             values += "'" + gameInfo.LastMove + "',";
             values += "'" + GetHand() + "',";
             values += "'" + gameInfo.InitialBoard + "',";

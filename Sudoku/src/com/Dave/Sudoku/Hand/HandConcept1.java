@@ -1,11 +1,15 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Hand;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+
+import com.Dave.Sudoku.DebugLog;
+import com.Dave.Sudoku.MyRandom;
+import com.Dave.Sudoku.SudokuBoard;
 
 import android.graphics.Point;
-import android.util.Log;
 
 public class HandConcept1 implements IHand
 {
@@ -84,7 +88,7 @@ public class HandConcept1 implements IHand
 				mCurrentHand.clear();
 			mCurrentPlayer = playerTurn;
 			
-			DebugLog.Write(String.format("Getting %d new values for hand", mHandSize - mCurrentHand.size()), null);
+			DebugLog.Write(String.format(Locale.US, "Getting %d new values for hand", mHandSize - mCurrentHand.size()), null);
 			
 			//Build a list of all the options for every cell in the player's territory
 			List<Byte> allOptions = GetHandOptions(board, playerTurn);
@@ -125,7 +129,7 @@ public class HandConcept1 implements IHand
 	{
 		if(mCurrentHand == null || mCurrentHand.size() == 0)
 		{
-			Log.i("HandConcept1", "Tried to remove a number from an empty hand");
+			DebugLog.Write("Tried to remove a number from an empty hand", null);
 			return;
 		}
 		
@@ -134,7 +138,7 @@ public class HandConcept1 implements IHand
 		{
 			if(mCurrentHand.get(i) == number)
 			{
-				DebugLog.Write(String.format("Removing %d from hand", number), null);
+				DebugLog.Write(String.format(Locale.US, "Removing %d from hand", number), null);
 				mCurrentHand.remove(i);
 				break;
 			}
@@ -149,7 +153,7 @@ public class HandConcept1 implements IHand
 			byte handValue = mCurrentHand.get(i);
 			if(!boardOptions.contains(handValue))
 			{
-				DebugLog.Write(String.format("%d invalidated from hand", handValue), null);
+				DebugLog.Write(String.format(Locale.US, "%d invalidated from hand", handValue), null);
 				mCurrentHand.remove(i);
 			}
 		}

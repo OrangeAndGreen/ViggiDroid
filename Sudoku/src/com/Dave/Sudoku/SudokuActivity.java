@@ -3,7 +3,9 @@ package com.Dave.Sudoku;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
+import com.Dave.Sudoku.Game.SudokuGameTwoPlayer;
 import com.Dave.Sudoku.HttpClient.GameListReadyListener;
 import com.Dave.Sudoku.HttpClient.GameReadyListener;
 import com.Dave.Sudoku.HttpClient.GameUpdatedListener;
@@ -77,6 +79,8 @@ public class SudokuActivity extends Activity
 	private CharSequence[] mScoringOptions = { "Vanilla", "System 1", "System 2", "Least square" };
 	private Spinner mHandSystemSpinner = null;
 	private CharSequence[] mHandOptions = { "Vanilla", "Concept 1" };
+	private Spinner mMultiplierSpinner = null;
+	private CharSequence[] mMultiplierOptions = { "111", "122", "123" };
 
 	private Context mContext = null;
 	private TextView mGameText = null;
@@ -107,7 +111,7 @@ public class SudokuActivity extends Activity
 
 		mContext = this;
 
-		mClient = new HttpClient(this);
+		mClient = new HttpClient();
 
 		mPreferences = getPreferences(MODE_PRIVATE);
 		mPlayerName = mPreferences.getString("PlayerName", "");
@@ -225,7 +229,7 @@ public class SudokuActivity extends Activity
 					for (int i = 0; i < gameList.size(); i++)
 					{
 						SudokuGameTwoPlayer game = gameList.get(i);
-						String entry = String.format("%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy").format(game.StartDate.getTime()));
+						String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
 						if (game.IsLocalPlayerTurn(mPlayerName))
 							entry += " (your turn)";
 						mArrayAdapter.add(entry);
@@ -250,6 +254,7 @@ public class SudokuActivity extends Activity
 		mBonusCellsSpinner = (Spinner) findViewById(R.id.spinnerBonusCells);
 		mScoringSystemSpinner = (Spinner) findViewById(R.id.spinnerScoringSystem);
 		mHandSystemSpinner = (Spinner) findViewById(R.id.spinnerHandSystem);
+		mMultiplierSpinner = (Spinner) findViewById(R.id.spinnerMultiplierStrategy);
 
 		// Setup the Cell-to-fill Spinner
 		ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mFillOptions);
@@ -280,6 +285,12 @@ public class SudokuActivity extends Activity
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mScoringSystemSpinner.setAdapter(adapter);
 		mScoringSystemSpinner.setSelection(3);
+		
+		// Setup the Scoring system Spinner
+		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mMultiplierOptions);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		mMultiplierSpinner.setAdapter(adapter);
+		mMultiplierSpinner.setSelection(0);
 
 		Button startButton = (Button) findViewById(R.id.buttonStart);
 		startButton.setOnClickListener(new OnClickListener()
@@ -296,8 +307,9 @@ public class SudokuActivity extends Activity
 				int bonusCells = Integer.parseInt(mBonusCellOptions[mBonusCellsSpinner.getSelectedItemPosition()].toString());
 				String handSystem = mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
 				String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
+				String multiplierSystem = mMultiplierOptions[mMultiplierSpinner.getSelectedItemPosition()].toString();
 
-				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem);
+				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem, multiplierSystem);
 			}
 		});
 	}
@@ -318,16 +330,16 @@ public class SudokuActivity extends Activity
 		// mShowButton.setVisibility(Button.INVISIBLE);
 	}
 
-	private void StartTwoPlayerGame(String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem)
+	private void StartTwoPlayerGame(String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem, String multiplierSystem)
 	{
 		DebugLog.Write("Starting two player game", null);
 
 		PrepareGame();
 
 		// Start two player game
-		mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, fillCenter, cellsToFill, bonusCells, scoringSystem, handSystem, handSize);
-		DebugLog.Write(String.format("Bonus cells: %d", bonusCells), null);
-		String cellsFilled = String.format("Fill %d", cellsToFill);
+		mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, fillCenter, cellsToFill, bonusCells, scoringSystem, handSystem, handSize, multiplierSystem);
+		DebugLog.Write(String.format(Locale.US, "Bonus cells: %d", bonusCells), null);
+		String cellsFilled = String.format(Locale.US, "Fill %d", cellsToFill);
 
 		DebugLog.Write("Initial board:\n" + mGame.GetBoard().toString(), null);
 
@@ -413,7 +425,7 @@ public class SudokuActivity extends Activity
 
 	private void MakeMove()
 	{
-		DebugLog.Write(String.format("Committing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
+		DebugLog.Write(String.format(Locale.US, "Committing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
 
 		int oldPlayer = mGame.GetCurrentPlayer();
 
@@ -565,7 +577,7 @@ public class SudokuActivity extends Activity
 
 			if (mGame.GetConfirmCommit())
 			{
-				DebugLog.Write(String.format("Showing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
+				DebugLog.Write(String.format(Locale.US, "Showing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);
 
 				UpdateBoard();
 
@@ -653,7 +665,7 @@ public class SudokuActivity extends Activity
 
 			// Determine which cell was clicked
 			Point currentPoint = mSudoku.GetCell(arg1.getX(), arg1.getY());
-			DebugLog.Write(String.format("Clicked cell (%d, %d)", currentPoint.x, currentPoint.y), null);
+			DebugLog.Write(String.format(Locale.US, "Clicked cell (%d, %d)", currentPoint.x, currentPoint.y), null);
 			Log.i("SudokuActivity", String.format("Clicked box (%d, %d)", currentPoint.x, currentPoint.y));
 
 			// Make sure we got a legal cell value

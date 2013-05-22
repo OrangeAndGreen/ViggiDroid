@@ -130,6 +130,7 @@ namespace TwodokuServer
 
         public String HttpMethod;
         public String HttpUrl;
+        private IPAddress mIPAddress = null;
         private String HttpProtocolVersionString;
         public Hashtable HttpHeaders = new Hashtable();
 
@@ -139,6 +140,8 @@ namespace TwodokuServer
         {
             mSocket = s;
             mDB = db;
+
+            mIPAddress = ((IPEndPoint)mSocket.Client.RemoteEndPoint).Address;
         }
 
         private string StreamReadLine(Stream inputStream)
@@ -217,10 +220,21 @@ namespace TwodokuServer
                 //Send a test ping to the player
                 string url = "https://android.googleapis.com/gcm/send";
                 TwodokuPlayer player = mDB.GetPlayer(postPlayer);
-                string data = "registration_id=" + player.GcmId;
-                Console.WriteLine(string.Format("Attempting to ping user {0}", player.Name));
-                Console.WriteLine(SendPost(url, data));
-                Console.WriteLine("Done");
+                if (player != null)
+                {
+                    string data = "registration_id=" + player.GcmId;
+                    Console.WriteLine(string.Format("Attempting to ping user {0}", player.Name));
+                    Console.WriteLine(SendPost(url, data));
+                    Console.WriteLine("Done");
+                }
+                else
+                {
+                    //Create the new player in the database
+                    Console.WriteLine("Creating new player: " + postPlayer);
+                    TwodokuPlayer newPlayer = new TwodokuPlayer(-1, postPlayer, "", "");
+                    newPlayer.PlayerId = mDB.GetNextKey(DBHelper.TablePlayers, DBHelper.ColumnPlayerId);
+                    mDB.AddPlayer(newPlayer);
+                }
             }
         }
 
@@ -288,7 +302,7 @@ namespace TwodokuServer
 
             if (method.Equals("Gamelist"))
             {
-                Console.WriteLine(string.Format("{0}: Sending game list to {1}", DateStrings.ToString(DateTime.Now), name));
+                Console.WriteLine(string.Format("{0}: Sending game list to {1} ({2})", DateStrings.ToString(DateTime.Now), name, mIPAddress));
                 string qualifier = DBHelper.ColumnPlayer1 + "='" + name + "' OR " + DBHelper.ColumnPlayer2 + "='" + name + "'";
                 string query = String.Format("select {0} from {1} where {2} order by {3}", "*", DBHelper.TableGames, qualifier, "STARTDATE");
                 SqlDataReader reader = mDB.Query(query);
@@ -311,7 +325,7 @@ namespace TwodokuServer
                 if (HttpHeaders.ContainsKey("gameid"))
                     int.TryParse((string)HttpHeaders["gameid"], out gameId);
 
-                Console.WriteLine(string.Format("{0}: Sending game {1} to {2}", DateStrings.ToString(DateTime.Now), gameId, name));
+                Console.WriteLine(string.Format("{0}: Sending game {1} to {2} ({3})", DateStrings.ToString(DateTime.Now), gameId, name, mIPAddress));
 
                 TwodokuGameInfo gameInfo = mDB.GetGame(gameId);
 
@@ -319,7 +333,7 @@ namespace TwodokuServer
             }
             else
             {
-                Console.WriteLine(string.Format("{0}: Sending default response (test page)", DateStrings.ToString(DateTime.Now)));
+                Console.WriteLine(string.Format("{0}: Sending default response (test page) to {1}", DateStrings.ToString(DateTime.Now), mIPAddress));
 
                 //TODO: Write a failure response here
 

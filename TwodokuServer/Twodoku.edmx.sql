@@ -48,6 +48,7 @@ CREATE TABLE [dbo].[Games] (
 	[HANDSYSTEM] varchar(max)  NOT NULL,
 	[HANDSIZE] int  NOT NULL,
 	[SCORINGSYSTEM] varchar(max)  NOT NULL,
+	[MULTIPLIERSYSTEM] varchar(max)  NOT NULL,
 	[LASTMOVE] varchar(max) NOT NULL,
 	[HAND] varchar(max) NOT NULL,
 	[STARTINGBOARD] varchar(max)  NOT NULL,

@@ -1,6 +1,8 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Hand;
 
 import java.util.List;
+
+import com.Dave.Sudoku.SudokuBoard;
 
 public interface IHand
 {

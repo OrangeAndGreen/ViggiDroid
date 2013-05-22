@@ -29,6 +29,7 @@ namespace TwodokuServer
         public string HandSystem = null;
         public int HandSize = 0;
         public string ScoringSystem = null;
+        public string MultiplierSystem = null;
 
         public string LastMove = null;
         public string Hand = null;
@@ -50,6 +51,7 @@ namespace TwodokuServer
             ret.HandSystem = (string)dataEntries["HandSystem"];
             int.TryParse((string)dataEntries["HandSize"], out ret.HandSize);
             ret.ScoringSystem = (string)dataEntries["ScoringSystem"];
+            ret.MultiplierSystem = (string)dataEntries["MultiplierSystem"];
             ret.InitialBoard = (string)dataEntries["StartingBoard"];
             ret.Multipliers = (string)dataEntries["Multipliers"];
 
@@ -82,6 +84,8 @@ namespace TwodokuServer
             gameInfo.HandSystem = (string)reader[DBHelper.ColumnHandSystem];
             gameInfo.HandSize = (int)reader[DBHelper.ColumnHandSize];
             gameInfo.ScoringSystem = (string)reader[DBHelper.ColumnScoringSystem];
+
+            gameInfo.MultiplierSystem = (string)reader[DBHelper.ColumnMultiplierSystem];
 
             gameInfo.LastMove = (string)reader[DBHelper.ColumnLastMove];
             gameInfo.Hand = (string)reader[DBHelper.ColumnHand];
@@ -119,13 +123,14 @@ namespace TwodokuServer
             ret.HandSystem = parts[9];
             int.TryParse(parts[10], out ret.HandSize);
             ret.ScoringSystem = parts[11];
+            ret.MultiplierSystem = parts[12];
 
-            ret.LastMove = parts[12];
-            ret.Hand = parts[13];
+            ret.LastMove = parts[13];
+            ret.Hand = parts[14];
 
-            ret.InitialBoard = parts[14];
-            ret.PlayerBoard = parts[15];
-            ret.Multipliers = parts[16];
+            ret.InitialBoard = parts[15];
+            ret.PlayerBoard = parts[16];
+            ret.Multipliers = parts[17];
             
             return ret;
         }
@@ -150,8 +155,8 @@ namespace TwodokuServer
 
             if (!infoOnly)
             {
-                ret += string.Format(",{0},{1},{2},{3},{4},{5},{6},{7}",
-                    HandSystem, HandSize, ScoringSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
+                ret += string.Format(",{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                    HandSystem, HandSize, ScoringSystem, MultiplierSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
             }
 
             return ret;
@@ -163,9 +168,9 @@ namespace TwodokuServer
         /// <returns></returns>
         public override string ToString()
         {
-            string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}",
+            string ret =  string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17}",
                 GameId, Player1, Player1Score, Player2, Player2Score, DateStrings.ToString(StartDate), DateStrings.ToString(PlayDate), Status, Turn,
-                HandSystem, HandSize, ScoringSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
+                HandSystem, HandSize, ScoringSystem, MultiplierSystem, LastMove, Hand, InitialBoard, PlayerBoard, Multipliers);
 
             return ret;
         }

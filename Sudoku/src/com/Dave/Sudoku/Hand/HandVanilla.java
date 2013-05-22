@@ -1,11 +1,13 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Hand;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.Dave.Sudoku.SudokuBoard;
+
 public class HandVanilla implements IHand
 {
-	private int mHandSize = 5;
+	private int mHandSize = 9;
 	
 	public String GetName()
 	{
@@ -14,9 +16,6 @@ public class HandVanilla implements IHand
 	
 	public void SetHandSize(int size)
 	{
-		mHandSize = size;
-		if(mHandSize > 9)
-			mHandSize = 9;
 	}
 
 	public List<Byte> GetHand(SudokuBoard board, int playerTurn)
