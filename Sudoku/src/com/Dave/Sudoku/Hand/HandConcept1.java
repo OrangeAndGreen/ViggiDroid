@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Locale;
 
 import com.Dave.Sudoku.DebugLog;
-import com.Dave.Sudoku.MyRandom;
 import com.Dave.Sudoku.SudokuBoard;
 
 import android.graphics.Point;
@@ -101,21 +100,24 @@ public class HandConcept1 implements IHand
 					break;
 				
 				Byte value = 0;
-				if(mRandomSequence != null && mRandomSequence.size() > 0)
+				if(mRandomSequence != null)
 				{
-					while(true)
+					while(mRandomSequence.size() > 0)
 					{
 						value = mRandomSequence.remove(0);
 						if(allOptions.contains(value))
+						{
+							mCurrentHand.add(value);
 							break;
+						}
 					}
 				}
-				else
-				{
-					int index = MyRandom.Get(0, numOptions - 1);
-					value = allOptions.remove(index);
-				}
-				mCurrentHand.add(value);
+				
+				//else
+				//{
+				//	int index = MyRandom.Get(0, numOptions - 1);
+				//	value = allOptions.remove(index);
+				//}
 			}
 			
 			//Sort the list

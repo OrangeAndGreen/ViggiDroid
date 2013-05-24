@@ -34,24 +34,23 @@ public class SudokuGameTwoPlayer
 {
 	private static final int mNumberOfPlayers = 2;
 	private static final int mBlue = Color.rgb(79, 129, 189);
-	private static final int mRed = Color.rgb(149, 55, 53);;
+	private static final int mRed = Color.rgb(149, 55, 53);
 	
 	private SudokuBoard Board = null;
 	
 	private IScoring mScoring = null;
 	private IHand mHand = null;
 	private IMultiplier mMultiplier = null;
-	
+
+	private String Player1Name = null;
+	private String Player2Name = null;	
 	private int Player1Score = 0;
 	private int Player2Score = 0;
+	
+	//These values are updated and stored so they can be used when updating the score 
 	private int mProposedScore = 0;
 	private boolean mDoesPlayerGoAgain = false;
-	//private int mProposedMultiplier = 0;
-	//private int mCurrentMultiplier = 0;
-	
-	private String Player1Name = null;
-	private String Player2Name = null;
-	
+
 	private int GamePhase = 0;
 	private int PlayerTurn = 0;
 	
@@ -59,10 +58,6 @@ public class SudokuGameTwoPlayer
 	public Calendar StartDate = null;
 	public Calendar PlayDate = null;
 	public int Status = 0;
-	
-	//public String HandSystem = null;
-	public int HandSize = 0;
-	//public String ScoringSystem = null;
 	
 	public String CurrentMove = null;
 	
@@ -518,7 +513,7 @@ public class SudokuGameTwoPlayer
 		return false;
 	}
 	
-	private AlertDialog.Builder CreateEnding(Context context)
+	public AlertDialog.Builder CreateEnding(Context context)
 	{
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		if(Player1Score == Player2Score)
@@ -533,7 +528,7 @@ public class SudokuGameTwoPlayer
 				winner = Player1Name;
 			
 			builder.setTitle(winner + " wins!");
-			builder.setMessage(String.format("%s wins ! Hooray for %s! %s is the champion!", winner, winner, winner));
+			builder.setMessage(String.format("%s wins! Hooray for %s! %s is the champion!", winner, winner, winner));
 			
 		}
 		builder.setCancelable(true);

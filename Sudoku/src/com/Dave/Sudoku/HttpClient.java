@@ -337,7 +337,7 @@ public class HttpClient
 				data.add(new Header("Player2", mGame.GetPlayer2Name()));
 				data.add(new Header("Player2Score", Integer.toString(mGame
 						.GetPlayer2Score())));
-				data.add(new Header("Status", "1"));
+				data.add(new Header("Status", Integer.toString(mGame.Status)));
 				data.add(new Header("Turn", Integer.toString(mGame
 						.GetCurrentPlayer())));
 

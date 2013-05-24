@@ -14,6 +14,7 @@ import com.google.android.gcm.GCMRegistrar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -165,6 +166,16 @@ public class SudokuActivity extends Activity
 		// hardButton.setOnClickListener(new StartButtonListener(false,
 		// "Hard"));
 
+		try
+		{
+		    NotificationManager nMgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		    nMgr.cancel(1);
+		}
+		catch(Exception e)
+		{
+			Log.i("", "Tried removing notification and failed");
+		}
+		
 		Button twoPlayerButton = (Button) findViewById(R.id.buttonTwoPlayer);
 		twoPlayerButton.setOnClickListener(new StartButtonListener(true, null));
 
@@ -230,7 +241,9 @@ public class SudokuActivity extends Activity
 					{
 						SudokuGameTwoPlayer game = gameList.get(i);
 						String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
-						if (game.IsLocalPlayerTurn(mPlayerName))
+						if(game.Status == 2)
+							entry += " (game over)";
+						else if (game.IsLocalPlayerTurn(mPlayerName))
 							entry += " (your turn)";
 						mArrayAdapter.add(entry);
 						mExistingGameIds.add(game.GameId);
@@ -386,6 +399,11 @@ public class SudokuActivity extends Activity
 				mSudoku.InitializeBoard(mGame.GetBoard(), mGame.GetPlayer1Color(mPlayerName), mGame.GetPlayer2Color(mPlayerName));
 
 				DrawHand();
+				
+				if(mGame.Status == 2)
+				{
+					FinishGame(mGame.CreateEnding(mContext));
+				}
 			}
 		});
 	}
@@ -432,18 +450,9 @@ public class SudokuActivity extends Activity
 		AlertDialog.Builder builder = mGame.MakeMove(mContext, mSudoku, mPendingPoint, mPendingValue);
 		if (builder != null)
 		{
-			builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
-			{
-				public void onClick(DialogInterface dialog, int id)
-				{
-					dialog.cancel();
-					LoadMainMenu();
-				}
-			});
-
-			DebugLog.Write("Final board:\n" + mGame.GetBoard().toString(), null);
-
-			builder.create().show();
+			mGame.Status = 2;
+			
+			FinishGame(builder);			
 		}
 
 		DrawHand();
@@ -457,7 +466,7 @@ public class SudokuActivity extends Activity
 		// Toast t = Toast.makeText(mContext, "Uploading game to server",
 		// Toast.LENGTH_SHORT);
 		// t.show();
-		if (mGame.GetCurrentPlayer() != oldPlayer)
+		if (mGame.GetCurrentPlayer() != oldPlayer || mGame.Status == 2)
 		{
 			Log.i("", "Sending game to server");
 			mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
@@ -483,6 +492,22 @@ public class SudokuActivity extends Activity
 
 	}
 
+	private void FinishGame(AlertDialog.Builder builder)
+	{
+		builder.setPositiveButton("Menu", new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int id)
+			{
+				dialog.cancel();
+				LoadMainMenu();
+			}
+		});
+
+		DebugLog.Write("Final board:\n" + mGame.GetBoard().toString(), null);
+
+		builder.create().show();
+	}
+	
 	private void UpdateBoard()
 	{
 		// Always calling ShowMove() to update (possibly erase) a pending move
