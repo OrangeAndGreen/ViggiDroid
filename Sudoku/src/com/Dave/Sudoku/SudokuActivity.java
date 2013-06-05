@@ -72,14 +72,16 @@ public class SudokuActivity extends Activity
 	private CheckBox mFillCenter = null;
 	private Spinner mCellsToFillSpinner = null;
 	private CharSequence[] mFillOptions = { "-2", "-1", "0", "1", "3", "5" };
-	private Spinner mHandSizeSpinner = null;
-	private CharSequence[] mHandSizeOptions = { "3", "5", "7", "9" };
+	//private Spinner mHandSizeSpinner = null;
+	//private CharSequence[] mHandSizeOptions = { "3", "5", "7", "9" };
 	private Spinner mBonusCellsSpinner = null;
 	private CharSequence[] mBonusCellOptions = { "0", "1", "2", "3" };
 	private Spinner mScoringSystemSpinner = null;
 	private CharSequence[] mScoringOptions = { "Vanilla", "System 1", "System 2", "Least square" };
-	private Spinner mHandSystemSpinner = null;
-	private CharSequence[] mHandOptions = { "Vanilla", "Concept 1" };
+	//private Spinner mHandSystemSpinner = null;
+	//private CharSequence[] mHandOptions = { "Vanilla", "Concept 1" };
+	private Spinner mBonusSystemSpinner = null;
+	private CharSequence[] mBonusOptions = { "0", "+5", "10" };
 	private Spinner mMultiplierSpinner = null;
 	private CharSequence[] mMultiplierOptions = { "111", "122", "123" };
 
@@ -263,10 +265,11 @@ public class SudokuActivity extends Activity
 
 		mFillCenter = (CheckBox) findViewById(R.id.fillCenterCheck);
 		mCellsToFillSpinner = (Spinner) findViewById(R.id.spinnerCellsToFill);
-		mHandSizeSpinner = (Spinner) findViewById(R.id.spinnerHandSize);
+		//mHandSizeSpinner = (Spinner) findViewById(R.id.spinnerHandSize);
 		mBonusCellsSpinner = (Spinner) findViewById(R.id.spinnerBonusCells);
 		mScoringSystemSpinner = (Spinner) findViewById(R.id.spinnerScoringSystem);
-		mHandSystemSpinner = (Spinner) findViewById(R.id.spinnerHandSystem);
+		//mHandSystemSpinner = (Spinner) findViewById(R.id.spinnerHandSystem);
+		mBonusSystemSpinner = (Spinner) findViewById(R.id.spinnerBonusSystem);
 		mMultiplierSpinner = (Spinner) findViewById(R.id.spinnerMultiplierStrategy);
 
 		// Setup the Cell-to-fill Spinner
@@ -276,10 +279,10 @@ public class SudokuActivity extends Activity
 		mCellsToFillSpinner.setSelection(0);
 
 		// Setup the hand size Spinner
-		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mHandSizeOptions);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		mHandSizeSpinner.setAdapter(adapter);
-		mHandSizeSpinner.setSelection(1);
+		//adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mHandSizeOptions);
+		//adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		//mHandSizeSpinner.setAdapter(adapter);
+		//mHandSizeSpinner.setSelection(1);
 
 		// Setup the bonus cells Spinner
 		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mBonusCellOptions);
@@ -288,10 +291,16 @@ public class SudokuActivity extends Activity
 		mBonusCellsSpinner.setSelection(2);
 
 		// Setup the Hand system Spinner
-		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mHandOptions);
+		//adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mHandOptions);
+		//adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		//mHandSystemSpinner.setAdapter(adapter);
+		//mHandSystemSpinner.setSelection(1);
+		
+		// Setup the Hand system Spinner
+		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mBonusOptions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		mHandSystemSpinner.setAdapter(adapter);
-		mHandSystemSpinner.setSelection(1);
+		mBonusSystemSpinner.setAdapter(adapter);
+		mBonusSystemSpinner.setSelection(1);
 
 		// Setup the Scoring system Spinner
 		adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mScoringOptions);
@@ -316,13 +325,14 @@ public class SudokuActivity extends Activity
 
 				boolean fillCenter = mFillCenter.isChecked();
 				int cellsToFill = Integer.parseInt(mFillOptions[mCellsToFillSpinner.getSelectedItemPosition()].toString());
-				int handSize = Integer.parseInt(mHandSizeOptions[mHandSizeSpinner.getSelectedItemPosition()].toString());
+				int handSize = 9;//Integer.parseInt(mHandSizeOptions[mHandSizeSpinner.getSelectedItemPosition()].toString());
 				int bonusCells = Integer.parseInt(mBonusCellOptions[mBonusCellsSpinner.getSelectedItemPosition()].toString());
-				String handSystem = mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
+				String handSystem = "Vanilla";//mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
+				String bonusSystem = mBonusOptions[mBonusSystemSpinner.getSelectedItemPosition()].toString();
 				String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
 				String multiplierSystem = mMultiplierOptions[mMultiplierSpinner.getSelectedItemPosition()].toString();
 
-				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem, multiplierSystem);
+				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem, multiplierSystem, bonusSystem);
 			}
 		});
 	}
@@ -343,21 +353,20 @@ public class SudokuActivity extends Activity
 		// mShowButton.setVisibility(Button.INVISIBLE);
 	}
 
-	private void StartTwoPlayerGame(String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem, String multiplierSystem)
+	private void StartTwoPlayerGame(String player1Name, String player2Name, boolean fillCenter, int cellsToFill, int handSize, int bonusCells, String handSystem, String scoringSystem, String multiplierSystem, String bonusSystem)
 	{
 		DebugLog.Write("Starting two player game", null);
 
 		PrepareGame();
 
 		// Start two player game
-		mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, fillCenter, cellsToFill, bonusCells, scoringSystem, handSystem, handSize, multiplierSystem);
+		mGame = new SudokuGameTwoPlayer(mSudoku, player1Name, player2Name, fillCenter, cellsToFill, bonusCells, scoringSystem, handSystem, handSize, multiplierSystem, bonusSystem);
 		DebugLog.Write(String.format(Locale.US, "Bonus cells: %d", bonusCells), null);
-		String cellsFilled = String.format(Locale.US, "Fill %d", cellsToFill);
+		//String cellsFilled = String.format(Locale.US, "Fill %d", cellsToFill);
 
 		DebugLog.Write("Initial board:\n" + mGame.GetBoard().toString(), null);
 
-		String gameOptions = String.format("Game: %s, %s, %s", cellsFilled, mGame.GetHandSystem(), mGame.GetScoringSystem());
-		mDebugText.setText(gameOptions);
+		mDebugText.setText(CreateDebugString());
 
 		mGameText.setText("Battle Sudoku!");
 		mGame.UpdateScore(mGameScore, mPlayerName);
@@ -384,8 +393,7 @@ public class SudokuActivity extends Activity
 				// Resume the two player game
 				mGame = game;
 
-				String gameOptions = String.format("Game: %s, %s", mGame.GetHandSystem(), mGame.GetScoringSystem());
-				mDebugText.setText(gameOptions);
+				mDebugText.setText(CreateDebugString());
 
 				mGameText.setText("Battle Sudoku!");
 				mGame.UpdateScore(mGameScore, mPlayerName);
@@ -441,6 +449,11 @@ public class SudokuActivity extends Activity
 		mShowingPossibilities = false;
 	}
 
+	private String CreateDebugString()
+	{
+		return String.format("Hand %s, Score %s, Bonus %s, %s", mGame.GetHandSystem(), mGame.GetScoringSystem(), mGame.BonusSystem, mGame.GetMultiplierSystem());
+	}
+	
 	private void MakeMove()
 	{
 		DebugLog.Write(String.format(Locale.US, "Committing move %d at (%d, %d)", mPendingValue, mPendingPoint.x, mPendingPoint.y), null);

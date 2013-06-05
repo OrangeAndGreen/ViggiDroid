@@ -15,7 +15,7 @@ public class ScoringConcept3 implements IScoring
 		return "Least square";
 	}
 	
-	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier)
+	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier, String bonusSystem)
 	{
 		if(number <= 0)
 			return 0;
@@ -41,6 +41,7 @@ public class ScoringConcept3 implements IScoring
 				minFilled = numFilled;
 		}
 				
+		minFilled = BonusScore.GetAdjustedScore(minFilled, bonusSystem);
 		
 		int score = minFilled * board.GetCellMultiplier(point);
 		if(multiplier > 0)

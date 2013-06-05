@@ -32,17 +32,17 @@ namespace TwodokuServer
             else if (args.Length > 0)
             {
                 string[] parts = args[0].Split(':');
-                if(parts.Length != 2)
+                if(parts.Length > 2)
                     Console.WriteLine("Confused by command line arguments, starting up with defaults (too many parts)");
                 else if (parts[0].ToLower().Equals("export"))
                 {
                     startServer = false;
-                    ExportDB(parts[1]);
+                    ExportDB();
                 }
                 else if (parts[0].ToLower().Equals("import"))
                 {
                     startServer = false;
-                    ImportDB(parts[1]);
+                    ImportDB();
                 }
                 else if(parts[0].ToLower().Equals("port"))
                 {
@@ -74,11 +74,12 @@ namespace TwodokuServer
             }
         }
 
-        private void ExportDB(string filename)
+        private void ExportDB()
         {
+            string filename = "games.txt";
             StreamWriter writer = File.CreateText(filename);
 
-            Console.WriteLine("Exporting database to " + filename);
+            Console.WriteLine("Exporting Games database to " + filename);
             string query = String.Format("select {0} from {1} order by {2}", "*", DBHelper.TableGames, "STARTDATE");
             SqlDataReader reader = mDB.Query(query);
 
@@ -97,14 +98,41 @@ namespace TwodokuServer
             else
                 Console.WriteLine("No games");
 
-            Console.WriteLine("Finished");
+            Console.WriteLine("Finished Games");
+            writer.Close();
+
+            //Now export the Player table
+            filename = "players.txt";
+            writer = File.CreateText(filename);
+
+            Console.WriteLine("Exporting Players database to " + filename);
+            query = String.Format("select {0} from {1} order by {2}", "*", DBHelper.TablePlayers, "PLAYERID");
+            reader = mDB.Query(query);
+
+            if (reader != null)
+            {
+                while (reader.Read())
+                {
+                    TwodokuPlayer player = TwodokuPlayer.FromSqlReader(reader);
+                    string output = player.ToString();
+                    Console.WriteLine("Exporting " + output);
+                    writer.WriteLine(output);
+                    //outputStream.WriteLine(gameInfo.ToPacket(true));
+                }
+                reader.Close();
+            }
+            else
+                Console.WriteLine("No players");
+
+            Console.WriteLine("Finished Players");
             writer.Close();
         }
 
-        private void ImportDB(string filename)
+        private void ImportDB()
         {
+            string filename = "games.txt";
             StreamReader reader = File.OpenText(filename);
-            Console.WriteLine("Importing database from " + filename);
+            Console.WriteLine("Importing Games database from " + filename);
             mDB.Reset("ERASE IT ALL");
 
             string line = reader.ReadLine();
@@ -116,7 +144,24 @@ namespace TwodokuServer
                 line = reader.ReadLine();
             }
 
-            Console.WriteLine("Finished");
+            Console.WriteLine("Finished Games");
+            reader.Close();
+
+            //Now import the Players table
+            filename = "players.txt";
+            reader = File.OpenText(filename);
+            Console.WriteLine("Importing Players database from " + filename);
+
+            line = reader.ReadLine();
+            while (line != null)
+            {
+                Console.WriteLine("Importing " + line);
+                TwodokuPlayer player = TwodokuPlayer.FromString(line);
+                mDB.AddPlayer(player);
+                line = reader.ReadLine();
+            }
+
+            Console.WriteLine("Finished Players");
             reader.Close();
         }
     }
@@ -223,9 +268,9 @@ namespace TwodokuServer
                 if (player != null)
                 {
                     string data = "registration_id=" + player.GcmId;
-                    Console.WriteLine(string.Format("Attempting to ping user {0}", player.Name));
-                    Console.WriteLine(SendPost(url, data));
-                    Console.WriteLine("Done");
+                    //Console.WriteLine(string.Format("Pinging user {0}", player.Name));
+                    string response = SendPost(url, data);
+                    //Console.WriteLine(response);
                 }
                 else
                 {

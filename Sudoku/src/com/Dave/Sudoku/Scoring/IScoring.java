@@ -8,5 +8,5 @@ public interface IScoring
 {
 	String GetName();
 	
-	int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier);
+	int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier, String bonusSystem);
 }

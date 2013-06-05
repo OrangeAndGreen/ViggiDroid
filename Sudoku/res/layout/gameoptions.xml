@@ -87,7 +87,7 @@
     
     <!-- To the right -->
     <Spinner
-  		android:id="@+id/spinnerHandSize"
+  		android:id="@+id/spinnerBonusCells"
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/textCellsToFill"
@@ -96,31 +96,31 @@
   		/>
     
     <TextView
-        android:id="@+id/textHandSize"
+        android:id="@+id/textBonusCells"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_below="@+id/fillCenterCheck"
-        android:layout_alignLeft="@+id/spinnerHandSize"
-        android:text="@string/handSize"
+        android:layout_alignLeft="@+id/spinnerBonusCells"
+        android:text="@string/bonusCells"
         />
     
     <!-- ________________________________________________ -->
     
     <!-- Down -->
     <TextView
-        android:id="@+id/textBonusCells"
+        android:id="@+id/textMultiplierStrategy"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/spinnerHandSize"
-        android:layout_alignLeft="@+id/spinnerHandSize"
-        android:text="@string/bonusCells"
+  		android:layout_below="@+id/spinnerBonusCells"
+        android:layout_alignLeft="@+id/spinnerBonusCells"
+        android:text="@string/multiplierstrategy"
         />
     <Spinner
-  		android:id="@+id/spinnerBonusCells"
+  		android:id="@+id/spinnerMultiplierStrategy"
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/textBonusCells"
-        android:layout_alignLeft="@+id/spinnerHandSize"
+  		android:layout_below="@+id/textMultiplierStrategy"
+        android:layout_alignLeft="@+id/spinnerBonusCells"
   		android:text=""
   		/>
     
@@ -128,30 +128,10 @@
     
     <!-- Left -->
     <TextView
-        android:id="@+id/textHandSystem"
-        android:layout_width="wrap_content"
-  		android:layout_height="wrap_content"
-  		android:layout_below="@+id/spinnerCellsToFill"
-        android:layout_alignParentLeft="true"
-        android:text="@string/handsystem"
-        />
-    <Spinner
-  		android:id="@+id/spinnerHandSystem"
-  		android:layout_width="wrap_content"
-  		android:layout_height="wrap_content"
-  		android:layout_below="@+id/textHandSystem"
-        android:layout_alignParentLeft="true"
-  		android:text=""
-  		/>
-    
-    <!-- ________________________________________________ -->
-    
-    <!-- Down -->
-    <TextView
         android:id="@+id/textScoringSystem"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/spinnerHandSystem"
+  		android:layout_below="@+id/spinnerCellsToFill"
         android:layout_alignParentLeft="true"
         android:text="@string/scoringsystem"
         />
@@ -166,22 +146,21 @@
     
     <!-- ________________________________________________ -->
     
-    <!-- Right -->
+    <!-- Down -->
     <TextView
-        android:id="@+id/textMultiplierStrategy"
+        android:id="@+id/textBonusSystem"
         android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/spinnerBonusCells"
-        android:layout_alignParentRight="true"
-        android:text="@string/multiplierstrategy"
+  		android:layout_below="@+id/spinnerMultiplierStrategy"
+        android:layout_alignParentLeft="true"
+        android:text="@string/bonussystem"
         />
-    
     <Spinner
-  		android:id="@+id/spinnerMultiplierStrategy"
+  		android:id="@+id/spinnerBonusSystem"
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
-  		android:layout_below="@+id/textMultiplierStrategy"
-        android:layout_alignParentRight="true"
+  		android:layout_below="@+id/textBonusSystem"
+        android:layout_alignParentLeft="true"
   		android:text=""
   		/>
 
@@ -191,7 +170,7 @@
         android:id="@+id/divider3"
 	    android:layout_height="2dp"
 	    android:layout_width="fill_parent"
-	    android:layout_below="@+id/spinnerScoringSystem"
+	    android:layout_below="@+id/spinnerBonusSystem"
 	    android:layout_marginTop="10sp"
         android:layout_marginBottom="10sp"
 	    android:background="#000080"

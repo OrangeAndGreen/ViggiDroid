@@ -25,6 +25,7 @@ namespace TwodokuServer
         public const string ColumnHandSize = "HANDSIZE";
         public const string ColumnScoringSystem = "SCORINGSYSTEM";
         public const string ColumnMultiplierSystem = "MULTIPLIERSYSTEM";
+        public const string ColumnBonusSystem = "BONUSSYSTEM";
         public const string ColumnStartingBoard = "STARTINGBOARD";
         public const string ColumnPlayerBoard = "PLAYERBOARD";
         public const string ColumnMultipliers = "MULTIPLIERS";
@@ -35,6 +36,9 @@ namespace TwodokuServer
         public const string ColumnName = "NAME";
         public const string ColumnPassword = "PASSWORD";
         public const string ColumnGcmId = "GCMID";
+        public const string ColumnWins = "WINS";
+        public const string ColumnLosses = "LOSSES";
+        public const string ColumnStreak = "STREAK";
 
         public string Server = null;
         public string Database = null;
@@ -405,6 +409,7 @@ namespace TwodokuServer
             values += "'" + gameInfo.HandSize + "',";
             values += "'" + gameInfo.ScoringSystem + "',";
             values += "'" + gameInfo.MultiplierSystem + "',";
+            values += "'" + gameInfo.BonusSystem + "',";
             values += "'" + gameInfo.LastMove + "',";
             values += "'" + GetHand() + "',";
             values += "'" + gameInfo.InitialBoard + "',";
@@ -483,7 +488,10 @@ namespace TwodokuServer
             values += "'" + player.PlayerId + "',";
             values += "'" + player.Name + "',";
             values += "'" + player.Password + "',";
-            values += "'" + player.GcmId + "'";
+            values += "'" + player.GcmId + "',";
+            values += "'" + player.Wins + "',";
+            values += "'" + player.Losses + "',";
+            values += "'" + player.Streak + "'";
 
             return Insert(TablePlayers, values);
         }

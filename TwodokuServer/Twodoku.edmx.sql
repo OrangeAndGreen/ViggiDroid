@@ -34,34 +34,38 @@ GO
 -- Creating all tables
 -- --------------------------------------------------
 
--- Creating table 'Calibrations'
+-- Creating table 'Games'
 CREATE TABLE [dbo].[Games] (
-    [GAMEID] int  NOT NULL,
-    [PLAYER1] varchar(max)  NOT NULL,
-    [PLAYER1SCORE] int  NOT NULL,
-	[PLAYER2] varchar(max)  NOT NULL,
-    [PLAYER2SCORE] int  NOT NULL,
-    [STARTDATE] datetime  NOT NULL,
-    [PLAYDATE] datetime  NOT NULL,
-	[STATUS] int  NOT NULL,
-	[TURN] int  NOT NULL,
-	[HANDSYSTEM] varchar(max)  NOT NULL,
-	[HANDSIZE] int  NOT NULL,
-	[SCORINGSYSTEM] varchar(max)  NOT NULL,
-	[MULTIPLIERSYSTEM] varchar(max)  NOT NULL,
+    [GAMEID] int NOT NULL,
+    [PLAYER1] varchar(max) NOT NULL,
+    [PLAYER1SCORE] int NOT NULL,
+	[PLAYER2] varchar(max) NOT NULL,
+    [PLAYER2SCORE] int NOT NULL,
+    [STARTDATE] datetime NOT NULL,
+    [PLAYDATE] datetime NOT NULL,
+	[STATUS] int NOT NULL,
+	[TURN] int NOT NULL,
+	[HANDSYSTEM] varchar(max) NOT NULL,
+	[HANDSIZE] int NOT NULL,
+	[SCORINGSYSTEM] varchar(max) NOT NULL,
+	[MULTIPLIERSYSTEM] varchar(max) NOT NULL,
+	[BONUSSYSTEM] varchar(max) NOT NULL,
 	[LASTMOVE] varchar(max) NOT NULL,
 	[HAND] varchar(max) NOT NULL,
-	[STARTINGBOARD] varchar(max)  NOT NULL,
-	[PLAYERBOARD] varchar(max)  NOT NULL,
-	[MULTIPLIERS] varchar(max)  NOT NULL
+	[STARTINGBOARD] varchar(max) NOT NULL,
+	[PLAYERBOARD] varchar(max) NOT NULL,
+	[MULTIPLIERS] varchar(max) NOT NULL
 );
 GO
 
 CREATE TABLE [dbo].[Players] (
-    [PLAYERID] int  NOT NULL,
-    [NAME] varchar(max)  NOT NULL,
+    [PLAYERID] int NOT NULL,
+    [NAME] varchar(max) NOT NULL,
     [PASSWORD] varchar(max) NOT NULL,
-	[GCMID] varchar(max)  NOT NULL
+	[GCMID] varchar(max) NOT NULL,
+	[WINS] int NOT NULL,
+	[LOSSES] int NOT NULL,
+	[STREAK] int NOT NULL
 );
 GO
 

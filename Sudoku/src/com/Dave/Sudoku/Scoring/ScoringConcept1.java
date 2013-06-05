@@ -16,10 +16,12 @@ public class ScoringConcept1 implements IScoring
 		return "System 1";
 	}
 	
-	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier)
+	public int ScoreMove(SudokuBoard board, Point point, byte number, int multiplier, String bonusSystem)
 	{
 		if(number <= 0)
 			return 0;
+		
+		number = (byte)BonusScore.GetAdjustedScore(number, bonusSystem);
 		
 		int score = number * board.GetCellMultiplier(point);
 		if(multiplier > 0)

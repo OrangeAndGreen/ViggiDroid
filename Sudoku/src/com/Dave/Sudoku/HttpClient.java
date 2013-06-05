@@ -374,6 +374,7 @@ public class HttpClient
 					data.add(new Header("ScoringSystem", mGame
 							.GetScoringSystem()));
 					data.add(new Header("MultiplierSystem", mGame.GetMultiplierSystem()));
+					data.add(new Header("BonusSystem", mGame.BonusSystem));
 					data.add(new Header("StartingBoard", startingBoard));
 					data.add(new Header("Multipliers", multipliers));
 				}

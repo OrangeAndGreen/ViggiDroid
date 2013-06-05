@@ -34,6 +34,7 @@
     <string name="handSize">Hand Size:</string>
     <string name="bonusCells">2x Cells:</string>
     <string name="scoringsystem">Scoring System:</string>
+    <string name="bonussystem">Bonus System:</string>
     <string name="multiplierstrategy">Multipliers:</string>
     <string name="handsystem">Hand System:</string>
     <string name="start">Start Game</string>

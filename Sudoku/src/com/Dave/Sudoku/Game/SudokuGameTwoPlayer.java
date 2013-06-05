@@ -41,6 +41,8 @@ public class SudokuGameTwoPlayer
 	private IScoring mScoring = null;
 	private IHand mHand = null;
 	private IMultiplier mMultiplier = null;
+	
+	public String BonusSystem = null;
 
 	private String Player1Name = null;
 	private String Player2Name = null;	
@@ -67,7 +69,7 @@ public class SudokuGameTwoPlayer
 	}
 	
 	public SudokuGameTwoPlayer(SudokuView view, String player1Name, String player2Name, boolean fillCenter, int cellsToFill,
-			int bonusCells, String scoringSystem, String handSystem, int handSize, String multiplierSystem)
+			int bonusCells, String scoringSystem, String handSystem, int handSize, String multiplierSystem, String bonusSystem)
 	{
 		Player1Name = player1Name;
 		Player2Name = player2Name;
@@ -88,6 +90,8 @@ public class SudokuGameTwoPlayer
     	
     	mMultiplier = CreateMultiplier(multiplierSystem);
     	DebugLog.Write("Multiplier: " + mMultiplier.GetName(), null);
+    	
+    	BonusSystem = bonusSystem;
     	
 		view.InitializeBoard(Board, GetPlayer1Color(player1Name), GetPlayer2Color(player1Name));
 	}
@@ -120,11 +124,12 @@ public class SudokuGameTwoPlayer
 			int handSize = Integer.parseInt(parts[10].trim());
 			String scoringSystem = parts[11];
 			String multiplierStrategy = parts[12];
-			String lastMove = parts[13];
-			String hand = parts[14];
-			String startingBoard = parts[15];
-			String playerBoard = parts[16];
-			String multipliers = parts[17];
+			game.BonusSystem = parts[13];
+			String lastMove = parts[14];
+			String hand = parts[15];
+			String startingBoard = parts[16];
+			String playerBoard = parts[17];
+			String multipliers = parts[18];
 			
 			//Setup the board and other game inputs
 			game.Board = new SudokuBoard(startingBoard, playerBoard, multipliers);
@@ -182,9 +187,9 @@ public class SudokuGameTwoPlayer
 	{
 		IMultiplier ret = null;
 		
-		if(multiplierSystem != null && multiplierSystem.equals("123"))
+		if(multiplierSystem != null && multiplierSystem.equals("Mult123"))
 			ret = new Multiplier123();
-		else if(multiplierSystem != null && multiplierSystem.equals("122"))
+		else if(multiplierSystem != null && multiplierSystem.equals("Mult122"))
 			ret = new Multiplier122();
 		else
 			ret = new Multiplier111();
@@ -395,13 +400,16 @@ public class SudokuGameTwoPlayer
 		mDoesPlayerGoAgain = ret;
 		return ret;
 	}
-	
+		
 	public void ShowMove(SudokuView view, Point point, byte number)
 	{
 		if(GamePhase == 1)
 		{
-			mProposedScore = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier());
 			DoesPlayerGoAgain(Board, point, number);
+			String bonusSystem = "";
+			if(mDoesPlayerGoAgain)
+				bonusSystem = BonusSystem;
+			mProposedScore = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier(), bonusSystem);
 			mMultiplier.UpdateProposedMultiplier(Board, point, number);
 		}
 		
@@ -417,10 +425,15 @@ public class SudokuGameTwoPlayer
 		
 		CurrentMove += String.format("(%d%d%d)", point.x, point.y, number);
 		
+		DoesPlayerGoAgain(Board, point, number);
+		
 		//Update the current player's score
 		if(GamePhase == 1)
 		{
-			int score = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier());
+			String bonusSystem = "";
+			if(mDoesPlayerGoAgain)
+				bonusSystem = BonusSystem;
+			int score = mScoring.ScoreMove(Board, point, number, mMultiplier.GetCurrentMultiplier(), bonusSystem);
 			//DebugLog.Write(String.format("Move scores %d", score), null);
 			if(PlayerTurn == 0)
 				Player1Score += score;
@@ -430,7 +443,7 @@ public class SudokuGameTwoPlayer
 		
 		mMultiplier.UpdateMultiplier(Board, point, number);
 		DebugLog.Write(String.format(Locale.US, "Turn multiplier: %d", mMultiplier.GetCurrentMultiplier()), null);
-		if(!DoesPlayerGoAgain(Board, point, number))
+		if(!mDoesPlayerGoAgain)
 		{
 			//Make it the other player's turn
 			PlayerTurn = 1 - PlayerTurn;
