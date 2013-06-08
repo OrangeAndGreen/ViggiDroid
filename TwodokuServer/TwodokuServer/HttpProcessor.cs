@@ -290,9 +290,7 @@ namespace TwodokuServer
                 content_len = Convert.ToInt32(HttpHeaders["content-length"]);
                 if (content_len > MAX_POST_SIZE)
                 {
-                    throw new Exception(
-                        String.Format("POST Content-Length({0}) too big for this simple server",
-                          content_len));
+                    throw new Exception(String.Format("POST Content-Length({0}) too big for this simple server", content_len));
                 }
                 byte[] buf = new byte[BUF_SIZE];
                 int to_read = content_len;

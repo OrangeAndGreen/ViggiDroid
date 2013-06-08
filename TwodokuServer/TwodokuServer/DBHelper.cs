@@ -416,6 +416,8 @@ namespace TwodokuServer
             values += "'" + gameInfo.PlayerBoard + "',";
             values += "'" + gameInfo.Multipliers + "'";
 
+            LogFile.LogGameMove(gameInfo);
+
             return Insert(TableGames, values);
         }
 
@@ -425,6 +427,8 @@ namespace TwodokuServer
             TwodokuGameInfo existingGame = GetGame(gameInfo.GameId);
             if (existingGame == null || !existingGame.IsSameGame(gameInfo))
                 return false;
+
+            LogFile.LogGameMove(gameInfo);
 
             gameInfo.Player1 = existingGame.Player1;
             gameInfo.Player2 = existingGame.Player2;
