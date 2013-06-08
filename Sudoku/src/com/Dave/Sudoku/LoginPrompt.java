@@ -7,19 +7,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class NamePrompt extends Dialog
+public class LoginPrompt extends Dialog
 {
 	protected OnNameSetListener mListener = null;
 	
 	private EditText mNameText = null;
+	private EditText mPasswordText = null;
 	private Button mOKButton = null;
 	private String mDefaultName = null;
+	private String mDefaultPassword = null;
 	
-	public NamePrompt(Context context, String defaultName, OnNameSetListener listener)
+	public LoginPrompt(Context context, String defaultName, String defaultPassword, OnNameSetListener listener)
 	{
 		super(context);
 		
 		mDefaultName = defaultName;
+		mDefaultPassword = defaultPassword;
 				
 		mListener = listener;
 	}
@@ -29,7 +32,7 @@ public class NamePrompt extends Dialog
 	{
 		super.onCreate(savedInstanceState);
 		
-		setContentView(R.layout.nameprompt);
+		setContentView(R.layout.loginprompt);
 		
 		mOKButton = (Button) findViewById(R.id.nameOk);
 		mOKButton.setOnClickListener(new OKButtonListener());
@@ -38,6 +41,9 @@ public class NamePrompt extends Dialog
 		if(mDefaultName != null)
 			mNameText.setText(mDefaultName);
 
+		mPasswordText = (EditText) findViewById(R.id.passwordInput);
+		if(mDefaultPassword != null)
+			mPasswordText.setText(mDefaultPassword);
 	}
 	
 	@Override
@@ -55,7 +61,7 @@ public class NamePrompt extends Dialog
 		public void onClick(View v)
 		{
 			if (mListener!=null)
-				mListener.onNameSet(NamePrompt.this, mNameText.getText().toString());
+				mListener.onNameSet(LoginPrompt.this, mNameText.getText().toString(), mPasswordText.getText().toString());
 			dismiss();
 		}
 		
@@ -68,6 +74,6 @@ public class NamePrompt extends Dialog
 		 * @param view			the caller of the method
 		 * 
 		 */
-		public void onNameSet(NamePrompt view, String name);
+		public void onNameSet(LoginPrompt view, String name, String password);
 	}
 }

@@ -57,7 +57,7 @@ import android.widget.Toast;
 public class SudokuActivity extends Activity
 {
 	// Local IP: "http://10.0.2.2:8080";
-	private String mServer = "http://orangeandgreen.no-ip.biz:8080";
+	private String mServer = "http://orangeandgreen.no-ip.biz:33133";
 	private String mSenderId = "563870167345";
 	private String mRegisteredId = null;
 	private HttpClient mClient = null;
@@ -66,6 +66,7 @@ public class SudokuActivity extends Activity
 
 	private SudokuGameTwoPlayer mGame = null;
 	private String mPlayerName = null;
+	private String mPlayerPassword = null;
 	private ListView mTwoPlayerList = null;
 
 	private EditText mPlayer2Text = null;
@@ -118,6 +119,7 @@ public class SudokuActivity extends Activity
 
 		mPreferences = getPreferences(MODE_PRIVATE);
 		mPlayerName = mPreferences.getString("PlayerName", "");
+		mPlayerPassword = mPreferences.getString("PlayerPassword", "");
 
 		// Show the name prompt
 		showDialog(1);
@@ -137,7 +139,7 @@ public class SudokuActivity extends Activity
 		} else if (id == 1)
 		{
 			// Show the name prompt
-			NamePrompt prompt = new NamePrompt(this, mPlayerName, mNameSetListener);
+			LoginPrompt prompt = new LoginPrompt(this, mPlayerName, mPlayerPassword, mNameSetListener);
 			return prompt;
 		}
 
@@ -150,11 +152,11 @@ public class SudokuActivity extends Activity
 		if (mShowingMainMenu)
 			finish();
 		else
-			LoadMainMenu();
+			LoadMainMenu(null);
 		return;
 	}
 
-	private void LoadMainMenu()
+	private void LoadMainMenu(List<SudokuGameTwoPlayer> gameList)
 	{
 		setContentView(R.layout.mainmenu);
 
@@ -220,39 +222,40 @@ public class SudokuActivity extends Activity
 			DebugLog.Write("GCM Failed getting registration ID: " + e.getMessage(), null);
 		}
 
-		mArrayAdapter.clear();
-		mArrayAdapter.add("Getting games");
-		
-		// Start getting the list of existing games
-		mClient.GetGameList(mServer, mPlayerName, mRegisteredId, new GameListReadyListener()
+		if(gameList != null)
 		{
-			public void OnGameListReady(List<SudokuGameTwoPlayer> gameList)
+			Toast.makeText(mContext, String.format("%d games found", gameList.size()), Toast.LENGTH_SHORT).show();
+			
+			mArrayAdapter.clear();
+			// mExistingGames.clear();
+			mExistingGameIds.clear();
+
+			if(mClient.Failed)
+				mArrayAdapter.add("Failed to get list");
+			else
 			{
-				Toast.makeText(mContext, String.format("%d games found", gameList.size()), Toast.LENGTH_SHORT).show();
-
-				mArrayAdapter.clear();
-				// mExistingGames.clear();
-				mExistingGameIds.clear();
-
-				if(mClient.Failed)
-					mArrayAdapter.add("Failed to get list");
-				else
+				// Split the list into individual entries
+				for (int i = 0; i < gameList.size(); i++)
 				{
-					// Split the list into individual entries
-					for (int i = 0; i < gameList.size(); i++)
-					{
-						SudokuGameTwoPlayer game = gameList.get(i);
-						String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
-						if(game.Status == 2)
-							entry += " (game over)";
-						else if (game.IsLocalPlayerTurn(mPlayerName))
-							entry += " (your turn)";
-						mArrayAdapter.add(entry);
-						mExistingGameIds.add(game.GameId);
-					}
+					SudokuGameTwoPlayer game = gameList.get(i);
+					String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
+					if(game.Status == 2)
+						entry += " (game over)";
+					else if (game.IsLocalPlayerTurn(mPlayerName))
+						entry += " (your turn)";
+					mArrayAdapter.add(entry);
+					mExistingGameIds.add(game.GameId);
 				}
 			}
-		});
+		}
+		else
+		{
+			mArrayAdapter.clear();
+			mArrayAdapter.add("Getting games");
+			
+			// Start getting the list of existing games
+			mClient.GetGameList(mServer, mPlayerName, mPlayerPassword, mRegisteredId, mGameListReadyListener);
+		}
 	}
 
 	private void LoadGameMenu()
@@ -319,20 +322,26 @@ public class SudokuActivity extends Activity
 		{
 			public void onClick(View v)
 			{
-				String player2Name = mPlayer2Text.getText().toString();
-				if (player2Name.trim().equals(""))
-					player2Name = "Player 2";
-
-				boolean fillCenter = mFillCenter.isChecked();
-				int cellsToFill = Integer.parseInt(mFillOptions[mCellsToFillSpinner.getSelectedItemPosition()].toString());
-				int handSize = 9;//Integer.parseInt(mHandSizeOptions[mHandSizeSpinner.getSelectedItemPosition()].toString());
-				int bonusCells = Integer.parseInt(mBonusCellOptions[mBonusCellsSpinner.getSelectedItemPosition()].toString());
-				String handSystem = "Vanilla";//mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
-				String bonusSystem = mBonusOptions[mBonusSystemSpinner.getSelectedItemPosition()].toString();
-				String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
-				String multiplierSystem = mMultiplierOptions[mMultiplierSpinner.getSelectedItemPosition()].toString();
-
-				StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem, multiplierSystem, bonusSystem);
+				String player2Name = mPlayer2Text.getText().toString().trim();
+				
+				if(player2Name.equals("") || player2Name.toLowerCase(Locale.US).equals(mPlayerName.toLowerCase(Locale.US)))
+				{
+					Toast t = Toast.makeText(mContext, "Enter valid name for Player 2", Toast.LENGTH_SHORT);
+					t.show();
+				}
+				else
+				{
+					boolean fillCenter = mFillCenter.isChecked();
+					int cellsToFill = Integer.parseInt(mFillOptions[mCellsToFillSpinner.getSelectedItemPosition()].toString());
+					int handSize = 9;//Integer.parseInt(mHandSizeOptions[mHandSizeSpinner.getSelectedItemPosition()].toString());
+					int bonusCells = Integer.parseInt(mBonusCellOptions[mBonusCellsSpinner.getSelectedItemPosition()].toString());
+					String handSystem = "Vanilla";//mHandOptions[mHandSystemSpinner.getSelectedItemPosition()].toString();
+					String bonusSystem = mBonusOptions[mBonusSystemSpinner.getSelectedItemPosition()].toString();
+					String scoringSystem = mScoringOptions[mScoringSystemSpinner.getSelectedItemPosition()].toString();
+					String multiplierSystem = mMultiplierOptions[mMultiplierSpinner.getSelectedItemPosition()].toString();
+	
+					StartTwoPlayerGame(mPlayerName, player2Name, fillCenter, cellsToFill, handSize, bonusCells, handSystem, scoringSystem, multiplierSystem, bonusSystem);
+				}
 			}
 		});
 	}
@@ -382,7 +391,7 @@ public class SudokuActivity extends Activity
 
 	private void ResumeGame(int gameId)
 	{
-		mClient.GetGame(mServer, gameId, mPlayerName, new GameReadyListener()
+		mClient.GetGame(mServer, gameId, mPlayerName, mPlayerPassword, new GameReadyListener()
 		{
 			public void OnGameReady(SudokuGameTwoPlayer game)
 			{
@@ -412,6 +421,26 @@ public class SudokuActivity extends Activity
 				{
 					FinishGame(mGame.CreateEnding(mContext));
 				}
+			}
+
+			public void OnLoginFailed()
+			{
+				Log.e("", "PROBLEM: Login failed while resuming game");
+				
+				Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
+				t.show();
+				
+				showDialog(1);
+			}
+
+			public void OnConnectionFailed()
+			{
+				Log.e("", "PROBLEM: Connection failed while resuming game");
+				
+				Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+				t.show();
+				
+				showDialog(1);
 			}
 		});
 	}
@@ -512,7 +541,7 @@ public class SudokuActivity extends Activity
 			public void onClick(DialogInterface dialog, int id)
 			{
 				dialog.cancel();
-				LoadMainMenu();
+				LoadMainMenu(null);
 			}
 		});
 
@@ -627,24 +656,56 @@ public class SudokuActivity extends Activity
 		}
 	};
 
-
-	private NamePrompt.OnNameSetListener mNameSetListener = new NamePrompt.OnNameSetListener()
+	private LoginPrompt.OnNameSetListener mNameSetListener = new LoginPrompt.OnNameSetListener()
 	{
-		public void onNameSet(NamePrompt view, String name)
+		public void onNameSet(LoginPrompt view, String name, String password)
 		{
 			mPlayerName = name;
+			mPlayerPassword = password;
 
-			Editor editor = mPreferences.edit();
-			editor.putString("PlayerName", mPlayerName);
-			editor.commit();
-
-			LoadMainMenu();
+			Log.d("", "Logging in");
+			
+			// Attempt to login
+			mClient.GetGameList(mServer, mPlayerName, mPlayerPassword, mRegisteredId, mGameListReadyListener);
 		}
 	};
 
+	private GameListReadyListener mGameListReadyListener = new GameListReadyListener()
+	{
+		public void OnGameListReady(List<SudokuGameTwoPlayer> gameList)
+		{
+			Log.d("", "Login succeeded");
 
-	// Different start buttons are used to select the number of players and
-	// difficulty
+			Editor editor = mPreferences.edit();
+			editor.putString("PlayerName", mPlayerName);
+			editor.putString("PlayerPassword", mPlayerPassword);
+			editor.commit();
+			
+			LoadMainMenu(gameList);
+		}
+
+		public void OnLoginFailed()
+		{
+			Log.d("", "Login failed");
+			
+			Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
+			t.show();
+			
+			showDialog(1);
+		}
+
+		public void OnConnectionFailed()
+		{
+			Log.e("", "Connection failed");
+			
+			Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+			t.show();
+			
+			showDialog(1);
+		}
+	};
+
+	// Different start buttons are used to select the number of players and difficulty
 	private class StartButtonListener implements OnClickListener
 	{
 		private String mDifficulty = null;
@@ -665,8 +726,7 @@ public class SudokuActivity extends Activity
 		}
 	}
 
-	// This class responds when the user chooses to play an existing 2-player
-	// game
+	// This class responds when the user chooses to play an existing 2-player game
 	private class ResumeGameListener implements OnItemClickListener
 	{
 		private ArrayList<Integer> mGameIds = null;

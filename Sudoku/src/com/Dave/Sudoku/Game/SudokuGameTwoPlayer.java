@@ -253,7 +253,7 @@ public class SudokuGameTwoPlayer
 	
 	public int GetPlayer1Color(String localPlayerName)
 	{
-		if(GetPlayer1Name().equals(localPlayerName))
+		if(GetPlayer1Name().toLowerCase(Locale.US).equals(localPlayerName.toLowerCase(Locale.US)))
 			return mBlue;
 		else
 			return mRed;
@@ -276,7 +276,7 @@ public class SudokuGameTwoPlayer
 	
 	public int GetPlayer2Color(String localPlayerName)
 	{
-		if(GetPlayer2Name().equals(localPlayerName))
+		if(GetPlayer2Name().toLowerCase(Locale.US).equals(localPlayerName.toLowerCase(Locale.US)))
 			return mBlue;
 		else
 			return mRed;

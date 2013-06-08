@@ -18,13 +18,31 @@
     	android:layout_height="wrap_content"
     	android:layout_below="@+id/nameIntro"
 		android:layout_alignParentLeft="true"
+		android:inputType="textPersonName"
+    	android:text="@string/blank"
+    />
+    <TextView
+    	android:id="@+id/passwordIntro"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:layout_below="@+id/nameInput"
+		android:layout_alignParentLeft="true"
+    	android:text="@string/password"
+    />
+    <EditText
+    	android:id="@+id/passwordInput"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:layout_below="@+id/passwordIntro"
+		android:layout_alignParentLeft="true"
+		android:inputType="textPassword"
     	android:text="@string/blank"
     />
     	
 	<Button android:id="@+id/nameOk"
 		android:layout_width="wrap_content"
 	  	android:layout_height="wrap_content"
-	  	android:layout_below="@+id/nameInput"
+	  	android:layout_below="@+id/passwordInput"
 	   	android:layout_centerInParent="true"
 	   	android:text="@string/ok" />
     
