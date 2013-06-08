@@ -273,8 +273,83 @@ namespace TwodokuServer
             return ret.ToString();
         }
 
-        private const int BUF_SIZE = 4096;
         public string HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
+        {
+            string data = GetPostData(inputStream);
+
+            //Console.WriteLine("POST request: {0}", data);
+
+            //Parse the data
+            int gameId = 0;
+            int.TryParse((string)HttpHeaders["gameid"], out gameId);
+
+            String playerName = (string)HttpHeaders["player"];
+            String password = (string)HttpHeaders["password"];
+
+            TwodokuPlayer player = mDB.GetPlayer(playerName);
+            if (LoginUser(player, password))
+            {
+                Hashtable dataEntries = new Hashtable();
+                string[] lines = data.Split('&');
+                foreach (string line in lines)
+                {
+                    string[] parts = line.Split('=');
+                    dataEntries[parts[0]] = parts[1];
+                }
+
+                TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
+
+                //Update the database
+                bool success = false;
+                if (gameId <= 0)
+                {
+                    //Add new game
+                    Console.WriteLine(string.Format("{0}: Adding new game for {1}", DateStrings.ToString(DateTime.Now), playerName));
+                    gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
+                    success = mDB.AddGame(gameInfo);
+                }
+                else
+                {
+                    //Update existing game
+                    Console.WriteLine(string.Format("{0}: Updating game {1} for {2}", DateStrings.ToString(DateTime.Now), gameId, playerName));
+                    success = mDB.UpdateGame(gameInfo);
+                }
+
+                //Respond with failure if there is a problem (i.e. gameId and players don't match)
+                if (success)
+                {
+                    outputStream.WriteLine("HTTP/1.0 200 OK");
+                    outputStream.WriteLine("Content-Type: text/html");
+                    outputStream.WriteLine("Connection: close");
+                    outputStream.WriteLine("");
+                    //outputStream.WriteLine("<html><body><h1>test server</h1>");
+                    //outputStream.WriteLine("<a href=/test>return</a><p>");
+                    //outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
+                    
+                    string otherPlayer = gameInfo.Player2;
+                    if (playerName.Equals(otherPlayer))
+                        otherPlayer = gameInfo.Player1;
+
+                    return otherPlayer;
+                }
+                else
+                {
+                    outputStream.WriteLine("HTTP/1.0 404 Update failed");
+                    outputStream.WriteLine("Connection: close");
+                    outputStream.WriteLine("");
+
+                    return null;
+                }
+            }
+            else
+            {
+                outputStream.Write(GenerateFailedLoginResponse(playerName));
+                return null;
+            }
+        }
+
+        private const int BUF_SIZE = 4096;
+        private string GetPostData(Stream inputStream)
         {
             // this post data processing just reads everything into a memory stream.
             // this is fine for smallish things, but for large stuff we should really
@@ -320,65 +395,7 @@ namespace TwodokuServer
 
             StreamReader sr = new StreamReader(ms);
 
-            string data = sr.ReadToEnd();
-
-            //Console.WriteLine("POST request: {0}", data);
-
-            //Parse the data
-            int gameId = 0;
-            int.TryParse((string)HttpHeaders["gameid"], out gameId);
-
-            String player = (string)HttpHeaders["player"];
-
-            Hashtable dataEntries = new Hashtable();
-            string[] lines = data.Split('&');
-            foreach (string line in lines)
-            {
-                string[] parts = line.Split('=');
-                dataEntries[parts[0]] = parts[1];
-            }
-
-            TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
-
-            //Update the database
-            bool success = false;
-            if (gameId <= 0)
-            {
-                //Add new game
-                Console.WriteLine(string.Format("{0}: Adding new game for {1}", DateStrings.ToString(DateTime.Now), player));
-                gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
-                success = mDB.AddGame(gameInfo);
-            }
-            else
-            {
-                //Update existing game
-                Console.WriteLine(string.Format("{0}: Updating game {1} for {2}", DateStrings.ToString(DateTime.Now), gameId, player));
-                success = mDB.UpdateGame(gameInfo);
-            }
-
-            //Respond with failure if there is a problem (i.e. gameId and players don't match)
-            if (success)
-            {
-                outputStream.WriteLine("HTTP/1.0 200 OK");
-                outputStream.WriteLine("Content-Type: text/html");
-                outputStream.WriteLine("Connection: close");
-                outputStream.WriteLine("");
-                outputStream.WriteLine("<html><body><h1>test server</h1>");
-                outputStream.WriteLine("<a href=/test>return</a><p>");
-                outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
-            }
-            else
-            {
-                outputStream.WriteLine("HTTP/1.0 404 File not found");
-                outputStream.WriteLine("Connection: close");
-                outputStream.WriteLine("");
-            }
-
-            string otherPlayer = gameInfo.Player2;
-            if (player.Equals(otherPlayer))
-                otherPlayer = gameInfo.Player1;
-
-            return otherPlayer;
+            return sr.ReadToEnd();
         }
 
         public string SendPost(string url, string postData)

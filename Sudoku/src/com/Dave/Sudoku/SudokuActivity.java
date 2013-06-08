@@ -511,22 +511,33 @@ public class SudokuActivity extends Activity
 		if (mGame.GetCurrentPlayer() != oldPlayer || mGame.Status == 2)
 		{
 			Log.i("", "Sending game to server");
-			mClient.UpdateGame(mServer, mGame, mPlayerName, new GameUpdatedListener()
+			mClient.UpdateGame(mServer, mGame, mPlayerName, mPlayerPassword, new GameUpdatedListener()
 			{
-				public void OnGameUpdated(boolean success)
+				public void OnGameUpdated()
 				{
-					String successStr = null;
-					if (success)
-					{
-						Log.i("", "Update complete");
-						successStr = "Update complete";
-					} else
-					{
-						Log.i("", "Update failed");
-						successStr = "Update failed";
-					}
-					Toast t = Toast.makeText(mContext, successStr, Toast.LENGTH_SHORT);
+					Log.i("", "Update complete");
+					Toast t = Toast.makeText(mContext, "Update complete", Toast.LENGTH_SHORT);
 					t.show();
+				}
+
+				public void OnLoginFailed()
+				{
+					Log.d("", "Login failed when updating game");
+					
+					Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
+				}
+
+				public void OnConnectionFailed()
+				{
+					Log.e("", "Connection failed when updating game");
+					
+					Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
 				}
 
 			});

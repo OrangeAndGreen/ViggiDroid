@@ -37,8 +37,7 @@ public class HttpClient
 		}
 	}
 
-	private boolean OpenHttpPostConnection(String urlString,
-			List<Header> headers, List<Header> postData) throws IOException
+	private void OpenHttpPostConnection(String urlString, List<Header> headers, List<Header> postData) throws IOException, ConnectionException, LoginException
 	{
 		Failed = false;
 		try
@@ -62,10 +61,8 @@ public class HttpClient
 			httpConnection.setAllowUserInteraction(false);
 			httpConnection.setInstanceFollowRedirects(true);
 			httpConnection.setRequestMethod("POST");
-			httpConnection.setRequestProperty("Content-Type",
-					"application/x-www-form-urlencoded");
-			httpConnection.setRequestProperty("Content-Length",
-					"" + Integer.toString(dataString.length()));
+			httpConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			httpConnection.setRequestProperty("Content-Length", "" + Integer.toString(dataString.length()));
 			httpConnection.setRequestProperty("Content-Language", "en-US");
 			httpConnection.setUseCaches(false);
 			httpConnection.setDoInput(true);
@@ -73,29 +70,26 @@ public class HttpClient
 
 			for (int i = 0; i < headers.size(); i++)
 			{
-				httpConnection.setRequestProperty(headers.get(i).Key,
-						headers.get(i).Value);
+				httpConnection.setRequestProperty(headers.get(i).Key, headers.get(i).Value);
 			}
 
 			// Send request
-			DataOutputStream wr = new DataOutputStream(
-					connection.getOutputStream());
+			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			wr.writeBytes(dataString);
 			wr.flush();
 			wr.close();
 
 			httpConnection.connect();
 			int response = httpConnection.getResponseCode();
-			if (response == HttpURLConnection.HTTP_OK)
-				return true;
-		} catch (Exception e)
+			if (response != HttpURLConnection.HTTP_OK)
+				throw new LoginException();
+		}
+		catch (Exception e)
 		{
 			Failed = true;
 			e.printStackTrace();
-			throw new IOException("Error connecting");
+			throw new ConnectionException();
 		}
-
-		return false;
 	}
 
 	private InputStream OpenHttpGetConnection(String urlString,
@@ -141,7 +135,7 @@ public class HttpClient
 		return stream;
 	}
 
-	private String DownloadText(String urlString, List<Header> headers)
+	private String DownloadText(String urlString, List<Header> headers) throws ConnectionException
 	{
 		int bufferSize = 2000;
 		InputStream stream = null;
@@ -150,10 +144,11 @@ public class HttpClient
 		try
 		{
 			stream = OpenHttpGetConnection(urlString, headers);
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
 			e.printStackTrace();
-			return "";
+			throw new ConnectionException();
 		}
 
 		InputStreamReader reader = new InputStreamReader(stream);
@@ -172,10 +167,11 @@ public class HttpClient
 				inputBuffer = new char[bufferSize];
 			}
 			stream.close();
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
 			e.printStackTrace();
-			return "";
+			throw new ConnectionException();
 		}
 
 		return str;
@@ -187,9 +183,10 @@ public class HttpClient
 	}
 	
 	private class ConnectionException extends Exception
-	{
-		
-	}
+	{ }
+	
+	private class LoginException extends Exception
+	{ }
 	
 	// /// Get game list /////
 
@@ -206,6 +203,7 @@ public class HttpClient
 		private String mGcmId = null;
 		private GameListReadyListener mListener = null;
 		private boolean mConnectionFailed = false;
+		private boolean mLoginFailed = false;
 
 		public GetGameListTask(String player, String password, String gcmId, GameListReadyListener listener)
 		{
@@ -228,6 +226,10 @@ public class HttpClient
 			{
 				mConnectionFailed = true;
 			}
+			catch(LoginException e)
+			{
+				mLoginFailed = true;
+			}
 			
 			return ret;
 		}
@@ -237,14 +239,14 @@ public class HttpClient
 		{
 			if(mConnectionFailed)
 				mListener.OnConnectionFailed();
-			else if(result == null)
+			else if(mLoginFailed)
 				mListener.OnLoginFailed();
 			else
 				mListener.OnGameListReady(result);
 		}
 	}
 
-	private List<SudokuGameTwoPlayer> DoGetGameList(String server, String player, String password, String gcmId) throws ConnectionException
+	private List<SudokuGameTwoPlayer> DoGetGameList(String server, String player, String password, String gcmId) throws ConnectionException, LoginException
 	{
 		List<SudokuGameTwoPlayer> result = new ArrayList<SudokuGameTwoPlayer>();
 		
@@ -255,24 +257,17 @@ public class HttpClient
 		if(gcmId != null)
 			headers.add(new Header("GcmId", gcmId));
 		
-		try
-		{
-			String strResult = DownloadText(server, headers);
+		String strResult = DownloadText(server, headers);
 
-			//Log.d("", "Gamelist response: " + strResult);
+		//Log.d("", "Gamelist response: " + strResult);
 			
-			String[] lines = strResult.split("\n");
-			if(!CheckHttpResponse(lines[0]))
-				return null;
+		String[] lines = strResult.split("\n");
+		if(!CheckHttpResponse(lines[0]))
+			throw new LoginException();
 			
-			for (int i=1; i<lines.length; i++)
-				result.add(SudokuGameTwoPlayer.FromString(lines[i], true));
-		}
-		catch (Exception e)
-		{
-			Log.e("HttpClient", "Error communicating with server: " + e.getLocalizedMessage());
-			throw new ConnectionException();
-		}
+		for (int i=1; i<lines.length; i++)
+			result.add(SudokuGameTwoPlayer.FromString(lines[i], true));
+		
 		return result;
 	}
 	
@@ -300,6 +295,7 @@ public class HttpClient
 		private String mPlayer = null;
 		private String mPassword = null;
 		private boolean mConnectionFailed = false;
+		private boolean mLoginFailed = false;
 
 		public GetGameTask(int gameId, String player, String password, GameReadyListener listener)
 		{
@@ -322,6 +318,10 @@ public class HttpClient
 			{
 				mConnectionFailed = true;
 			}
+			catch(LoginException e)
+			{
+				mLoginFailed = true;
+			}
 			
 			return ret;
 		}
@@ -331,14 +331,14 @@ public class HttpClient
 		{
 			if(mConnectionFailed)
 				mListener.OnConnectionFailed();
-			else if(game == null)
+			else if(mLoginFailed)
 				mListener.OnLoginFailed();
 			else
 				mListener.OnGameReady(game);
 		}
 	}
 
-	private SudokuGameTwoPlayer DoGetGame(String server, String player, String password, int gameId) throws ConnectionException
+	private SudokuGameTwoPlayer DoGetGame(String server, String player, String password, int gameId) throws ConnectionException, LoginException
 	{
 		SudokuGameTwoPlayer result = null;
 		List<Header> headers = new ArrayList<Header>();
@@ -351,10 +351,12 @@ public class HttpClient
 			String strResult = DownloadText(server, headers);
 			
 			String[] lines = strResult.split("\n");
-			if(CheckHttpResponse(lines[0]))
-				result = SudokuGameTwoPlayer.FromString(lines[1], false);
+			if(!CheckHttpResponse(lines[0]))
+				throw new LoginException();
+			
+			result = SudokuGameTwoPlayer.FromString(lines[1], false);
 		}
-		catch (Exception e)
+		catch (ConnectionException e)
 		{
 			Log.e("HttpClient", "Error communicating with server: " + e.getLocalizedMessage());
 			StackTraceElement[] trace = e.getStackTrace();
@@ -378,48 +380,69 @@ public class HttpClient
 
 	// /// Update game /////
 
-	public void UpdateGame(String server, SudokuGameTwoPlayer game,
-			String player, GameUpdatedListener listener)
+	public void UpdateGame(String server, SudokuGameTwoPlayer game, String player, String password, GameUpdatedListener listener)
 	{
-		UpdateGameTask task = new UpdateGameTask(game, player, listener);
+		UpdateGameTask task = new UpdateGameTask(game, player, password, listener);
 		task.execute(server);
 	}
 
+	//TODO: Figure out how to get rid of the Boolean return value (should be Void)
 	private class UpdateGameTask extends AsyncTask<String, Void, Boolean>
 	{
 		private SudokuGameTwoPlayer mGame = null;
 		private String mPlayer = null;
+		private String mPassword = null;
 		private GameUpdatedListener mListener = null;
+		private boolean mConnectionFailed = false;
+		private boolean mLoginFailed = false;
 
-		public UpdateGameTask(SudokuGameTwoPlayer game, String player,
-				GameUpdatedListener listener)
+		public UpdateGameTask(SudokuGameTwoPlayer game, String player, String password, GameUpdatedListener listener)
 		{
 			mGame = game;
 			mPlayer = player;
+			mPassword = password;
 			mListener = listener;
 		}
 
 		@Override
 		protected Boolean doInBackground(String... server)
 		{
-			return DoUpdateGame(server[0], mPlayer, mGame);
+			try
+			{
+				DoUpdateGame(server[0], mPlayer, mPassword, mGame);
+			}
+			catch(ConnectionException e)
+			{
+				mConnectionFailed = true;
+			}
+			catch(LoginException e)
+			{
+				mLoginFailed = true;
+			}
+			
+			return true;
 		}
 
 		@Override
 		protected void onPostExecute(Boolean success)
 		{
-			mListener.OnGameUpdated(success);
+			if(mConnectionFailed)
+				mListener.OnConnectionFailed();
+			else if(mLoginFailed)
+				mListener.OnLoginFailed();
+			else
+				mListener.OnGameUpdated();
 		}
 	}
 
-	private Boolean DoUpdateGame(String server, String player, SudokuGameTwoPlayer game)
+	private void DoUpdateGame(String server, String player, String password, SudokuGameTwoPlayer game) throws ConnectionException, LoginException
 	{
-		boolean success = false;
 		try
 		{
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("GameId", Integer.toString(game.GameId)));
 			headers.add(new Header("Player", player));
+			headers.add(new Header("Password", password));
 
 			List<Header> data = new ArrayList<Header>();
 			data.add(new Header("Player1", game.GetPlayer1Name()));
@@ -452,8 +475,7 @@ public class HttpClient
 
 			if (game.GameId <= 0)
 			{
-				// This data only needs to be sent the first time a game is
-				// sent to the server
+				// This data only needs to be sent the first time a game is sent to the server
 				data.add(new Header("HandSystem", game.GetHandSystem()));
 				data.add(new Header("HandSize", Integer.toString(game.GetHand().size())));
 				data.add(new Header("ScoringSystem", game.GetScoringSystem()));
@@ -463,16 +485,21 @@ public class HttpClient
 				data.add(new Header("Multipliers", multipliers));
 			}
 
-			success = OpenHttpPostConnection(server, headers, data);
-		} catch (IOException e)
+			OpenHttpPostConnection(server, headers, data);
+		}
+		catch (IOException e)
 		{
 			Log.e("HttpClient", "Error communicating with server" + e.getLocalizedMessage());
+			throw new ConnectionException();
 		}
-		return success;
 	}
 	
 	public interface GameUpdatedListener
 	{
-		public void OnGameUpdated(boolean success);
+		public void OnGameUpdated();
+		
+		public void OnLoginFailed();
+		
+		public void OnConnectionFailed();
 	}
 }
