@@ -161,10 +161,7 @@ namespace TwodokuServer
             //Console.WriteLine("request: {0}", HttpUrl);
 
             //Write the success response
-            outputStream.WriteLine("HTTP/1.0 200 OK");
-            outputStream.WriteLine("Content-Type: text/html");
-            outputStream.WriteLine("Connection: close");
-            outputStream.WriteLine("");
+            outputStream.Write(GenerateSuccessResponse());
 
             string method = "";
             if (HttpHeaders.ContainsKey("method"))
@@ -173,15 +170,6 @@ namespace TwodokuServer
             string name = (string)HttpHeaders["player"];
             string password = (string)HttpHeaders["password"];
             string gcmId = (string)HttpHeaders["gcmid"];
-
-            //CODE TO CREATE A NEW PLAYER
-            //TwodokuPlayer player = mDB.GetPlayer(name);
-            //if (player == null)
-            //{
-            //    player = new TwodokuPlayer(-1, name, password, gcmId);
-            //    player.PlayerId = mDB.GetNextKey(DBHelper.TablePlayers, DBHelper.ColumnPlayerId);
-            //    mDB.AddPlayer(player);
-            //}
 
             TwodokuPlayer player = mDB.GetPlayer(name);
             if (LoginUser(player, password))
@@ -204,6 +192,14 @@ namespace TwodokuServer
 
                     outputStream.Write(GenerateGameResponse(name, gameId));
                 }
+                else if (method.Equals("PlayerStats"))
+                {
+                    outputStream.Write(GeneratePlayerStatsResponse(name));
+                }
+                else
+                {
+                    outputStream.Write(GenerateUnknownCommandResponse(name));
+                }
             }
             else
             {
@@ -221,7 +217,19 @@ namespace TwodokuServer
             return password.Equals(player.Password);
         }
 
-        private String GenerateFailedLoginResponse(string name)
+        private string GenerateSuccessResponse()
+        {
+            StringBuilder ret = new StringBuilder();
+
+            ret.AppendLine("HTTP/1.0 200 OK");
+            ret.AppendLine("Content-Type: text/html");
+            ret.AppendLine("Connection: close");
+            ret.AppendLine("");
+
+            return ret.ToString();
+        }
+
+        private string GenerateFailedLoginResponse(string name)
         {
             if (name == null || name.Equals(""))
                 name = "(unknown)";
@@ -236,7 +244,22 @@ namespace TwodokuServer
             return ret.ToString();
         }
 
-        private String GenerateGameListResponse(string name)
+        private string GenerateUnknownCommandResponse(string name)
+        {
+            if (name == null || name.Equals(""))
+                name = "(unknown)";
+            Console.WriteLine(string.Format("{0}: Sending unknown command response to {1} ({2})", DateStrings.ToString(DateTime.Now), name, mIPAddress));
+
+            StringBuilder ret = new StringBuilder();
+
+            ret.AppendLine("HTTP/1.0 404 Unknown command");
+            ret.AppendLine("Connection: close");
+            ret.AppendLine("");
+
+            return ret.ToString();
+        }
+
+        private string GenerateGameListResponse(string name)
         {
             Console.WriteLine(string.Format("{0}: Sending game list to {1} ({2})", DateStrings.ToString(DateTime.Now), name, mIPAddress));
             
@@ -261,7 +284,7 @@ namespace TwodokuServer
             return ret.ToString();
         }
 
-        private String GenerateGameResponse(string name, int id)
+        private string GenerateGameResponse(string name, int id)
         {
             Console.WriteLine(string.Format("{0}: Sending game {1} to {2} ({3})", DateStrings.ToString(DateTime.Now), id, name, mIPAddress));
 
@@ -273,6 +296,20 @@ namespace TwodokuServer
             return ret.ToString();
         }
 
+        private string GeneratePlayerStatsResponse(string name)
+        {
+            Console.WriteLine(string.Format("{0}: Sending player stats to {1} ({2})", DateStrings.ToString(DateTime.Now), name, mIPAddress));
+
+            TwodokuPlayer player = mDB.GetPlayer(name);
+
+            StringBuilder ret = new StringBuilder();
+            ret.AppendLine("HTTP/1.0 200 OK");
+            ret.AppendLine(string.Format("Wins={0}", player.Wins));
+            ret.AppendLine(string.Format("Losses={0}", player.Losses));
+            ret.AppendLine(string.Format("Streak={0}", player.Streak));
+            return ret.ToString();
+        }
+
         public string HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
         {
             string data = GetPostData(inputStream);
@@ -280,11 +317,22 @@ namespace TwodokuServer
             //Console.WriteLine("POST request: {0}", data);
 
             //Parse the data
+            string method = "";
+            if (HttpHeaders.ContainsKey("method"))
+                method = (string)HttpHeaders["method"];
+
             int gameId = 0;
             int.TryParse((string)HttpHeaders["gameid"], out gameId);
 
-            String playerName = (string)HttpHeaders["player"];
-            String password = (string)HttpHeaders["password"];
+            string playerName = (string)HttpHeaders["player"];
+            string password = (string)HttpHeaders["password"];
+            string gcmId = (string)HttpHeaders["gcmid"];
+
+            if(method.Equals("AddPlayer"))
+            {
+                outputStream.Write(AddPlayer(playerName, password, gcmId));
+                return null;
+            }
 
             TwodokuPlayer player = mDB.GetPlayer(playerName);
             if (LoginUser(player, password))
@@ -297,47 +345,11 @@ namespace TwodokuServer
                     dataEntries[parts[0]] = parts[1];
                 }
 
-                TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
-
-                //Update the database
-                bool success = false;
-                if (gameId <= 0)
-                {
-                    //Add new game
-                    Console.WriteLine(string.Format("{0}: Adding new game for {1}", DateStrings.ToString(DateTime.Now), playerName));
-                    gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
-                    success = mDB.AddGame(gameInfo);
-                }
+                if (method.Equals("Update"))
+                    return UpdateGame(playerName, gameId, dataEntries, outputStream);
                 else
                 {
-                    //Update existing game
-                    Console.WriteLine(string.Format("{0}: Updating game {1} for {2}", DateStrings.ToString(DateTime.Now), gameId, playerName));
-                    success = mDB.UpdateGame(gameInfo);
-                }
-
-                //Respond with failure if there is a problem (i.e. gameId and players don't match)
-                if (success)
-                {
-                    outputStream.WriteLine("HTTP/1.0 200 OK");
-                    outputStream.WriteLine("Content-Type: text/html");
-                    outputStream.WriteLine("Connection: close");
-                    outputStream.WriteLine("");
-                    //outputStream.WriteLine("<html><body><h1>test server</h1>");
-                    //outputStream.WriteLine("<a href=/test>return</a><p>");
-                    //outputStream.WriteLine("postbody: <pre>{0}</pre>", data);
-                    
-                    string otherPlayer = gameInfo.Player2;
-                    if (playerName.Equals(otherPlayer))
-                        otherPlayer = gameInfo.Player1;
-
-                    return otherPlayer;
-                }
-                else
-                {
-                    outputStream.WriteLine("HTTP/1.0 404 Update failed");
-                    outputStream.WriteLine("Connection: close");
-                    outputStream.WriteLine("");
-
+                    outputStream.Write(GenerateUnknownCommandResponse(playerName));
                     return null;
                 }
             }
@@ -396,6 +408,74 @@ namespace TwodokuServer
             StreamReader sr = new StreamReader(ms);
 
             return sr.ReadToEnd();
+        }
+
+        private string UpdateGame(string playerName, int gameId, Hashtable dataEntries, StreamWriter outputStream)
+        {
+            TwodokuGameInfo gameInfo = TwodokuGameInfo.FromHttpPost(gameId, dataEntries);
+
+            //Update the database
+            bool success = false;
+            if (gameId <= 0)
+            {
+                //Add new game
+                Console.WriteLine(string.Format("{0}: Adding new game for {1}", DateStrings.ToString(DateTime.Now), playerName));
+                gameInfo.GameId = mDB.GetNextKey(DBHelper.TableGames, DBHelper.ColumnGameId);
+                success = mDB.AddGame(gameInfo, true);
+            }
+            else
+            {
+                //Update existing game
+                Console.WriteLine(string.Format("{0}: Updating game {1} for {2}", DateStrings.ToString(DateTime.Now), gameId, playerName));
+                success = mDB.UpdateGame(gameInfo);
+
+                if (gameInfo.Status == 2)
+                {
+                    //Game is over, update stats for both players
+                    bool player1Wins = gameInfo.Player1Score > gameInfo.Player2Score;
+                    mDB.UpdatePlayerStats(gameInfo.Player1, player1Wins);
+                    mDB.UpdatePlayerStats(gameInfo.Player2, !player1Wins);
+                }
+            }
+
+            //Respond with failure if there is a problem (i.e. gameId and players don't match)
+            if (success)
+            {
+                outputStream.Write(GenerateSuccessResponse());
+
+                string otherPlayer = gameInfo.Player2;
+                if (playerName.Equals(otherPlayer))
+                    otherPlayer = gameInfo.Player1;
+
+                return otherPlayer;
+            }
+            else
+            {
+                outputStream.WriteLine("HTTP/1.0 404 Update failed");
+                outputStream.WriteLine("Connection: close");
+                outputStream.WriteLine("");
+
+                return null;
+            }
+        }
+
+        private string AddPlayer(string name, string password, string gcmId)
+        {
+            TwodokuPlayer player = mDB.GetPlayer(name);
+            if (player == null)
+            {
+                player = new TwodokuPlayer(-1, name, password, gcmId);
+                player.PlayerId = mDB.GetNextKey(DBHelper.TablePlayers, DBHelper.ColumnPlayerId);
+                if (mDB.AddPlayer(player))
+                    return GenerateSuccessResponse();
+            }
+
+            StringBuilder ret = new StringBuilder();
+            ret.AppendLine("HTTP/1.0 404 Add failed");
+            ret.AppendLine("Connection: close");
+            ret.AppendLine("");
+
+            return ret.ToString();
         }
 
         public string SendPost(string url, string postData)

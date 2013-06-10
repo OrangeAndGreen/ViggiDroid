@@ -160,7 +160,7 @@ namespace TwodokuServer
             {
                 Console.WriteLine("Importing " + line);
                 TwodokuGameInfo gameInfo = TwodokuGameInfo.FromString(line);
-                mDB.AddGame(gameInfo);
+                mDB.AddGame(gameInfo, false);
                 line = reader.ReadLine();
             }
 

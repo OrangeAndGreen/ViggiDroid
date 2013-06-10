@@ -38,12 +38,19 @@
 		android:inputType="textPassword"
     	android:text="@string/blank"
     />
-    	
-	<Button android:id="@+id/nameOk"
+   
+    <Button android:id="@+id/nameNew"
+		android:layout_width="wrap_content"
+	  	android:layout_height="wrap_content"
+	  	android:layout_below="@+id/passwordInput"
+	   	android:layout_alignParentLeft="true"
+	   	android:text="@string/newplayer" />	
+   
+	<Button android:id="@+id/nameLogin"
 		android:layout_width="wrap_content"
 	  	android:layout_height="wrap_content"
 	  	android:layout_below="@+id/passwordInput"
 	   	android:layout_centerInParent="true"
-	   	android:text="@string/ok" />
+	   	android:text="@string/login" />
     
 </RelativeLayout>

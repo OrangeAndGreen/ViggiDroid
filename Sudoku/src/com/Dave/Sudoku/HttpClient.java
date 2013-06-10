@@ -84,7 +84,7 @@ public class HttpClient
 			if (response != HttpURLConnection.HTTP_OK)
 				throw new LoginException();
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
 			Failed = true;
 			e.printStackTrace();
@@ -188,6 +188,203 @@ public class HttpClient
 	private class LoginException extends Exception
 	{ }
 	
+	
+	
+	// /// Create new player /////
+	
+	public void CreatePlayer(String server, String player, String password, String gcmId, CreatePlayerListener listener)
+	{
+		CreatePlayerTask task = new CreatePlayerTask(player, password, gcmId, listener);
+		task.execute(server);
+	}
+
+	//TODO: Figure out how to get rid of the Boolean return value (should be Void)
+	private class CreatePlayerTask extends AsyncTask<String, Void, Boolean>
+	{
+		private String mPlayer = null;
+		private String mPassword = null;
+		private String mGcmId = null;
+		private CreatePlayerListener mListener = null;
+		private boolean mConnectionFailed = false;
+
+		public CreatePlayerTask(String player, String password, String gcmId, CreatePlayerListener listener)
+		{
+			mPlayer = player;
+			mPassword = password;
+			mGcmId = gcmId;
+			mListener = listener;
+		}
+
+		@Override
+		protected Boolean doInBackground(String... urls)
+		{
+			Boolean ret = false;
+			
+			try
+			{
+				ret = DoCreatePlayer(urls[0], mPlayer, mPassword, mGcmId);
+			}
+			catch(ConnectionException e)
+			{
+				mConnectionFailed = true;
+			}
+			
+			return ret;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if(mConnectionFailed)
+				mListener.OnConnectionFailed();
+			else if(result)
+				mListener.OnPlayerCreated();
+			else
+				mListener.OnCreateFailed();
+		}
+	}
+
+	private Boolean DoCreatePlayer(String server, String player, String password, String gcmId) throws ConnectionException
+	{
+		try
+		{
+			List<Header> headers = new ArrayList<Header>();
+			headers.add(new Header("Method", "AddPlayer"));
+			headers.add(new Header("Player", player));
+			headers.add(new Header("Password", password));
+			if(gcmId != null)
+				headers.add(new Header("GcmId", gcmId));
+
+			try
+			{
+				OpenHttpPostConnection(server, headers, new ArrayList<Header>());
+				return true;
+			}
+			catch(LoginException e)
+			{
+				//A login exception here means we couldn't create the new player, not that login failed
+				return false;
+			}
+		}
+		catch (IOException e)
+		{
+			Log.e("HttpClient", "Error communicating with server" + e.getLocalizedMessage());
+			throw new ConnectionException();
+		}
+	}
+	
+	public interface CreatePlayerListener
+	{
+		public void OnPlayerCreated();
+		
+		public void OnCreateFailed();
+		
+		public void OnConnectionFailed();
+	}
+	
+	
+	
+	// /// Get player stats /////
+	
+	public void GetPlayerStats(String server, String player, String password, StatsReadyListener listener)
+	{
+		GetPlayerStatsTask task = new GetPlayerStatsTask(player, password, listener);
+		task.execute(server);
+	}
+	
+	private class GetPlayerStatsTask extends AsyncTask<String, Void, PlayerStats>
+	{
+		private String mPlayer = null;
+		private String mPassword = null;
+		private StatsReadyListener mListener = null;
+		private boolean mConnectionFailed = false;
+		private boolean mLoginFailed = false;
+		
+		public GetPlayerStatsTask(String player, String password, StatsReadyListener listener)
+		{
+			mPlayer = player;
+			mPassword = password;
+			mListener = listener;
+		}
+		
+		protected PlayerStats doInBackground(String... urls)
+		{
+			PlayerStats ret = null;
+			
+			try
+			{
+				ret = DoGetPlayerStats(urls[0], mPlayer, mPassword);
+			}
+			catch(ConnectionException e)
+			{
+				mConnectionFailed = true;
+			}
+			catch(LoginException e)
+			{
+				mLoginFailed = true;
+			}
+			
+			return ret;
+		}
+		
+		protected void onPostExecute(PlayerStats result)
+		{
+			if(mConnectionFailed)
+				mListener.OnConnectionFailed();
+			else if(mLoginFailed)
+				mListener.OnLoginFailed();
+			else
+				mListener.OnStatsReady(result);
+		}
+	}
+	
+	private PlayerStats DoGetPlayerStats(String server, String player, String password) throws ConnectionException, LoginException
+	{
+		List<Header> headers = new ArrayList<Header>();
+		headers.add(new Header("Method", "PlayerStats"));
+		headers.add(new Header("Player", player));
+		headers.add(new Header("Password", password));
+
+		String strResult = DownloadText(server, headers);
+		
+		String[] lines = strResult.split("\n");
+		if(!CheckHttpResponse(lines[0]))
+			throw new LoginException();
+		
+		PlayerStats stats = new PlayerStats();
+		
+		for(int i=1; i<lines.length; i++)
+		{
+			String[] parts = lines[i].split("=");
+			if(parts[0].equals("Wins"))
+				stats.Wins = Integer.parseInt(parts[1].trim());
+			else if(parts[0].equals("Losses"))
+				stats.Losses = Integer.parseInt(parts[1].trim());
+			else if(parts[0].equals("Streak"))
+				stats.Streak = Integer.parseInt(parts[1].trim());
+		}
+		
+		return stats;
+	}
+	
+	public interface StatsReadyListener
+	{
+		public void OnStatsReady(PlayerStats stats);
+		
+		public void OnLoginFailed();
+		
+		public void OnConnectionFailed();
+	}
+	
+	public class PlayerStats
+	{
+		public int Wins = 0;
+		public int Losses = 0;
+		public int Streak = 0;
+	}
+	
+	
+	
 	// /// Get game list /////
 
 	public void GetGameList(String server, String player, String password, String gcmId, GameListReadyListener listener)
@@ -280,6 +477,9 @@ public class HttpClient
 		public void OnConnectionFailed();
 	}
 
+	
+	
+	
 	// /// Get game /////
 
 	public void GetGame(String server, int gameId, String player, String password, GameReadyListener listener)
@@ -287,6 +487,7 @@ public class HttpClient
 		GetGameTask task = new GetGameTask(gameId, player, password, listener);
 		task.execute(server);
 	}
+	
 
 	private class GetGameTask extends AsyncTask<String, Void, SudokuGameTwoPlayer>
 	{
@@ -337,6 +538,7 @@ public class HttpClient
 				mListener.OnGameReady(game);
 		}
 	}
+	
 
 	private SudokuGameTwoPlayer DoGetGame(String server, String player, String password, int gameId) throws ConnectionException, LoginException
 	{
@@ -378,6 +580,9 @@ public class HttpClient
 		public void OnConnectionFailed();
 	}
 
+	
+	
+	
 	// /// Update game /////
 
 	public void UpdateGame(String server, SudokuGameTwoPlayer game, String player, String password, GameUpdatedListener listener)
@@ -386,6 +591,7 @@ public class HttpClient
 		task.execute(server);
 	}
 
+	
 	//TODO: Figure out how to get rid of the Boolean return value (should be Void)
 	private class UpdateGameTask extends AsyncTask<String, Void, Boolean>
 	{
@@ -440,6 +646,7 @@ public class HttpClient
 		try
 		{
 			List<Header> headers = new ArrayList<Header>();
+			headers.add(new Header("Method", "Update"));
 			headers.add(new Header("GameId", Integer.toString(game.GameId)));
 			headers.add(new Header("Player", player));
 			headers.add(new Header("Password", password));

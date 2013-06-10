@@ -393,7 +393,7 @@ namespace TwodokuServer
         /////////////////////     Game Helpers       ////////////////////////////////
 
 
-        public bool AddGame(TwodokuGameInfo gameInfo)
+        public bool AddGame(TwodokuGameInfo gameInfo, Boolean useNow)
         {
             string values = "";
             values += "'" + gameInfo.GameId + "',";
@@ -401,8 +401,14 @@ namespace TwodokuServer
             values += "'" + gameInfo.Player1Score + "',";
             values += "'" + gameInfo.Player2 + "',";
             values += "'" + gameInfo.Player2Score + "',";
-            values += "'" + DateTime.Now.ToString() + "',";
-            values += "'" + DateTime.Now.ToString() + "',";
+
+            if (useNow)
+            {
+                gameInfo.StartDate = DateTime.Now;
+                gameInfo.PlayDate = DateTime.Now;
+            }
+            values += "'" + gameInfo.StartDate + "',";
+            values += "'" + gameInfo.PlayDate + "',";
             values += "'" + gameInfo.Status + "',";
             values += "'" + gameInfo.Turn + "',";
             values += "'" + gameInfo.HandSystem + "',";
@@ -502,7 +508,7 @@ namespace TwodokuServer
 
         public bool UpdatePlayerGcmId(TwodokuPlayer player)
         {
-            //Retrieve the game and make sure everything matches (players, etc.)
+            //Retrieve the player and make sure it exists
             TwodokuPlayer existingPlayer = GetPlayer(player.Name);
             if (existingPlayer == null)
                 return false;
@@ -510,6 +516,43 @@ namespace TwodokuServer
             //Update: Scores, PlayDate, Status, Turn, PlayerBoard, LastMove
             string update = "";
             update += string.Format("{0}='{1}'", ColumnGcmId, player.GcmId);
+
+            string qualifier = string.Format("{0}='{1}'", ColumnName, player.Name);
+            return Update(TablePlayers, update, qualifier);
+        }
+
+        public bool UpdatePlayerStats(string name, bool won)
+        {
+            TwodokuPlayer player = GetPlayer(name);
+            if (player == null)
+                return false;
+            return UpdatePlayerStats(player, won);
+        }
+
+        public bool UpdatePlayerStats(TwodokuPlayer player, bool won)
+        {
+            if (won)
+            {
+                player.Wins++;
+                if (player.Streak <= 0)
+                    player.Streak = 1;
+                else
+                    player.Streak++;
+            }
+            else
+            {
+                player.Losses++;
+                if (player.Streak >= 0)
+                    player.Streak = -1;
+                else
+                    player.Streak--;
+            }
+
+            //Update: Wins, Losses, and Streak
+            string update = "";
+            update += string.Format("{0}='{1}',", ColumnWins, player.Wins);
+            update += string.Format("{0}='{1}',", ColumnLosses, player.Losses);
+            update += string.Format("{0}='{1}'", ColumnStreak, player.Streak);
 
             string qualifier = string.Format("{0}='{1}'", ColumnName, player.Name);
             return Update(TablePlayers, update, qualifier);

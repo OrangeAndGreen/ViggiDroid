@@ -14,6 +14,7 @@ public class LoginPrompt extends Dialog
 	private EditText mNameText = null;
 	private EditText mPasswordText = null;
 	private Button mOKButton = null;
+	private Button mNewButton = null;
 	private String mDefaultName = null;
 	private String mDefaultPassword = null;
 	
@@ -34,8 +35,11 @@ public class LoginPrompt extends Dialog
 		
 		setContentView(R.layout.loginprompt);
 		
-		mOKButton = (Button) findViewById(R.id.nameOk);
+		mOKButton = (Button) findViewById(R.id.nameLogin);
 		mOKButton.setOnClickListener(new OKButtonListener());
+		
+		mNewButton = (Button) findViewById(R.id.nameNew);
+		mNewButton.setOnClickListener(new NewButtonListener());
 		
 		mNameText = (EditText) findViewById(R.id.nameInput);
 		if(mDefaultName != null)
@@ -52,6 +56,14 @@ public class LoginPrompt extends Dialog
 		super.show();
 	}
 	
+	@Override
+	public void onBackPressed()
+	{
+		if (mListener!=null)
+			mListener.onCancelled();
+		dismiss();
+	}
+	
 	private class OKButtonListener implements View.OnClickListener
 	{		
 		public OKButtonListener()
@@ -66,14 +78,28 @@ public class LoginPrompt extends Dialog
 		}
 		
 	}
+
+	private class NewButtonListener implements View.OnClickListener
+	{		
+		public NewButtonListener()
+		{
+		}
+
+		public void onClick(View v)
+		{
+			if (mListener!=null)
+				mListener.onNewPlayer(LoginPrompt.this, mNameText.getText().toString(), mPasswordText.getText().toString());
+			dismiss();
+		}
+		
+	}
 	
 	public interface OnNameSetListener
 	{
-		/**
-		 * this method is called when a name was selected by the user
-		 * @param view			the caller of the method
-		 * 
-		 */
 		public void onNameSet(LoginPrompt view, String name, String password);
+		
+		public void onNewPlayer(LoginPrompt view, String name, String password);
+		
+		public void onCancelled();
 	}
 }

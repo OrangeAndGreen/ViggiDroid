@@ -6,15 +6,19 @@ import java.util.List;
 import java.util.Locale;
 
 import com.Dave.Sudoku.Game.SudokuGameTwoPlayer;
+import com.Dave.Sudoku.HttpClient.CreatePlayerListener;
 import com.Dave.Sudoku.HttpClient.GameListReadyListener;
 import com.Dave.Sudoku.HttpClient.GameReadyListener;
 import com.Dave.Sudoku.HttpClient.GameUpdatedListener;
+import com.Dave.Sudoku.HttpClient.PlayerStats;
+import com.Dave.Sudoku.HttpClient.StatsReadyListener;
 import com.google.android.gcm.GCMRegistrar;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -22,6 +26,9 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -95,6 +102,7 @@ public class SudokuActivity extends Activity
 	private Button mShowButton = null;
 	private TextView mHandText = null;
 	private TextView mDebugText = null;
+	private TextView mStatsView = null;
 
 	private boolean mShowingPossibilities = false;
 	private Point mCurrentPoint = null;
@@ -156,6 +164,28 @@ public class SudokuActivity extends Activity
 		return;
 	}
 
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu)
+	{
+		MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+		return true;
+	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item)
+	{
+		// Handle item selection
+        switch (item.getItemId())
+        {
+        case R.id.mainmenu_stats:
+        	LoadPlayerStats();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+	}
+	
 	private void LoadMainMenu(List<SudokuGameTwoPlayer> gameList)
 	{
 		setContentView(R.layout.mainmenu);
@@ -346,6 +376,46 @@ public class SudokuActivity extends Activity
 		});
 	}
 
+	private void LoadPlayerStats()
+	{
+		setContentView(R.layout.playerstats);
+
+		mShowingMainMenu = false;
+		
+		mStatsView = (TextView) findViewById(R.id.playerStats);
+		
+		mStatsView.setText("Getting stats");
+		
+		mClient.GetPlayerStats(mServer, mPlayerName, mPlayerPassword, new StatsReadyListener()
+		{
+			public void OnStatsReady(PlayerStats stats)
+			{
+				String text = String.format("Wins: %d\nLosses: %d\nStreak: %d", stats.Wins, stats.Losses, stats.Streak);
+				mStatsView.setText(text);
+			}
+
+			public void OnLoginFailed()
+			{
+				Log.d("", "Login failed");
+				
+				Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
+				t.show();
+				
+				showDialog(1);
+			}
+
+			public void OnConnectionFailed()
+			{
+				Log.e("", "Connection failed");
+				
+				Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+				t.show();
+				
+				showDialog(1);
+			}
+		});
+	}
+	
 	private void StartOnePlayerGame(String difficulty)
 	{
 		DebugLog.Write("Starting one player game... BROKEN", null);
@@ -667,6 +737,7 @@ public class SudokuActivity extends Activity
 		}
 	};
 
+
 	private LoginPrompt.OnNameSetListener mNameSetListener = new LoginPrompt.OnNameSetListener()
 	{
 		public void onNameSet(LoginPrompt view, String name, String password)
@@ -678,6 +749,55 @@ public class SudokuActivity extends Activity
 			
 			// Attempt to login
 			mClient.GetGameList(mServer, mPlayerName, mPlayerPassword, mRegisteredId, mGameListReadyListener);
+		}
+
+		public void onNewPlayer(LoginPrompt view, String name, String password)
+		{
+			mPlayerName = name;
+			mPlayerPassword = password;
+
+			Log.d("", "Creating new player");
+			
+			// Attempt to create player
+			mClient.CreatePlayer(mServer, mPlayerName, mPlayerPassword, mRegisteredId, new CreatePlayerListener()
+			{
+				public void OnPlayerCreated()
+				{
+					Log.d("", "Create player succeeded");
+
+					Editor editor = mPreferences.edit();
+					editor.putString("PlayerName", mPlayerName);
+					editor.putString("PlayerPassword", mPlayerPassword);
+					editor.commit();
+					
+					LoadMainMenu(new ArrayList<SudokuGameTwoPlayer>());
+				}
+
+				public void OnCreateFailed()
+				{
+					Log.d("", "Failed to create player");
+					
+					Toast t = Toast.makeText(mContext, "Player already exists", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
+				}
+
+				public void OnConnectionFailed()
+				{
+					Log.e("", "Connection failed");
+					
+					Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
+				}
+			});
+		}
+		
+		public void onCancelled()
+		{
+			finish();
 		}
 	};
 
