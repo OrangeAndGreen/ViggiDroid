@@ -558,6 +558,26 @@ namespace TwodokuServer
             return Update(TablePlayers, update, qualifier);
         }
 
+        public bool UpdatePlayerPassword(string name, string newPassword)
+        {
+            TwodokuPlayer player = GetPlayer(name);
+            if (player == null)
+                return false;
+            return UpdatePlayerPassword(player, newPassword);
+        }
+
+        public bool UpdatePlayerPassword(TwodokuPlayer player, string newPassword)
+        {
+            player.Password = newPassword;
+
+            //Update: Password
+            string update = "";
+            update += string.Format("{0}='{1}'", ColumnPassword, player.Password);
+
+            string qualifier = string.Format("{0}='{1}'", ColumnName, player.Name);
+            return Update(TablePlayers, update, qualifier);
+        }
+
         public TwodokuPlayer GetPlayer(string name)
         {
             TwodokuPlayer player = null;

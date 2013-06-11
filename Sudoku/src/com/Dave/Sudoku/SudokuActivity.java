@@ -144,7 +144,8 @@ public class SudokuActivity extends Activity
 			PreparePrompt();
 
 			return mPrompt;
-		} else if (id == 1)
+		}
+		else if (id == 1)
 		{
 			// Show the name prompt
 			LoginPrompt prompt = new LoginPrompt(this, mPlayerName, mPlayerPassword, mNameSetListener);
@@ -181,6 +182,9 @@ public class SudokuActivity extends Activity
         case R.id.mainmenu_stats:
         	LoadPlayerStats();
             return true;
+        case R.id.mainmenu_password:
+        	//TODO: Implement password prompt here
+        	return true;
         default:
             return super.onOptionsItemSelected(item);
         }

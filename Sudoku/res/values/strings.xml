@@ -14,6 +14,7 @@
     <string name="login">Login</string>
     
     <string name="stats">Stats</string>
+    <string name="changepassword">Change password</string>
     
     <string name="select_number">Select number:</string>
     <string name="number_one">1</string>

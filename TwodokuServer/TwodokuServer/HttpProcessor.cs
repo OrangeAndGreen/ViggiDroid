@@ -196,6 +196,12 @@ namespace TwodokuServer
                 {
                     outputStream.Write(GeneratePlayerStatsResponse(name));
                 }
+                else if (method.Equals("ChangePassword"))
+                {
+                    string newPassword = (string)HttpHeaders["newpassword"];
+
+                    outputStream.Write(GenerateChangePasswordResponse(name, newPassword));
+                }
                 else
                 {
                     outputStream.Write(GenerateUnknownCommandResponse(name));
@@ -308,6 +314,15 @@ namespace TwodokuServer
             ret.AppendLine(string.Format("Losses={0}", player.Losses));
             ret.AppendLine(string.Format("Streak={0}", player.Streak));
             return ret.ToString();
+        }
+
+        private string GenerateChangePasswordResponse(string name, string newPassword)
+        {
+            Console.WriteLine(string.Format("{0}: Updating password for {1} ({2})", DateStrings.ToString(DateTime.Now), name, mIPAddress));
+
+            mDB.UpdatePlayerPassword(name, newPassword);
+
+            return GenerateSuccessResponse();
         }
 
         public string HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)
