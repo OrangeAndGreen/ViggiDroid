@@ -10,8 +10,13 @@ import com.Dave.Sudoku.HttpClient.CreatePlayerListener;
 import com.Dave.Sudoku.HttpClient.GameListReadyListener;
 import com.Dave.Sudoku.HttpClient.GameReadyListener;
 import com.Dave.Sudoku.HttpClient.GameUpdatedListener;
+import com.Dave.Sudoku.HttpClient.PasswordChangedListener;
 import com.Dave.Sudoku.HttpClient.PlayerStats;
 import com.Dave.Sudoku.HttpClient.StatsReadyListener;
+import com.Dave.Sudoku.Prompt.ChangePasswordPrompt;
+import com.Dave.Sudoku.Prompt.ChangePasswordPrompt.OnSetPasswordListener;
+import com.Dave.Sudoku.Prompt.LoginPrompt;
+import com.Dave.Sudoku.Prompt.NumberPrompt;
 import com.google.android.gcm.GCMRegistrar;
 
 import android.app.Activity;
@@ -147,8 +152,64 @@ public class SudokuActivity extends Activity
 		}
 		else if (id == 1)
 		{
-			// Show the name prompt
+			// Show the login prompt
 			LoginPrompt prompt = new LoginPrompt(this, mPlayerName, mPlayerPassword, mNameSetListener);
+			return prompt;
+		}
+		else if(id==2)
+		{
+			//Prepare the listener for when the password is changed
+			final PasswordChangedListener listener = new PasswordChangedListener(){
+
+				public void OnPasswordChanged(List<SudokuGameTwoPlayer> gameList, String newPassword)
+				{
+					Log.d("", "Password changed");
+
+					Toast t = Toast.makeText(mContext, "Password changed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					mPlayerPassword = newPassword;
+					
+					Editor editor = mPreferences.edit();
+					editor.putString("PlayerPassword", mPlayerPassword);
+					editor.commit();
+					
+					LoadMainMenu(gameList);
+				}
+
+				public void OnLoginFailed()
+				{
+					Log.d("", "Login failed");
+					
+					Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
+				}
+
+				public void OnConnectionFailed()
+				{
+					Log.e("", "Connection failed");
+					
+					Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
+					t.show();
+					
+					showDialog(1);
+				}};
+			
+			//Show the change password prompt
+			ChangePasswordPrompt prompt = new ChangePasswordPrompt(mContext, mPlayerPassword, new OnSetPasswordListener()
+			{
+				public void onPasswordSet(ChangePasswordPrompt view, String oldPassword, String newPassword)
+				{
+					mClient.ChangePassword(mServer, mPlayerName, mPlayerPassword, newPassword, listener);
+				}
+
+				public void onCancelled()
+				{
+					LoadMainMenu(null);
+				}
+			});
 			return prompt;
 		}
 
@@ -183,7 +244,7 @@ public class SudokuActivity extends Activity
         	LoadPlayerStats();
             return true;
         case R.id.mainmenu_password:
-        	//TODO: Implement password prompt here
+        	showDialog(2);
         	return true;
         default:
             return super.onOptionsItemSelected(item);
@@ -394,7 +455,7 @@ public class SudokuActivity extends Activity
 		{
 			public void OnStatsReady(PlayerStats stats)
 			{
-				String text = String.format("Wins: %d\nLosses: %d\nStreak: %d", stats.Wins, stats.Losses, stats.Streak);
+				String text = String.format(Locale.US, "Wins: %d\nLosses: %d\nStreak: %d", stats.Wins, stats.Losses, stats.Streak);
 				mStatsView.setText(text);
 			}
 

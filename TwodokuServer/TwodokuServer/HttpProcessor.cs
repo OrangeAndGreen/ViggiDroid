@@ -322,7 +322,7 @@ namespace TwodokuServer
 
             mDB.UpdatePlayerPassword(name, newPassword);
 
-            return GenerateSuccessResponse();
+            return GenerateGameListResponse(name);
         }
 
         public string HandlePOSTRequest(Stream inputStream, StreamWriter outputStream)

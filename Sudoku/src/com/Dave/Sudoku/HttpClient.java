@@ -284,6 +284,102 @@ public class HttpClient
 	
 	
 	
+	
+	// /// Change password /////
+
+	public void ChangePassword(String server, String player, String password, String newPassword, PasswordChangedListener listener)
+	{
+		ChangePasswordTask task = new ChangePasswordTask(player, password, newPassword, listener);
+		task.execute(server);
+	}
+
+	private class ChangePasswordTask extends AsyncTask<String, Void, List<SudokuGameTwoPlayer>>
+	{
+		private String mPlayer = null;
+		private String mPassword = null;
+		private String mNewPassword = null;
+		private PasswordChangedListener mListener = null;
+		private boolean mConnectionFailed = false;
+		private boolean mLoginFailed = false;
+
+		public ChangePasswordTask(String player, String password, String newPassword, PasswordChangedListener listener)
+		{
+			mPlayer = player;
+			mPassword = password;
+			mNewPassword = newPassword;
+			mListener = listener;
+		}
+
+		@Override
+		protected List<SudokuGameTwoPlayer> doInBackground(String... urls)
+		{
+			List<SudokuGameTwoPlayer> ret = null;
+			
+			try
+			{
+				ret = DoChangePassword(urls[0], mPlayer, mPassword, mNewPassword);
+			}
+			catch(ConnectionException e)
+			{
+				mConnectionFailed = true;
+			}
+			catch(LoginException e)
+			{
+				mLoginFailed = true;
+			}
+			
+			return ret;
+		}
+
+		@Override
+		protected void onPostExecute(List<SudokuGameTwoPlayer> result)
+		{
+			if(mConnectionFailed)
+				mListener.OnConnectionFailed();
+			else if(mLoginFailed)
+				mListener.OnLoginFailed();
+			else
+				mListener.OnPasswordChanged(result, mNewPassword);
+		}
+	}
+
+	private List<SudokuGameTwoPlayer> DoChangePassword(String server, String player, String password, String newPassword) throws ConnectionException, LoginException
+	{
+		List<SudokuGameTwoPlayer> result = new ArrayList<SudokuGameTwoPlayer>();
+			
+		List<Header> headers = new ArrayList<Header>();
+		headers.add(new Header("Method", "ChangePassword"));
+		headers.add(new Header("Player", player));
+		headers.add(new Header("Password", password));
+		headers.add(new Header("NewPassword", newPassword));
+
+		
+		String strResult = DownloadText(server, headers);
+
+		//Log.d("", "Gamelist response: " + strResult);
+			
+		String[] lines = strResult.split("\n");
+		if(!CheckHttpResponse(lines[0]))
+			throw new LoginException();
+			
+		for (int i=1; i<lines.length; i++)
+			result.add(SudokuGameTwoPlayer.FromString(lines[i], true));
+		
+		return result;
+	}
+		
+	public interface PasswordChangedListener
+	{
+		public void OnPasswordChanged(List<SudokuGameTwoPlayer> gameList, String newPassword);
+		
+		public void OnLoginFailed();
+		
+		public void OnConnectionFailed();
+	}
+	
+	
+	
+	
 	// /// Get player stats /////
 	
 	public void GetPlayerStats(String server, String player, String password, StatsReadyListener listener)

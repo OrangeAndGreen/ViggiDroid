@@ -1,4 +1,6 @@
-package com.Dave.Sudoku;
+package com.Dave.Sudoku.Prompt;
+
+import com.Dave.Sudoku.R;
 
 import android.app.Dialog;
 import android.content.Context;
