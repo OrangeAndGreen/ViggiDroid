@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -15,6 +16,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -119,6 +121,7 @@ import com.Dave.Files.LogFile;
  * 
  */
 
+@TargetApi(Build.VERSION_CODES.FROYO)
 public class DaveLogger extends Activity implements Runnable
 {
 	//Tracking Fields
@@ -173,7 +176,15 @@ public class DaveLogger extends Activity implements Runnable
         super.onCreate(savedInstanceState);
         try
         {
-        	mRootDirectory = Environment.getExternalStorageDirectory().getPath() + '/' + mStorageDirectory + "/";
+        	//Old
+        	mRootDirectory = Environment.getExternalStorageDirectory().getPath() + "/" + mStorageDirectory + "/";
+        	if(Build.VERSION.SDK_INT >= 9)
+        	{
+        		//New
+        		//DAVE! This is a hack while tripping, to work on Clay's phone (was /storage/extSdCard/)
+        		//For Clay's phone, use "/storage/sdcard0/"
+        		mRootDirectory = "/storage/extSdCard/" + mStorageDirectory + "/";
+        	}
         	
         	File dir = new File(mRootDirectory);
         	if(!dir.exists() && !dir.mkdirs())
@@ -192,6 +203,19 @@ public class DaveLogger extends Activity implements Runnable
         	setContentView(R.layout.main);
 
         	Debug("Logger", "Loading config file", false);
+        	//String external = "(missing)";
+        	//try
+        	//{
+        	//	external = Environment.getExternalStoragePublicDirectory(null).getPath();
+        	//}
+        	//catch(Exception e){}
+        	//String msg = String.format("1:%s\n2:%s\n3:%s\nBuild:%d", external,
+    		//		Environment.getExternalStorageDirectory().getPath(),
+    		//		Environment.getDataDirectory().getPath(),
+    		//		Build.VERSION.SDK_INT);
+        	//Toast t2 = Toast.makeText(this, msg, Toast.LENGTH_LONG);
+        	//t2.show();
+        	
         	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile, getApplicationContext());
         	if(mConfig == null)
         	{
@@ -622,6 +646,7 @@ public class DaveLogger extends Activity implements Runnable
     		try
     		{
     			mLog.AddLogEntry(Date, Index, null, Comment, mConfig);
+    			Comment = null;
     			mState.UpdateEvent(Index, Date, mConfig);
     			UpdateSummaries();
     			Toast t = Toast.makeText(getApplicationContext(), "Added log entry", Toast.LENGTH_SHORT);

@@ -178,10 +178,12 @@ public class SudokuBoard
 						if(mInitialBoard[x][y] == 0 && GetCellOptions(cell, true).contains(value))
 						{
 							mInitialBoard[x][y] = value;
-							break;
+							if(IsBoardLegal())
+								break;
+							mInitialBoard[x][y] = 0;
 						}
 						if(attempt == 999)
-							Log.i("", String.format("Could not fill %d in sqaure (%d,%d)", fillNum, squareX, squareY));
+							Log.i("", String.format("Could not fill %d in square (%d,%d)", fillNum, squareX, squareY));
 					}
 			}
 	}
@@ -247,6 +249,26 @@ public class SudokuBoard
 		       		break;
 		        }
 		    }
+	}
+	
+	public boolean IsBoardLegal()
+	{
+		//Check each square to make sure the options are all still valid
+		for(int squareX = 0; squareX < SquareSize; squareX++)
+			for(int squareY = 0; squareY < SquareSize; squareY++)
+			{
+				Point square = new Point(squareX, squareY);
+				List<Byte> squareOptions = GetSquareOptions(square, true);
+				List<Byte> squareFilled = GetSquarePlayedValues(square, true);
+				
+				for(byte i=1; i<=BoardSize; i++)
+				{
+					if(!squareOptions.contains(i) && !squareFilled.contains(i))
+						return false;
+				}
+			}
+		
+		return true;
 	}
 	
 	public static List<Point> GetPlayerSquares(int player)

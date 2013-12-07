@@ -23,7 +23,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -330,17 +329,28 @@ public class SudokuActivity extends Activity
 			else
 			{
 				// Split the list into individual entries
-				for (int i = 0; i < gameList.size(); i++)
-				{
-					SudokuGameTwoPlayer game = gameList.get(i);
-					String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
-					if(game.Status == 2)
-						entry += " (game over)";
-					else if (game.IsLocalPlayerTurn(mPlayerName))
-						entry += " (your turn)";
-					mArrayAdapter.add(entry);
-					mExistingGameIds.add(game.GameId);
-				}
+				//Loop 3 times for "your turn", "their turn", and "game over"
+				for(int j = 0; j<3; j++)
+					for (int i = 0; i < gameList.size(); i++)
+					{
+						SudokuGameTwoPlayer game = gameList.get(i);
+						if(j != 2 && game.Status == 2)
+							continue;
+						if(j == 0 && !game.IsLocalPlayerTurn(mPlayerName))
+							continue;
+						if(j == 1 && game.IsLocalPlayerTurn(mPlayerName))
+							continue;
+						if(j == 2 && game.Status != 2)
+							continue;
+						
+						String entry = String.format(Locale.US, "%s vs. %s, started %s", game.GetPlayer1Name(), game.GetPlayer2Name(), new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(game.StartDate.getTime()));
+						if(game.Status == 2)
+							entry += " (game over)";
+						else if (game.IsLocalPlayerTurn(mPlayerName))
+							entry += " (your turn)";
+						mArrayAdapter.add(entry);
+						mExistingGameIds.add(game.GameId);
+					}
 			}
 		}
 		else

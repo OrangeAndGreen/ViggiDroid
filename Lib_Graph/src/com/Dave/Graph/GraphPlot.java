@@ -71,7 +71,9 @@ public class GraphPlot implements IGraphElement
 	public FloatRectangle GetDataRange()
 	{
 		float yMax = ArrayMath.GetCeiling(Data);
-		float yMin = (float) Math.floor(ArrayMath.GetMin(Data));
+		float yMin = ArrayMath.GetMin(Data);
+		Log.i("GraphPlot.GetDataRange", String.format("Raw data range: %f, %f", yMin, yMax));
+		yMin = (float) Math.floor(yMin);
 		float xMax = Math.round(Data.length * XInterval);
 		float xMin = 0;
 		
@@ -93,6 +95,7 @@ public class GraphPlot implements IGraphElement
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
 		//Log.e("Graphing", "Drawing graph plot");
+		Log.e("Graphing", String.format("Drawing graph plot. Bound: {(%d,%d)(%d,%d)}  Data Bound: {(%.02f,%.02f)(%.02f,%.02f)}", bounds.Left, bounds.Right, bounds.Top, bounds.Bottom, dataBounds.Left, dataBounds.Right, dataBounds.Top, dataBounds.Bottom));
 		int graphHeight = bounds.Bottom - bounds.Top;
 		int graphWidth = bounds.Right - bounds.Left;
 		if(dataBounds.Top % 1 != 0)

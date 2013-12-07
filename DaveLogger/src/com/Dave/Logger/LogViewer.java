@@ -48,7 +48,7 @@ public class LogViewer extends Activity implements Runnable
 	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Values", "Stats", "Recent History"};
 	private CharSequence[] mCategoryStrings = null;
 	private boolean[] mCategoryTypes = null;
-	private CharSequence[] mTimeOptions = { "All-time", "Month", "Week" };
+	private CharSequence[] mTimeOptions = { "All-time", "1 Year", "6 Months", "3 Months", "1 Month", "2 Weeks", "1 Week" };
 	private LoggerConfig mConfig = null;
 	private LogFile mLog = null;    
 	
@@ -304,6 +304,27 @@ public class LogViewer extends Activity implements Runnable
 		}
 	}
 	
+	private int GetDesiredLengthInDays(String timeRange)
+	{
+		//{ "All-time", "1 Year", "6 Months", "3 Months", "1 Month", "2 Weeks", "1 Week" }
+		int desiredLength = 0;
+		
+		if(timeRange == "1 Year")
+			desiredLength = 365;
+		else if(timeRange == "6 Months")
+			desiredLength = 180;
+		else if(timeRange == "3 Months")
+			desiredLength = 90;
+		else if(timeRange == "1 Month")
+			desiredLength = 30;
+		else if(timeRange == "2 Weeks")
+			desiredLength = 14;
+		else if(timeRange == "1 Week")
+			desiredLength = 7;
+		
+		return desiredLength;
+	}
+	
 	private void DrawDailyCountsGraph(String category, String timeRange, boolean prepare)
 	{
 		if(!prepare)
@@ -354,11 +375,7 @@ public class LogViewer extends Activity implements Runnable
 			float average = ArrayMath.GetAverage(data);
 	
 			//Filter to the desired time range
-			int desiredLength = 0;
-			if(timeRange == "Week")
-				desiredLength = 7;
-			else if(timeRange == "Month")
-				desiredLength = 30;
+			int desiredLength = GetDesiredLengthInDays(timeRange);
 			
 			if(desiredLength > 0)
 			{
@@ -441,11 +458,7 @@ public class LogViewer extends Activity implements Runnable
 				data = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 	
-			int historyDays = 0;
-			if(timeRange == "Week")
-				historyDays = 7;
-			else if(timeRange == "Month")
-				historyDays = 30;
+			int historyDays = GetDesiredLengthInDays(timeRange);
 			
 			if(historyDays > 0)
 			{
@@ -752,11 +765,7 @@ public class LogViewer extends Activity implements Runnable
 				numEntries = entries.size();
 			}
 			
-			int historyDays = 0;
-			if(timeRange == "Week")
-				historyDays = 7;
-			else if(timeRange == "Month")
-				historyDays = 30;
+			int historyDays = GetDesiredLengthInDays(timeRange);
 			
 			if(historyDays > 0)
 			{
@@ -863,11 +872,7 @@ public class LogViewer extends Activity implements Runnable
 				data = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 	
-			int historyDays = 0;
-			if(timeRange == "Week")
-				historyDays = 7;
-			else if(timeRange == "Month")
-				historyDays = 30;
+			int historyDays = GetDesiredLengthInDays(timeRange);
 			
 			if(historyDays > 0)
 			{
@@ -1111,11 +1116,7 @@ public class LogViewer extends Activity implements Runnable
 				entries = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 			
-			int historyDays = 0;
-			if(timeRange == "Week")
-				historyDays = 7;
-			else if(timeRange == "Month")
-				historyDays = 30;
+			int historyDays = GetDesiredLengthInDays(timeRange);
 			
 			if(historyDays > 0)
 			{
@@ -1139,8 +1140,18 @@ public class LogViewer extends Activity implements Runnable
 			if(numEntries < historyLength)
 				historyLength = numEntries;
 			mStatsText = "";
+			LogEntry lastLogEntry = null;
 			for(int i=numEntries - historyLength; i<numEntries; i++)
-				mStatsText += entries.get(i).GetEntryString() + "\n";
+			{
+				LogEntry logEntry = entries.get(i);
+				String lineEnd = "\n";
+				if(lastLogEntry != null)
+					lineEnd = String.format(" (%s)\n", DateStrings.GetElapsedTimeString(lastLogEntry.GetDate(), logEntry.GetDate(), 2));
+				mStatsText += lineEnd + logEntry.GetEntryString();
+				lastLogEntry = logEntry;
+			}
+			if(lastLogEntry != null)
+				mStatsText += String.format(" (%s)\n", DateStrings.GetElapsedTimeString(lastLogEntry.GetDate(), Calendar.getInstance(), 2));
 		}
 	}
 	

@@ -27,7 +27,7 @@ public class ArrayMath
 				//Subtract off the old point and add the new
 				curAverage = curAverage - (data[i - (int) window] / window) + (data[i] / window);
 			}
-			averaged[i] = curAverage;
+			averaged[i] = Round(curAverage, 4);
 		}
 		return averaged;
 	}
@@ -41,7 +41,7 @@ public class ArrayMath
 		for(int i=0; i<length; i++)
 		{
 			runningTotal += data[i];
-			output[i] = runningTotal / (i+1);
+			output[i] = Round(runningTotal / (i+1), 4);
 		}
 		
 		return output;
@@ -116,5 +116,12 @@ public class ArrayMath
 		if(ceiling % 1 != 0)
 			ceiling = (int) ceiling + 1;// - (ceiling % 1);
 		return ceiling;
+	}
+
+	public static float Round(float value, int decimalPlaces)
+	{
+		int multiplier = (int)Math.pow(10, decimalPlaces);
+		
+		return ((float)Math.round(value * multiplier)) / multiplier;
 	}
 }
