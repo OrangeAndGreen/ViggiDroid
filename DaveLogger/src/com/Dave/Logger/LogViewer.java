@@ -121,12 +121,14 @@ public class LogViewer extends Activity implements Runnable
    			}
    		
    			//Setup the graph categories Spinner
-   			mCategoryStrings = new CharSequence[categories.size()];
-   			mCategoryTypes = new boolean[categories.size()];
+   			mCategoryStrings = new CharSequence[categories.size() + 1];
+   			mCategoryTypes = new boolean[categories.size() + 1];
+   			mCategoryStrings[0] = "All";
+   			mCategoryTypes[0] = false;
    			for(int i=0; i<categories.size(); i++)
    			{
-   				mCategoryStrings[i] = categories.get(i);
-   				mCategoryTypes[i] = categoryTypes.get(i);
+   				mCategoryStrings[i + 1] = categories.get(i);
+   				mCategoryTypes[i + 1] = categoryTypes.get(i);
    			}
    			
 			ArrayAdapter<CharSequence> adapter2 = new ArrayAdapter<CharSequence>(mContext, android.R.layout.simple_spinner_item, mCategoryStrings);
@@ -343,16 +345,16 @@ public class LogViewer extends Activity implements Runnable
 	
 			//Extract the data specified by "category"
 			float[] data = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
+			int catIndex = mConfig.Toggles.indexOf(category);
 			boolean isToggle = false;
-			if(catIndex < 0)
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				data = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				data = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
 			}
 	
@@ -445,16 +447,16 @@ public class LogViewer extends Activity implements Runnable
 	
 			//Extract the data specified by "category"
 			List<LogEntry> data = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
+			int catIndex = mConfig.Toggles.indexOf(category);
 			boolean isToggle = false;
-			if(catIndex < 0)
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				data = mLog.ExtractToggleLog(catIndex, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				data = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 	
@@ -568,15 +570,15 @@ public class LogViewer extends Activity implements Runnable
 			//Extract the data specified by "category"
 			float[] data = null;
 			boolean isToggle = false;
-			int catIndex = mConfig.Buttons.indexOf(category);
-			if(catIndex < 0)
+			int catIndex = mConfig.Toggles.indexOf(category);
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				data = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				data = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
 			}
 	
@@ -654,17 +656,17 @@ public class LogViewer extends Activity implements Runnable
 			Debug("LogViewer", "Preparing daily histogram graph", false);
 			//Extract the specified data
 			float[] allData = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
+			int catIndex = mConfig.Toggles.indexOf(category);
 			Calendar startDate = Calendar.getInstance();
 			boolean isToggle = false;
-			if(catIndex < 0)
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				allData = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				allData = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
 			}
 	
@@ -744,12 +746,11 @@ public class LogViewer extends Activity implements Runnable
 			int multiplier = 1;
 			int numEntries = 0;
 			List<LogEntry> entries = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
+			int catIndex = mConfig.Toggles.indexOf(category);
 			boolean isToggle = false;
-			if(catIndex < 0)
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				entries = mLog.ExtractToggleLog(catIndex, mConfig);
 				if(entries.size() % 2 != 0)
 					entries.add(new LogEntry(DateStrings.GetDateTimeString(Calendar.getInstance()),
@@ -759,6 +760,7 @@ public class LogViewer extends Activity implements Runnable
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				entries = mLog.ExtractEventLog(catIndex, mConfig);
 				entries.add(new LogEntry(DateStrings.GetDateTimeString(Calendar.getInstance()),
 						entries.get(entries.size() - 1).GetType(), null, null));
@@ -859,16 +861,16 @@ public class LogViewer extends Activity implements Runnable
 	
 			//Extract the data specified by "category"
 			List<LogEntry> data = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
+			int catIndex = mConfig.Toggles.indexOf(category);
 			boolean isToggle = false;
-			if(catIndex < 0)
+			if(catIndex >= 0)
 			{
 				isToggle = true;
-				catIndex = mConfig.Toggles.indexOf(category);
 				data = mLog.ExtractToggleLog(catIndex, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				data = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 	
@@ -1068,14 +1070,14 @@ public class LogViewer extends Activity implements Runnable
 		else
 		{
 			Debug("LogViewer", "Preparing stats", false);
-			int catIndex = mConfig.Buttons.indexOf(category);
-			if(catIndex < 0)
+			int catIndex = mConfig.Toggles.indexOf(category);
+			if(catIndex >= 0)
 			{
-				catIndex = mConfig.Toggles.indexOf(category);
 				mStatsText = mLog.GetToggleStats(catIndex, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				mStatsText = mLog.GetEventStats(catIndex, mConfig);
 			}
 		}
@@ -1105,14 +1107,14 @@ public class LogViewer extends Activity implements Runnable
 		{
 			Debug("LogViewer", "Preparing recent history", false);
 			List<LogEntry> entries = null;
-			int catIndex = mConfig.Buttons.indexOf(category);
-			if(catIndex < 0)
+			int catIndex = mConfig.Toggles.indexOf(category);
+			if(catIndex >= 0)
 			{
-				catIndex = mConfig.Toggles.indexOf(category);
 				entries = mLog.ExtractToggleLog(catIndex, mConfig);
 			}
 			else
 			{
+				catIndex = mConfig.Buttons.indexOf(category);
 				entries = mLog.ExtractEventLog(catIndex, mConfig);
 			}
 			
