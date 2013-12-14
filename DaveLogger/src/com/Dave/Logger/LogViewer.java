@@ -97,6 +97,7 @@ public class LogViewer extends Activity implements Runnable
 			adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, mTimeOptions);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			mTimeSpinner.setAdapter(adapter);
+			mTimeSpinner.setSelection(6); //Default to this 1-week history
 
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
@@ -302,6 +303,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		catch(Exception e)
 		{
+			Log.e("ERROR", "Error: " + e.toString());
 			ErrorFile.WriteException(e, null);
 		}
 	}

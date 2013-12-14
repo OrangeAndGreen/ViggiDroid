@@ -64,14 +64,20 @@ public class GraphPoint implements IGraphElement
 	
 	public void RecalculateGraphPosition(GraphRectangle bounds, FloatRectangle dataBounds)
 	{
-    	Location.x = bounds.Left + Math.round(XValue / (dataBounds.GetWidth() - 1) * bounds.GetWidth());
-    	Location.y = bounds.Bottom - Math.round(YValue / dataBounds.GetHeight() * bounds.GetHeight());
+    	int x = bounds.Left + Math.round(XValue / (dataBounds.GetWidth() - 1) * bounds.GetWidth());
+    	int y = bounds.Bottom - Math.round(YValue / dataBounds.GetHeight() * bounds.GetHeight());
+    	
+    	Location = new Point(x, y);
 	}
 	
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
 		//Disabling this 9/18/12 while fixing positioning of graph points for daily timing graph in Dave Logger
 		//RecalculateGraphPosition(bounds, dataBounds);
+		
+		//Attempt to fix histogram points, 12/13/13
+		//if(Location == null)
+		//	RecalculateGraphPosition(bounds, dataBounds);
 		
 		if(Type == PointType.CROSS)
 			DrawCross(canvas);

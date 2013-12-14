@@ -167,8 +167,9 @@ public class LogFile
 			
 			if(lastDate != null && !DateStrings.SameDay(lastDate, curDate, config.MidnightHour))
 			{
-			//This entry starts a new day
-				for(int k=0; k<DateStrings.GetActiveDiffInDays(lastDate, curDate, config.MidnightHour); k++)
+				//This entry starts a new day
+				int days = DateStrings.GetActiveDiffInDays(lastDate, curDate, config.MidnightHour);
+				for(int k=0; k<days; k++)
 				{
 					//Add the current count for the end of the previous day,
 						//then any zero-days to catch up to the current day
@@ -248,6 +249,14 @@ public class LogFile
 					firstMidnight.set(Calendar.HOUR_OF_DAY, midnightShift);
 					firstMidnight.set(Calendar.MINUTE, 0);
 					firstMidnight.set(Calendar.SECOND, 0);
+					
+					//Handles the special case for starting a toggle after 11PM the night before daylight savings ("Spring ahead")
+					if((firstMidnight.getTimeInMillis() - onDate.getTimeInMillis()) / (float)3600000 > 24)
+						firstMidnight.add(Calendar.HOUR, -24);
+					//Handles the special case for daylight savings ("Fall back")
+					if((firstMidnight.getTimeInMillis() - onDate.getTimeInMillis()) / (float)3600000 < 0)
+						firstMidnight.add(Calendar.HOUR, 24);
+					
 					for(int d=0; d<days; d++)
 					{
 						//Add daily totals for every day between the last "on" and this "off"
@@ -346,11 +355,22 @@ public class LogFile
     	String stats = "";
 		List<LogEntry> subset = ExtractEventLog(searchIndex, config);
 		if(subset == null)
+		{
+			Log.d("", "Event stats subset is null");
 			return stats;
-		stats += config.Buttons.get(searchIndex) + ":\n";
+		}
+		
+		if(searchIndex >= 0)
+			stats += config.Buttons.get(searchIndex) + ":\n";
+		else
+			stats += "All:\n";
+		
 		int subsetSize = subset.size();
 		if(subsetSize == 0)
+		{
+			Log.d("", "Event stats subset is empty");
 			return stats + "0 logged\n";
+		}
 		
 		//First entry stats
 		Calendar firstDate = subset.get(0).GetDate();
@@ -381,6 +401,9 @@ public class LogFile
 			Calendar curDate = subset.get(i).GetDate();
 			if(i > 0)
 				intervals[i] = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float) 3600000;
+			//TODO: Use the following debug line when looking for out-of-order dates
+			if(intervals[i] < 0)
+				Log.d("CHECK", "Adding interval " + intervals[i] + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
 			lastDate = curDate;
 		}
 		min = ArrayMath.GetMin(intervals);

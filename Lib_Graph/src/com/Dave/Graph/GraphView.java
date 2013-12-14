@@ -411,6 +411,7 @@ public class GraphView extends View
     			mDataRange.GetWidth(), mDataRange.GetHeight(),
     			mGraphBounds.GetWidth(), mGraphBounds.GetHeight()));
     	GraphPoint graphPoint = new GraphPoint(new Point(xVal, yVal), x, y, 2, PointType.CROSS);
+    	//GraphPoint graphPoint = new GraphPoint(null, x, y, 2, PointType.CROSS);
     	graphPoint.SetColor(color);
     	Points.add(graphPoint);
     }
