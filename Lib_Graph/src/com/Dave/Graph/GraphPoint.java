@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.util.Log;
 
 public class GraphPoint implements IGraphElement
 {
@@ -22,8 +23,6 @@ public class GraphPoint implements IGraphElement
 	public GraphPoint(Point location, float xValue, float yValue)
 	{
 		Location = location;
-		if(Location == null)
-			Location = new Point(0, 0);
 		XValue = xValue;
 		YValue = yValue;
 		SetColor(Color.WHITE);
@@ -72,12 +71,10 @@ public class GraphPoint implements IGraphElement
 	
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
-		//Disabling this 9/18/12 while fixing positioning of graph points for daily timing graph in Dave Logger
-		//RecalculateGraphPosition(bounds, dataBounds);
 		
-		//Attempt to fix histogram points, 12/13/13
-		//if(Location == null)
-		//	RecalculateGraphPosition(bounds, dataBounds);
+		//Calculate the pixel location from the data value if necessary (used for histogram points)
+		if(Location == null)
+			RecalculateGraphPosition(bounds, dataBounds);
 		
 		if(Type == PointType.CROSS)
 			DrawCross(canvas);

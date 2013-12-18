@@ -403,15 +403,7 @@ public class GraphView extends View
     {
     	UpdateParams();
     	
-    	int xVal = mGraphBounds.Left + (int)(x / (mDataRange.GetWidth() - 1) * mGraphBounds.GetWidth());
-    	int yVal = mGraphBounds.Bottom - (int)(y / mDataRange.GetHeight() * mGraphBounds.GetHeight());
-    	
-    	Log.e("AddDataPoint", String.format("Adding (%.02f, %.02f), to (%d, %d)", x, y, xVal, yVal));
-    	Log.e("AddDataPoint", String.format("     data: (%.02f, %.02f), graph: (%d, %d)",
-    			mDataRange.GetWidth(), mDataRange.GetHeight(),
-    			mGraphBounds.GetWidth(), mGraphBounds.GetHeight()));
-    	GraphPoint graphPoint = new GraphPoint(new Point(xVal, yVal), x, y, 2, PointType.CROSS);
-    	//GraphPoint graphPoint = new GraphPoint(null, x, y, 2, PointType.CROSS);
+    	GraphPoint graphPoint = new GraphPoint(null, x, y, 2, PointType.CROSS);
     	graphPoint.SetColor(color);
     	Points.add(graphPoint);
     }
