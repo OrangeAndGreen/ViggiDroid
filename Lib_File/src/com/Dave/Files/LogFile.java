@@ -387,40 +387,104 @@ public class LogFile
 		//Daily total stats
 		Calendar startDate = Calendar.getInstance();
 		float[] dailyTotals = ExtractDailyEventTotals(searchIndex, startDate, config);
-		float min = ArrayMath.GetMin(dailyTotals);
-		float max = ArrayMath.GetMax(dailyTotals);
-		stats += String.format("Least/day: %d\nMost/day: %d\n", (int)min, (int)max);
+		float min = Float.MAX_VALUE;//ArrayMath.GetMin(dailyTotals);
+		Calendar minDate = (Calendar)startDate.clone();
+		float max = Float.MIN_VALUE;//ArrayMath.GetMax(dailyTotals);
+		Calendar maxDate = (Calendar)startDate.clone();
+		
+		Calendar curDate = (Calendar)startDate.clone();
+		for(int i=0; i<dailyTotals.length; i++)
+		{
+			float curValue = dailyTotals[i];
+			if(curValue < min)
+			{
+				min = curValue;
+				minDate = (Calendar)curDate.clone();
+			}
+			if(curValue > max)
+			{
+				max = curValue;
+				maxDate = (Calendar)curDate.clone();
+			}
+			
+			curDate.add(Calendar.HOUR, 24);
+		}
+		
+		stats += String.format("Least/day: %d (%s)\nMost/day: %d (%s)\n", (int)min, DateStrings.GetDateTimeString(minDate), (int)max, DateStrings.GetDateTimeString(maxDate));
 		stats += "\n";
 		
 		//Interval stats
 		int numEntries = subset.size();
 		float[] intervals = new float[numEntries];
 		Calendar lastDate = null;
+		min = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
 		for(int i=0; i<numEntries; i++)
 		{
-			Calendar curDate = subset.get(i).GetDate();
+			curDate = subset.get(i).GetDate();
 			if(i > 0)
 				intervals[i] = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float) 3600000;
-			//TODO: Use the following debug line when looking for out-of-order dates
-			if(intervals[i] < 0)
-				Log.d("CHECK", "Adding interval " + intervals[i] + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
+			
+			if(lastDate != null && intervals[i] < min)
+			{
+				min = intervals[i];
+				minDate = (Calendar) lastDate.clone();
+			}
+			
+			if(lastDate != null && intervals[i] > max)
+			{
+				max = intervals[i];
+				maxDate = (Calendar) lastDate.clone();
+			}
+			
+			//Use the following debug line when looking for out-of-order dates
+			//if(intervals[i] < 0)
+			//	Log.d("CHECK", "Adding interval " + intervals[i] + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
 			lastDate = curDate;
 		}
-		min = ArrayMath.GetMin(intervals);
-		max = ArrayMath.GetMax(intervals);
-		stats += String.format("Shortest interval: %.02f hours\nLongest interval: %.02f hours\n", min, max);
+		stats += String.format("Shortest interval: %.02f hours (%s)\nLongest interval: %.02f hours (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 		stats += "\n";
 		
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
-		min = ArrayMath.GetMin(allAve);
-		max = ArrayMath.GetMax(allAve);
-		stats += String.format("All-time average:\nMin: %.02f/day\nMax: %.02f/day\n", min, max);
+		min = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
+		for(int i=0; i<allAve.length; i++)
+		{
+			curDate = subset.get(i).GetDate();
+			if(allAve[i] < min)
+			{
+				min = allAve[i];
+				minDate = (Calendar) curDate.clone();
+			}
+			
+			if(allAve[i] > max)
+			{
+				max = allAve[i];
+				maxDate = (Calendar) curDate.clone();
+			}
+		}
+		stats += String.format("All-time average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 		stats += "\n";
 		
 		float[] ave = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
-		min = ArrayMath.GetMin(ave);
-		max = ArrayMath.GetMax(ave);
-		stats += String.format("Running average:\nMin: %.02f/day\nMax: %.02f/day", min, max);
+		min = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
+		for(int i=0; i<allAve.length; i++)
+		{
+			curDate = subset.get(i).GetDate();
+			if(ave[i] < min)
+			{
+				min = ave[i];
+				minDate = (Calendar) curDate.clone();
+			}
+			
+			if(ave[i] > max)
+			{
+				max = ave[i];
+				maxDate = (Calendar) curDate.clone();
+			}
+		}
+		stats += String.format("Running average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 		
     	return stats;
     }
@@ -470,17 +534,37 @@ public class LogFile
 		
 		//Daily total stats
 		Calendar startDate = Calendar.getInstance();
+		Calendar minDate = Calendar.getInstance();
+		Calendar maxDate = Calendar.getInstance();
 		float[] dailyTotals = ExtractDailyToggleTotals(searchIndex, startDate, config);
-		float min = ArrayMath.GetMin(dailyTotals);
-		float max = ArrayMath.GetMax(dailyTotals);
-		stats += String.format("Least/day: %.02f hours\nMost/day: %.02f hours\n", min, max);
+		float min = Float.MAX_VALUE;
+		float max = Float.MIN_VALUE;
+		for(int i=0; i<dailyTotals.length; i++)
+		{
+			Calendar curDate = subset.get(i).GetDate();
+			if(dailyTotals[i] < min)
+			{
+				min = dailyTotals[i];
+				minDate = (Calendar)curDate.clone();
+			}
+			if(dailyTotals[i] > max)
+			{
+				max = dailyTotals[i];
+				maxDate = (Calendar)curDate.clone();
+			}
+		}
+		stats += String.format("Least/day: %.02f hours (%s)\nMost/day: %.02f hours (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 		stats += "\n";
 		
 		//Min/max on/off times
 		float minOff = Float.MAX_VALUE;
+		Calendar minOffDate = Calendar.getInstance();
 		float minOn = Float.MAX_VALUE;
+		Calendar minOnDate = Calendar.getInstance();
 		float maxOff = Float.MIN_VALUE;
+		Calendar maxOffDate = Calendar.getInstance();
 		float maxOn = Float.MIN_VALUE;
+		Calendar maxOnDate = Calendar.getInstance();
 		Calendar lastDate = null;
 		for(int i=0; i<subsetSize; i++)
 		{
@@ -490,31 +574,78 @@ public class LogFile
 				float hours = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float)3600000;
 				if(subset.get(i).ToggleState.equals("off"))
 				{
-					maxOn = Math.max(hours, maxOn);
-					minOn = Math.min(hours, minOn);
+					if(hours < minOn)
+					{
+						minOn = hours;
+						minOnDate = (Calendar)lastDate.clone();
+					}
+					if(hours < maxOn)
+					{
+						maxOn = hours;
+						maxOnDate = (Calendar)lastDate.clone();
+					}
 				}
 				else
 				{
-					maxOff = Math.max(hours, maxOff);
-					minOff = Math.min(hours, minOff);
+					if(hours < minOff)
+					{
+						minOff = hours;
+						minOffDate = (Calendar)lastDate.clone();
+					}
+					if(hours < maxOff)
+					{
+						maxOff = hours;
+						maxOffDate = (Calendar)lastDate.clone();
+					}
 				}
 			}
 			lastDate = curDate;
 		}
-		stats += String.format("Shortest off: %.02f hours\nLongest off: %.02f hours\n", minOff, maxOff);
-		stats += String.format("Shortest on: %.02f hours\nLongest on: %.02f hours\n", minOn, maxOn);
+		stats += String.format("Shortest off: %.02f hours (%s)\nLongest off: %.02f hours (%s)\n", minOff, DateStrings.GetDateTimeString(minOffDate), maxOff, DateStrings.GetDateTimeString(maxOffDate));
+		stats += String.format("Shortest on: %.02f hours (%s)\nLongest on: %.02f hours (%s)\n", minOn, DateStrings.GetDateTimeString(minOnDate), maxOn, DateStrings.GetDateTimeString(maxOnDate));
 		stats += "\n";
 		
 		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
-		min = ArrayMath.GetMin(allAve);
-		max = ArrayMath.GetMax(allAve);
-		stats += String.format("All-time average:\nMin: %.02f hours/day\nMax: %.02f hours/day\n", min, max);
+		min = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
+		
+		for(int i=0; i<allAve.length; i++)
+		{
+			Calendar curDate = subset.get(i).GetDate();
+			if(allAve[i] < min)
+			{
+				min = allAve[i];
+				minDate = (Calendar)curDate.clone();
+			}
+			if(allAve[i] > max)
+			{
+				max = allAve[i];
+				maxDate = (Calendar)curDate.clone();
+			}
+		}
+		
+		stats += String.format("All-time average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 		stats += "\n";
 		
 		float[] ave = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
-		min = ArrayMath.GetMin(ave);
-		max = ArrayMath.GetMax(ave);
-		stats += String.format("Running average:\nMin: %.02f hours/day\nMax: %.02f hours/day", min, max);
+		min = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
+		
+		for(int i=0; i<ave.length; i++)
+		{
+			Calendar curDate = subset.get(i).GetDate();
+			if(ave[i] < min)
+			{
+				min = ave[i];
+				minDate = (Calendar)curDate.clone();
+			}
+			if(ave[i] > max)
+			{
+				max = ave[i];
+				maxDate = (Calendar)curDate.clone();
+			}
+		}
+		stats += String.format("Running average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
 				
     	return stats;
     }
