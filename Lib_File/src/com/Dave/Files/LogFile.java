@@ -351,303 +351,316 @@ public class LogFile
     
     public String GetEventStats(int searchIndex, LoggerConfig config)
     {
-    	Calendar now = Calendar.getInstance();
-    	String stats = "";
+		String stats = "";
 		List<LogEntry> subset = ExtractEventLog(searchIndex, config);
-		if(subset == null)
-		{
+        if(subset == null)
+        {
 			Log.d("", "Event stats subset is null");
 			return stats;
-		}
-		
-		if(searchIndex >= 0)
+        }
+                
+        if(searchIndex >= 0)
 			stats += config.Buttons.get(searchIndex) + ":\n";
 		else
 			stats += "All:\n";
-		
-		int subsetSize = subset.size();
-		if(subsetSize == 0)
-		{
+                
+        int subsetSize = subset.size();
+        if(subsetSize == 0)
+        {
 			Log.d("", "Event stats subset is empty");
 			return stats + "0 logged\n";
-		}
-		
-		//First entry stats
-		Calendar firstDate = subset.get(0).GetDate();
-		String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 3);
-		stats += String.format("First entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
-	
-		//Total entry stats
-		float elapsedDays = ((float)(now.getTimeInMillis() - firstDate.getTimeInMillis())) / 1000 / 3600 / 24;
-		float dailyAverage = subsetSize/elapsedDays;
-		stats += String.format("Total: %d entries (%.02f/day, %d/year)\n", subsetSize,
-								dailyAverage, (int)(dailyAverage * 365));
-		stats += "\n";
-		
-		//Daily total stats
-		Calendar startDate = Calendar.getInstance();
-		float[] dailyTotals = ExtractDailyEventTotals(searchIndex, startDate, config);
-		float min = Float.MAX_VALUE;//ArrayMath.GetMin(dailyTotals);
-		Calendar minDate = (Calendar)startDate.clone();
-		float max = Float.MIN_VALUE;//ArrayMath.GetMax(dailyTotals);
-		Calendar maxDate = (Calendar)startDate.clone();
+        }
+                
+		Calendar now = Calendar.getInstance();
+        //First entry stats
+        Calendar firstDate = subset.get(0).GetDate();
+        String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 3);
+        stats += String.format("First entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
+        
+        //Total entry stats
+        float elapsedDays = ((float)(now.getTimeInMillis() - firstDate.getTimeInMillis())) / 1000 / 3600 / 24;
+        float dailyAverage = subsetSize/elapsedDays;
+        stats += String.format("Total: %d entries (%.02f/day, %d/year)\n", subsetSize,
+																dailyAverage, (int)(dailyAverage * 365));
+        stats += "\n";
+                
+        //Calculate the data
+        Calendar startDate = Calendar.getInstance();
+        float[] dailyTotals = ExtractDailyEventTotals(searchIndex, startDate, config);
+		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
+		float[] runningAve = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
+				
+		//Define the values to be tracked
+		float minTotal = Float.MAX_VALUE;
+		float maxTotal = Float.MIN_VALUE;
+		Calendar minTotalDate = Calendar.getInstance();
+		Calendar maxTotalDate = Calendar.getInstance();
+		float minAve = Float.MAX_VALUE;
+		float maxAve = Float.MIN_VALUE;
+		Calendar minAveDate = Calendar.getInstance();
+		Calendar maxAveDate = Calendar.getInstance();
+		float minRunning = Float.MAX_VALUE;
+		float maxRunning = Float.MIN_VALUE;
+		Calendar minRunningDate = Calendar.getInstance();
+		Calendar maxRunningDate = Calendar.getInstance();
 		
 		Calendar curDate = (Calendar)startDate.clone();
+		
 		for(int i=0; i<dailyTotals.length; i++)
 		{
-			float curValue = dailyTotals[i];
-			if(curValue < min)
+			float curTotal = dailyTotals[i];
+			if(curTotal < minTotal)
 			{
-				min = curValue;
-				minDate = (Calendar)curDate.clone();
+				minTotal = curTotal;
+				minTotalDate = (Calendar)curDate.clone();
 			}
-			if(curValue > max)
+			if(curTotal > maxTotal)
 			{
-				max = curValue;
-				maxDate = (Calendar)curDate.clone();
+				maxTotal = curTotal;
+				maxTotalDate = (Calendar)curDate.clone();
 			}
-			
+					
+			float curAve = allAve[i];
+			if(curAve < minAve)
+			{
+				minAve = curAve;
+				minAveDate = (Calendar)curDate.clone();
+			}
+			if(curAve > maxAve)
+			{
+				maxAve = curAve;
+				maxAveDate = (Calendar)curDate.clone();
+			}
+					
+			float curRunning = runningAve[i];
+			if(curRunning < minRunning)
+			{
+				minRunning = curRunning;
+				minRunningDate = (Calendar)curDate.clone();
+			}
+			if(curRunning > maxRunning)
+			{
+				maxRunning = curRunning;
+				maxRunningDate = (Calendar)curDate.clone();
+			}
+					
 			curDate.add(Calendar.HOUR, 24);
 		}
 		
-		stats += String.format("Least/day: %d (%s)\nMost/day: %d (%s)\n", (int)min, DateStrings.GetDateTimeString(minDate), (int)max, DateStrings.GetDateTimeString(maxDate));
-		stats += "\n";
-		
-		//Interval stats
-		int numEntries = subset.size();
-		float[] intervals = new float[numEntries];
+		float minInterval = Float.MAX_VALUE;
+		float maxInterval = Float.MIN_VALUE;
+		Calendar minIntervalDate = Calendar.getInstance();
+		Calendar maxIntervalDate = Calendar.getInstance();
 		Calendar lastDate = null;
-		min = Float.MAX_VALUE;
-		max = Float.MIN_VALUE;
-		for(int i=0; i<numEntries; i++)
+		for(int i=0; i<subsetSize; i++)
 		{
 			curDate = subset.get(i).GetDate();
-			if(i > 0)
-				intervals[i] = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float) 3600000;
-			
-			if(lastDate != null && intervals[i] < min)
+			if(lastDate != null)
 			{
-				min = intervals[i];
-				minDate = (Calendar) lastDate.clone();
+				float interval = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float) 3600000;
+				if(interval < minInterval)
+				{
+					minInterval = interval;
+					minIntervalDate = (Calendar)lastDate.clone();
+				}
+				if(interval > maxInterval)
+				{
+					maxInterval = interval;
+					maxIntervalDate = (Calendar)lastDate.clone();
+				}
+				//Use the following debug line when looking for out-of-order dates
+                //if(interval < 0)
+                //        Log.d("CHECK", "Adding interval " + interval + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
 			}
-			
-			if(lastDate != null && intervals[i] > max)
-			{
-				max = intervals[i];
-				maxDate = (Calendar) lastDate.clone();
-			}
-			
-			//Use the following debug line when looking for out-of-order dates
-			//if(intervals[i] < 0)
-			//	Log.d("CHECK", "Adding interval " + intervals[i] + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
-			lastDate = curDate;
+					
+			lastDate = (Calendar)curDate.clone();
 		}
-		stats += String.format("Shortest interval: %.02f hours (%s)\nLongest interval: %.02f hours (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-		stats += "\n";
-		
-		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
-		min = Float.MAX_VALUE;
-		max = Float.MIN_VALUE;
-		for(int i=0; i<allAve.length; i++)
-		{
-			curDate = subset.get(i).GetDate();
-			if(allAve[i] < min)
-			{
-				min = allAve[i];
-				minDate = (Calendar) curDate.clone();
-			}
-			
-			if(allAve[i] > max)
-			{
-				max = allAve[i];
-				maxDate = (Calendar) curDate.clone();
-			}
-		}
-		stats += String.format("All-time average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-		stats += "\n";
-		
-		float[] ave = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
-		min = Float.MAX_VALUE;
-		max = Float.MIN_VALUE;
-		for(int i=0; i<allAve.length; i++)
-		{
-			curDate = subset.get(i).GetDate();
-			if(ave[i] < min)
-			{
-				min = ave[i];
-				minDate = (Calendar) curDate.clone();
-			}
-			
-			if(ave[i] > max)
-			{
-				max = ave[i];
-				maxDate = (Calendar) curDate.clone();
-			}
-		}
-		stats += String.format("Running average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-		
-    	return stats;
+				
+		stats += String.format("Least/day: %d (%s)\nMost/day: %d (%s)\n", (int)minTotal, DateStrings.GetDateString(minTotalDate),
+																		  (int)maxTotal, DateStrings.GetDateString(maxTotalDate));
+        stats += "\n";
+		stats += String.format("Shortest interval: %.02f hours (%s)\nLongest interval: %.02f hours (%s)\n",
+																			minInterval, DateStrings.GetDateTimeString(minIntervalDate),
+																			maxInterval, DateStrings.GetDateTimeString(maxIntervalDate));
+        stats += "\n";
+		stats += String.format("All-time average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)\n",
+																			minAve, DateStrings.GetDateString(minAveDate),
+																			maxAve, DateStrings.GetDateString(maxAveDate));
+        stats += "\n";
+		stats += String.format("Running average:\nMin: %.02f/day (%s)\nMax: %.02f/day (%s)",
+																			minRunning, DateStrings.GetDateString(minRunningDate),
+																			maxRunning, DateStrings.GetDateString(maxRunningDate));
+				
+        return stats;
     }
     
     public String GetToggleStats(int searchIndex, LoggerConfig config)
     {
-    	Calendar now = Calendar.getInstance();
-    	String stats = "";
-    	List<LogEntry> subset = ExtractToggleLog(searchIndex, config);
-    	if(subset == null)
-    		return stats;
-    	stats += config.Toggles.get(searchIndex) + ":\n";
-    	int subsetSize = subset.size();
-		if(subsetSize == 0)
+        String stats = "";
+        List<LogEntry> subset = ExtractToggleLog(searchIndex, config);
+        if(subset == null)
+			return stats;
+        stats += config.Toggles.get(searchIndex) + ":\n";
+        int subsetSize = subset.size();
+        if(subsetSize == 0)
 			return stats + "0 logged\n";
 
-		//First entry stats
-		Calendar firstDate = subset.get(0).GetDate();
-		String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 3);
-		stats += String.format("First entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
-	
-		//Total entry stats
-		float elapsedDays = ((float)(now.getTimeInMillis() - firstDate.getTimeInMillis())) / 1000 / 3600 / 24;
-		float dailyAverage = subsetSize/elapsedDays;
-		stats += String.format("Total: %d entries (%.02f/day, %d/year)\n", subsetSize/2, dailyAverage/2, (int)(dailyAverage * 365/2));
+		Calendar now = Calendar.getInstance();
+        //First entry stats
+        Calendar firstDate = subset.get(0).GetDate();
+        String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 3);
+        stats += String.format("First entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
+        
+        //Total entry stats
+        float elapsedDays = ((float)(now.getTimeInMillis() - firstDate.getTimeInMillis())) / 1000 / 3600 / 24;
+        float dailyAverage = subsetSize/elapsedDays;
+        stats += String.format("Total: %d entries (%.02f/day, %d/year)\n", subsetSize/2, dailyAverage/2, (int)(dailyAverage * 365/2));
 
-		//Total time stats
-		float totalTime = 0;
-		Calendar onDate = null;
-		for(int j=0; j<subsetSize; j++)
-		{
+        //Total time stats
+        float totalTime = 0;
+        Calendar onDate = null;
+        for(int j=0; j<subsetSize; j++)
+        {
 			LogEntry curEntry = subset.get(j);
-			if(subset.get(j).GetToggleState().equals("on"))
-			{
+            if(subset.get(j).GetToggleState().equals("on"))
+            {
 				onDate = curEntry.GetDate();
-			}
-			else if(onDate != null)
-			{
+            }
+            else if(onDate != null)
+            {
 				totalTime += ((float)(curEntry.GetDate().getTimeInMillis() - onDate.getTimeInMillis())) / 1000 / 3600;
 				onDate = null;
-			}
-		}
-		if(onDate != null)
+            }
+        }
+        if(onDate != null)
 			totalTime += ((float)(now.getTimeInMillis() - onDate.getTimeInMillis())) / 1000 / 3600;
-		stats += String.format("Time: %.02f days (%.02f hrs/day, %d hrs/yr)\n", totalTime/24, totalTime/elapsedDays, (int)(totalTime/elapsedDays * 365));
-		stats += "\n";
-		
-		//Daily total stats
+        stats += String.format("Time: %.02f days (%.02f hrs/day, %d hrs/yr)\n", totalTime/24, totalTime/elapsedDays, (int)(totalTime/elapsedDays * 365));
+        stats += "\n";
+			
+		//Calculate the data
 		Calendar startDate = Calendar.getInstance();
-		Calendar minDate = Calendar.getInstance();
-		Calendar maxDate = Calendar.getInstance();
 		float[] dailyTotals = ExtractDailyToggleTotals(searchIndex, startDate, config);
-		float min = Float.MAX_VALUE;
-		float max = Float.MIN_VALUE;
+		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
+		float[] runningAve = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
+			
+		//Define the variables to track
+		float minTotal = Float.MAX_VALUE;
+		float maxTotal = Float.MIN_VALUE;
+		Calendar minTotalDate = Calendar.getInstance();
+		Calendar maxTotalDate = Calendar.getInstance();
+		float minAve = Float.MAX_VALUE;
+		float maxAve = Float.MIN_VALUE;
+		Calendar minAveDate = Calendar.getInstance();
+		Calendar maxAveDate = Calendar.getInstance();
+		float minRunning = Float.MAX_VALUE;
+		float maxRunning = Float.MIN_VALUE;
+		Calendar minRunningDate = Calendar.getInstance();
+		Calendar maxRunningDate = Calendar.getInstance();
+		
+		Calendar curDate = (Calendar)startDate.clone();
 		for(int i=0; i<dailyTotals.length; i++)
 		{
-			Calendar curDate = subset.get(i).GetDate();
-			if(dailyTotals[i] < min)
+			float curTotal = dailyTotals[i];
+			if(curTotal < minTotal)
 			{
-				min = dailyTotals[i];
-				minDate = (Calendar)curDate.clone();
+				minTotal = curTotal;
+				minTotalDate = (Calendar)curDate.clone();
 			}
-			if(dailyTotals[i] > max)
+			if(curTotal > maxTotal)
 			{
-				max = dailyTotals[i];
-				maxDate = (Calendar)curDate.clone();
+				maxTotal = curTotal;
+				maxTotalDate = (Calendar)curDate.clone();
 			}
+			
+			float curAve = allAve[i];
+			if(curAve < minAve)
+			{
+				minAve = curAve;
+				minAveDate = (Calendar)curDate.clone();
+			}
+			if(curAve > maxAve)
+			{
+				maxAve = curAve;
+				maxAveDate = (Calendar)curDate.clone();
+			}
+				
+			float curRunning = runningAve[i];
+			if(curRunning < minRunning)
+			{
+				minRunning = curRunning;
+				minRunningDate = (Calendar)curDate.clone();
+			}
+			if(curRunning > maxRunning)
+			{
+				maxRunning = curRunning;
+				maxRunningDate = (Calendar)curDate.clone();
+			}
+				
+			curDate.add(Calendar.HOUR, 24);
 		}
-		stats += String.format("Least/day: %.02f hours (%s)\nMost/day: %.02f hours (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-		stats += "\n";
 		
-		//Min/max on/off times
 		float minOff = Float.MAX_VALUE;
-		Calendar minOffDate = Calendar.getInstance();
-		float minOn = Float.MAX_VALUE;
-		Calendar minOnDate = Calendar.getInstance();
 		float maxOff = Float.MIN_VALUE;
+		Calendar minOffDate = Calendar.getInstance();
 		Calendar maxOffDate = Calendar.getInstance();
+		float minOn = Float.MAX_VALUE;
 		float maxOn = Float.MIN_VALUE;
+		Calendar minOnDate = Calendar.getInstance();
 		Calendar maxOnDate = Calendar.getInstance();
 		Calendar lastDate = null;
 		for(int i=0; i<subsetSize; i++)
 		{
-			Calendar curDate = subset.get(i).GetDate();
+			curDate = subset.get(i).GetDate();
+			
 			if(lastDate != null)
 			{
 				float hours = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float)3600000;
-				if(subset.get(i).ToggleState.equals("off"))
-				{
+                if(subset.get(i).ToggleState.equals("off"))
+                {
 					if(hours < minOn)
-					{
+                    {
 						minOn = hours;
-						minOnDate = (Calendar)lastDate.clone();
-					}
-					if(hours < maxOn)
-					{
+						minOnDate = lastDate;
+                    }
+                    if(hours > maxOn)
+                    {
 						maxOn = hours;
-						maxOnDate = (Calendar)lastDate.clone();
-					}
-				}
-				else
-				{
+						maxOnDate = lastDate;
+                    }
+                }
+                else
+                {
 					if(hours < minOff)
-					{
+                    {
 						minOff = hours;
-						minOffDate = (Calendar)lastDate.clone();
-					}
-					if(hours < maxOff)
-					{
+						minOffDate = lastDate;
+                    }
+                    if(hours > maxOff)
+                    {
 						maxOff = hours;
-						maxOffDate = (Calendar)lastDate.clone();
-					}
-				}
+						maxOffDate = lastDate;
+                    }
+                }
 			}
+			
 			lastDate = curDate;
 		}
-		stats += String.format("Shortest off: %.02f hours (%s)\nLongest off: %.02f hours (%s)\n", minOff, DateStrings.GetDateTimeString(minOffDate), maxOff, DateStrings.GetDateTimeString(maxOffDate));
-		stats += String.format("Shortest on: %.02f hours (%s)\nLongest on: %.02f hours (%s)\n", minOn, DateStrings.GetDateTimeString(minOnDate), maxOn, DateStrings.GetDateTimeString(maxOnDate));
-		stats += "\n";
 		
-		float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
-		min = Float.MAX_VALUE;
-		max = Float.MIN_VALUE;
-		
-		for(int i=0; i<allAve.length; i++)
-		{
-			Calendar curDate = subset.get(i).GetDate();
-			if(allAve[i] < min)
-			{
-				min = allAve[i];
-				minDate = (Calendar)curDate.clone();
-			}
-			if(allAve[i] > max)
-			{
-				max = allAve[i];
-				maxDate = (Calendar)curDate.clone();
-			}
-		}
-		
-		stats += String.format("All-time average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)\n", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-		stats += "\n";
-		
-		float[] ave = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
-		min = Float.MAX_VALUE;
-		max = Float.MIN_VALUE;
-		
-		for(int i=0; i<ave.length; i++)
-		{
-			Calendar curDate = subset.get(i).GetDate();
-			if(ave[i] < min)
-			{
-				min = ave[i];
-				minDate = (Calendar)curDate.clone();
-			}
-			if(ave[i] > max)
-			{
-				max = ave[i];
-				maxDate = (Calendar)curDate.clone();
-			}
-		}
-		stats += String.format("Running average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)", min, DateStrings.GetDateTimeString(minDate), max, DateStrings.GetDateTimeString(maxDate));
-				
-    	return stats;
+		stats += String.format("Least/day: %.02f hours (%s)\nMost/day: %.02f hours (%s)\n", minTotal, DateStrings.GetDateString(minTotalDate),
+																							maxTotal, DateStrings.GetDateString(maxTotalDate));
+        stats += "\n";
+		stats += String.format("Shortest off: %.02f hours (%s)\nLongest off: %.02f hours (%s)\n", minOff, DateStrings.GetDateTimeString(minOffDate),
+																								  maxOff, DateStrings.GetDateTimeString(maxOffDate));
+        stats += String.format("Shortest on: %.02f hours (%s)\nLongest on: %.02f hours (%s)\n", minOn, DateStrings.GetDateTimeString(minOnDate),
+																								maxOn, DateStrings.GetDateTimeString(maxOnDate));
+        stats += "\n";
+		stats += String.format("All-time average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)\n", minAve, DateStrings.GetDateString(minAveDate),
+																										maxAve, DateStrings.GetDateString(maxAveDate));
+        stats += "\n";
+		stats += String.format("Running average:\nMin: %.02f hours/day (%s)\nMax: %.02f hours/day (%s)", minRunning, DateStrings.GetDateString(minRunningDate),
+																										maxRunning, DateStrings.GetDateString(maxRunningDate));
+
+        return stats;
     }
     
     public String GetAllTimeStats()

@@ -181,7 +181,7 @@ public class DaveLogger extends Activity implements Runnable
         	if(Build.VERSION.SDK_INT >= 9)
         	{
         		//New
-        		//DAVE! This is a hack while tripping, to work on Clay's phone (was /storage/extSdCard/)
+        		//DAVE! This is a hack to work on Clay's phone (was /storage/extSdCard/)
         		//For Clay's phone, use "/storage/sdcard0/"
         		mRootDirectory = "/storage/extSdCard/" + mStorageDirectory + "/";
         	}
