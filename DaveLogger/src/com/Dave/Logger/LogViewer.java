@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.Dave.DateStrings.DateStrings;
+import com.Dave.Graph.FloatRectangle;
 import com.Dave.Graph.GraphPlot;
 import com.Dave.Files.DebugFile;
 import com.Dave.Files.ErrorFile;
@@ -416,7 +417,7 @@ public class LogViewer extends Activity implements Runnable
 										average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
 			
 			//Add the weekend shading and start-of-month indicators
-			mGraph.AddDateInfo(startDate);
+			mGraph.AddDateInfo(startDate, true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
 			mGraph.BottomAxis.DrawLabels = false;
@@ -444,6 +445,7 @@ public class LogViewer extends Activity implements Runnable
 	
 			int historyDays = GetDesiredLengthInDays(timeRange);
 			
+			Calendar firstDate = Calendar.getInstance();
 			if(historyDays > 0)
 			{
 				Calendar filterDate = Calendar.getInstance();
@@ -451,6 +453,8 @@ public class LogViewer extends Activity implements Runnable
 				filterDate.set(Calendar.HOUR, 0);
 				filterDate.set(Calendar.MINUTE, 0);
 				filterDate.set(Calendar.SECOND, 0);
+				firstDate = filterDate;
+				Log.d("DEBUG", String.format("Filter date: %s", DateStrings.GetDateTimeString(filterDate)));
 				
 				List<LogEntry> tempData = new ArrayList<LogEntry>();
 				
@@ -458,58 +462,67 @@ public class LogViewer extends Activity implements Runnable
 					if(data.get(i).GetDate().after(filterDate))
 						tempData.add(data.get(i));
 				
-				if(isToggle && tempData.get(0).ToggleState == "off")
+				if(isToggle && tempData.size() > 0 && tempData.get(0).ToggleState.equals("off"))
+				{
 					tempData.remove(0);
+				}
 				
 				data = tempData;
 			}
-			
-			Calendar firstDate = data.get(0).GetDate();
-			
-			List<Float> xValues = new ArrayList<Float>();
-			List<Float> yValues = new ArrayList<Float>();
-			LogEntry lastEntry = null;
-			int lastX = 0;
-			for(int i=0; i<data.size(); i++)
+			else
 			{
-				LogEntry curEntry = data.get(i);
-				Calendar date = curEntry.GetDate();
-				
-				float hour = date.get(Calendar.HOUR_OF_DAY);
-				float minute = date.get(Calendar.MINUTE);
-				float second = date.get(Calendar.SECOND);
-				
-				if(isToggle)
-				{
-					int curX = DateStrings.GetActiveDiffInDays(firstDate, date, 0);
-					
-					if(lastEntry != null)
-					{
-						//Code for "off" entries
-						for(int j=0; j<curX - lastX; j++)
-						{
-							xValues.add((float)(lastX + j));
-							yValues.add((float)24);
-							
-							xValues.add((float)(lastX + j + 1));
-							yValues.add((float)0);
-						}
-						
-						lastEntry = null;
-					}
-					else
-					{
-						//Code for "on" entries
-						lastEntry = curEntry;
-					}
-					
-					lastX = curX;
-				}
-				
-				xValues.add((float)DateStrings.GetActiveDiffInDays(firstDate, date, 0));
-				yValues.add((float)hour + (minute / 60) + (second / 3600));
+				if(data.size() > 0)
+					firstDate = data.get(0).GetDate();
 			}
 			
+			List<Calendar> dates = new ArrayList<Calendar>();
+			List<Float> xValues = new ArrayList<Float>();
+			List<Float> yValues = new ArrayList<Float>();
+			if(data.size() > 0)
+			{
+				LogEntry lastEntry = null;
+				int lastX = 0;
+				for(int i=0; i<data.size(); i++)
+				{
+					LogEntry curEntry = data.get(i);
+					Calendar date = curEntry.GetDate();
+					
+					float hour = date.get(Calendar.HOUR_OF_DAY);
+					float minute = date.get(Calendar.MINUTE);
+					float second = date.get(Calendar.SECOND);
+					
+					if(isToggle)
+					{
+						int curX = DateStrings.GetActiveDiffInDays(firstDate, date, 0);
+						
+						if(lastEntry != null)
+						{
+							//Code for "off" entries
+							for(int j=0; j<curX - lastX; j++)
+							{
+								xValues.add((float)(lastX + j));
+								yValues.add((float)24);
+								
+								xValues.add((float)(lastX + j + 1));
+								yValues.add((float)0);
+							}
+							
+							lastEntry = null;
+						}
+						else
+						{
+							//Code for "on" entries
+							lastEntry = curEntry;
+						}
+						
+						lastX = curX;
+					}
+					
+					xValues.add((float)DateStrings.GetActiveDiffInDays(firstDate, date, 0));
+					yValues.add((float)hour + (minute / 60) + (second / 3600));
+					dates.add(date);
+				}
+			}
 			float[] x = new float[xValues.size()];
 			float[] y = new float[yValues.size()];
 			for(int i = 0; i < xValues.size(); i++)
@@ -518,7 +531,8 @@ public class LogViewer extends Activity implements Runnable
 				y[i] = yValues.get(i);
 			}
 			
-			mGraph.EasyScatterPlot(x, y, isToggle);
+			Log.d("DEBUG", String.format("First date: %s", DateStrings.GetDateTimeString(firstDate)));
+			mGraph.EasyScatterPlot(x, y, isToggle, new FloatRectangle(0, 24, (float)DateStrings.GetActiveDiffInDays(firstDate, Calendar.getInstance(), 0), 0));
 			mGraph.Plots.get(0).PointColor = Color.YELLOW;
 			
 			//Setup the title
@@ -526,7 +540,7 @@ public class LogViewer extends Activity implements Runnable
 			//							average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
 			
 			//Add the weekend shading and start-of-month indicators
-			//mGraph.AddDateInfo(startDate);
+			mGraph.AddDateInfo(firstDate, Calendar.getInstance(), true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
 			mGraph.BottomAxis.DrawLabels = false;
@@ -676,7 +690,7 @@ public class LogViewer extends Activity implements Runnable
 			int day = startDate.get(Calendar.DAY_OF_WEEK) % 7;
 			if(day > 0)
 				startDate.add(Calendar.HOUR, -24 * day);				
-			mGraph.AddWeekendShading(startDate);
+			mGraph.AddDateInfo(startDate, false);
 		}
 	}
 	

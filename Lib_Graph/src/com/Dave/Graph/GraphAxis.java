@@ -82,6 +82,8 @@ public class GraphAxis implements IGraphElement
 	
 	public void SetLabels(String[] labels)
 	{
+		if(Edge == EdgeType.BOTTOM)
+			Log.d("DEBUG", "Got to SetLabels");
 		Labels.clear();
 		Ticks.clear();
 		Lines.clear();
@@ -126,6 +128,8 @@ public class GraphAxis implements IGraphElement
 	
     public void GenerateLabels(int min, int max, float labelMultiplier, boolean forceAll)
     {
+    	if(Edge == EdgeType.BOTTOM)
+			Log.d("DEBUG", "Got to GenerateLabels");
     	int range = max - min;
     	//Auto-adjust the label interval so at-most 20 labels are shown
     	int multiplier = 1;

@@ -74,6 +74,7 @@ public class GraphView extends View
 	private int mTotalHeight = 0;
 	private int mTotalWidth = 0;
 	private FloatRectangle mDataRange = null;
+	private FloatRectangle mDataRangeOverride = null;
 	private GraphRectangle mGraphBounds = null;
 	private List<IGraphElement> mGraphElements = new ArrayList<IGraphElement>();
 
@@ -193,13 +194,15 @@ public class GraphView extends View
 		}
 	}
 	
-	public void EasyScatterPlot(float[] xValues, float[] yValues, boolean drawLinePairs)
+	public void EasyScatterPlot(float[] xValues, float[] yValues, boolean drawLinePairs, FloatRectangle dataBounds)
 	{
 		try
 		{
 			//Draw the default graph
 			ClearGraph();
 		
+			mDataRangeOverride = dataBounds;
+			
 			Title.Text = "Scatter plot";
 		
 			Plots.add(new GraphPlot(xValues, yValues, drawLinePairs));
@@ -216,9 +219,19 @@ public class GraphView extends View
 			if(TopAxis == null)
 				TopAxis = new GraphAxis(EdgeType.TOP);
 			
+			if(mDataRangeOverride != null)
+			{
+				RightAxis.GenerateLabels((int)mDataRangeOverride.Bottom, (int)mDataRangeOverride.Top, 1, false);
+				LeftAxis.GenerateLabels((int)mDataRangeOverride.Bottom, (int)mDataRangeOverride.Top, 1, false);
+			}
+			else
+			{
+				RightAxis.GenerateLabels(Plots);
+				LeftAxis.GenerateLabels(Plots);
+			}
+			
 			BottomAxis.DrawLines = false;
-			RightAxis.GenerateLabels(Plots);
-			LeftAxis.GenerateLabels(Plots);
+			
 			//TODO: Does this work? May need better way to generate labels
 			//BottomAxis.GenerateLabels(DateStrings.GetActiveDiffInDays(oldDate, newDate, midnightHour), 1, true);
 		}
@@ -322,83 +335,117 @@ public class GraphView extends View
     	return ret;
     }
     
-    public void AddDateInfo(Calendar startDate)
-    {
-    	UpdateParams();
-    	
-    	Calendar curDate = (Calendar) startDate.clone();
-    	int dataLength = Plots.get(0).Data.length;
-    	int graphWidth = mGraphBounds.GetWidth();
-    	float pixelRatio = (float) graphWidth / (dataLength - 1);
-    	for(int i=0; i<dataLength; i++)
-    	{
-    		//Add weekend shading and first-of-month lines/labels
-    		float x = (pixelRatio * i) + mGraphBounds.Left;
-			int curDay = curDate.get(Calendar.DAY_OF_WEEK) % 7;
-			int monthDay = curDate.get(Calendar.DAY_OF_MONTH);
-			if(curDay == 1 || curDay == 0)
-			{
-				//Draw weekend shading
-				float halfColumn = pixelRatio / 2;
-				float xEnd = x + halfColumn;
-				if(i == dataLength - 1)
-					xEnd = x - 1;
-				GraphRectangle bar = new GraphRectangle((int)(x-halfColumn), mGraphBounds.Top, (int)xEnd + 1, mGraphBounds.Bottom);
-				bar.SetColor(Color.rgb(0, 0, 32));
-				bar.Fill = true;
-				bar.FillColor = Color.rgb(0, 0, 32);
-				Bars.add(bar);
-			}
-			if(monthDay == 1)
-			{
-				//Draw start-of-month line
-				GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom));
-				line.SetColor(Color.DKGRAY);
-				Lines.add(line);
-				
-				String month = String.format("%d", curDate.get(Calendar.MONTH)+1);
-				GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), month);
-				label.HAlign = Align.CENTER;
-				label.VAlign = VerticalAlign.TOP;
-				Labels.add(label);
-			}
+    public void AddDateInfo(Calendar startDate, boolean labelDates)
+	{
+		List<Calendar> allDates = new ArrayList<Calendar>();
+	
+		Calendar curDate = (Calendar) startDate.clone();
+        int dataLength = Plots.get(0).Data.length;
+		for(int i=0; i<dataLength; i++)
+		{
+			allDates.add((Calendar) curDate.clone());
 			curDate.add(Calendar.HOUR, 24);
-    	}
+		}
+		
+		AddDateInfo(allDates, labelDates);
+	}
+	
+    public void AddDateInfo(Calendar startDate, Calendar endDate, boolean labelDates)
+    {
+    	List<Calendar> allDates = new ArrayList<Calendar>();
+    	
+		Calendar curDate = (Calendar) startDate.clone();
+		allDates.add((Calendar) curDate.clone());
+		while(curDate.before(endDate))
+		{
+			allDates.add((Calendar) curDate.clone());
+			curDate.add(Calendar.HOUR, 24);
+		}
+		
+		AddDateInfo(allDates, labelDates);
     }
     
-    public void AddWeekendShading(Calendar startDate)
-    {
-    	UpdateParams();
-    	
-    	Calendar curDate = (Calendar) startDate.clone();
-    	int dataLength = Plots.get(0).Data.length;
-    	int graphWidth = mGraphBounds.GetWidth();
-    	float pixelRatio = (float) graphWidth / (dataLength - 1);
-    	for(int i=0; i<dataLength; i++)
-    	{
-    		//Add weekend shading
-    		float x = (pixelRatio * i) + mGraphBounds.Left;
-			int curDay = curDate.get(Calendar.DAY_OF_WEEK) % 7;
-			if(curDay == 1 || curDay == 0)
+	public void AddDateInfo(List<Calendar> dates, boolean labelDates)
+	{
+		UpdateParams();
+            
+		int numDates = dates.size();
+		int totalDays = DateStrings.GetActiveDiffInDays(dates.get(0), Calendar.getInstance(), 0) + 1;
+		
+		//Log.d("DEBUG", String.format("AddDateInfo: %d dates, %d total days", numDates, totalDays));
+		
+        int graphWidth = mGraphBounds.GetWidth();
+        float pixelRatio = (float) graphWidth / (totalDays - 1);
+		int lastMonthDay = -1;
+		int blue = Color.rgb(0, 0, 64);
+        for(int i=0; i<numDates; i++)
+        {
+			Calendar curDate = dates.get(i);
+		
+			//Add weekend shading and first-of-month lines/labels
+            float x = (pixelRatio * DateStrings.GetActiveDiffInDays(dates.get(0), curDate, 0)) + mGraphBounds.Left;
+            int curDay = curDate.get(Calendar.DAY_OF_WEEK) % 7;
+            int monthDay = curDate.get(Calendar.DAY_OF_MONTH);
+			int month = curDate.get(Calendar.MONTH) + 1;
+			if(lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
 			{
-				//Draw weekend shading
-				float halfColumn = pixelRatio / 2;
-				float xEnd = x + halfColumn;
-				float xStart = x - halfColumn;
-				if(i == 0)
-					xStart = x;
-				if(i == dataLength - 1)
-					xEnd = x - 1;
-				GraphRectangle bar = new GraphRectangle((int)xStart, mGraphBounds.Top, (int)xEnd + 1, mGraphBounds.Bottom);
-				bar.SetColor(Color.rgb(0, 0, 32));
-				bar.Fill = true;
-				bar.FillColor = Color.rgb(0, 0, 32);
-				Bars.add(bar);
+				if(curDay == 1 || curDay == 0)
+				{
+					//Log.d("DEBUG", String.format("AddDateInfo: Weekend at %s", DateStrings.GetDateTimeString(curDate)));
+					//Draw weekend shading
+					float halfColumn = pixelRatio / 2;
+					float xStart = x - halfColumn;
+					float xEnd = x + halfColumn + 1;
+					
+					if(i == 0)
+						xStart = x;
+					if(i == numDates - 1)
+						xEnd = x;
+					GraphRectangle bar = new GraphRectangle((int)(xStart), mGraphBounds.Top, (int)xEnd, mGraphBounds.Bottom);
+					bar.SetColor(blue);
+					bar.Fill = true;
+					bar.FillColor = blue;
+					Bars.add(bar);
+				}
+				if(labelDates && monthDay == 1)
+				{
+					//Log.d("DEBUG", String.format("AddDateInfo: Month-line at %s", DateStrings.GetDateTimeString(curDate)));
+					
+					//Draw start-of-month line
+					GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom));
+					line.SetColor(Color.DKGRAY);
+					Lines.add(line);
+					
+					if(month == 1 || month == 7)
+					{
+						//Draw a second line to make January and July thicker
+						line = new GraphLine(new Point((int)x + 1, mGraphBounds.Top), new Point((int)x + 1, mGraphBounds.Bottom));
+						line.SetColor(Color.DKGRAY);
+						Lines.add(line);
+					}
+					
+					if(totalDays < 730) //2 years
+					{
+						String monthText = String.format("%d", month);
+						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), monthText);
+						label.HAlign = Align.CENTER;
+						label.VAlign = VerticalAlign.TOP;
+						Labels.add(label);
+					}
+					else if (month == 1) //January
+					{
+						String yearText = String.format("%d", curDate.get(Calendar.YEAR));
+						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), yearText);
+						label.HAlign = Align.CENTER;
+						label.VAlign = VerticalAlign.TOP;
+						Labels.add(label);
+					}
+				}
 			}
-			curDate.add(Calendar.HOUR, 24);
-    	}
+			lastMonthDay = monthDay;
+        }
     }
-    
+        
     public void AddDataPoint(float x, float y, int color)
     {
     	UpdateParams();
@@ -451,6 +498,9 @@ public class GraphView extends View
 	
 	public FloatRectangle GetDataRange()
 	{
+		if(mDataRangeOverride != null)
+			return mDataRangeOverride;
+		
 		if(Plots.size() == 0)
 			return new FloatRectangle();
 		

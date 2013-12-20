@@ -72,9 +72,8 @@ public class GraphPlot implements IGraphElement
 	{
 		float yMax = ArrayMath.GetCeiling(Data);
 		float yMin = ArrayMath.GetMin(Data);
-		Log.i("GraphPlot.GetDataRange", String.format("Raw data range: %f, %f", yMin, yMax));
 		yMin = (float) Math.floor(yMin);
-		float xMax = Math.round(Data.length * XInterval);
+		float xMax = Math.round((Data.length - 1) * XInterval);
 		float xMin = 0;
 		
 		if(XValues != null)
@@ -82,6 +81,9 @@ public class GraphPlot implements IGraphElement
 			xMin = ArrayMath.GetMin(Data);
 			xMax = ArrayMath.GetMax(XValues);
 		}
+		
+		//Log.i("GraphPlot.GetDataRange", String.format("Raw X data range: %f, %f", xMin, xMax));
+		//Log.i("GraphPlot.GetDataRange", String.format("Raw Y data range: %f, %f", yMin, yMax));
 		
 		//Log.i("GraphPlot.GetDataRange", String.format("size: (%.02f, %d)", yMax, (int)xMax));
 		return new FloatRectangle(xMin, yMax, xMax, yMin);
@@ -95,20 +97,21 @@ public class GraphPlot implements IGraphElement
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
 		//Log.e("Graphing", "Drawing graph plot");
-		Log.e("Graphing", String.format("Drawing graph plot. Bound: {(%d,%d)(%d,%d)}  Data Bound: {(%.02f,%.02f)(%.02f,%.02f)}", bounds.Left, bounds.Right, bounds.Top, bounds.Bottom, dataBounds.Left, dataBounds.Right, dataBounds.Top, dataBounds.Bottom));
+		//Log.e("Graphing", String.format("Drawing graph plot. Bound: {(%d,%d)(%d,%d)}  Data Bound: {(%.02f,%.02f)(%.02f,%.02f)}", bounds.Left, bounds.Right, bounds.Top, bounds.Bottom, dataBounds.Left, dataBounds.Right, dataBounds.Top, dataBounds.Bottom));
 		int graphHeight = bounds.Bottom - bounds.Top;
 		int graphWidth = bounds.Right - bounds.Left;
 		if(dataBounds.Top % 1 != 0)
 			dataBounds.Top = dataBounds.Top + 1 - (dataBounds.Top % 1);
 		float dataYMultiplier = graphHeight / (dataBounds.Top - dataBounds.Bottom);
-		float dataXMultiplier = 0;
-		float xMax = (Data.length - 1) * XInterval;
+		//float dataXMultiplier = 0;
+		float xMax = dataBounds.Right;
 		
-		if(XValues != null)
-			xMax = ArrayMath.GetMax(XValues);
+		//if(XValues != null)
+		//	xMax = ArrayMath.GetMax(XValues);
+		//Log.d("DEBUG", String.format("Data max: %f, bounds.right: %f", xMax, dataBounds.Right));
 		
-		if(Data != null && Data.length > 1)
-			dataXMultiplier = (float)graphWidth / (xMax) * XInterval;
+		//if(Data != null && Data.length > 1)
+		//	dataXMultiplier = (float)graphWidth / (xMax) * XInterval;
 		
 		DataPoints.clear();
 		Point lastPoint = null;
