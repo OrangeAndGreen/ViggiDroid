@@ -115,7 +115,35 @@ public class LogFile
     	return dict;
     }
     
-    public List<LogEntry> ExtractEventLog(int searchIndex, LoggerConfig config)
+    public List<LogEntry> ExtractLog(String category, LoggerConfig config)
+    {
+		boolean isToggle = true;
+		int searchIndex = config.Toggles.indexOf(category);
+		if(searchIndex < 0)
+		{
+			isToggle = false;
+			searchIndex = config.Buttons.indexOf(category);
+		}
+		
+		//Populate the output array
+		List<LogEntry> output = new ArrayList<LogEntry>();
+        for(int i=0; i<GetLogEntries().size(); i++)
+        {
+			boolean addLine = true;
+            if(searchIndex >=0)
+            {
+				int index = GetLogEntries().get(i).GetId(config);
+				if(isToggle)
+					index = GetLogEntries().get(i).GetToggleId(config);
+				addLine = index == searchIndex;
+            }
+            if(addLine)
+				output.add(GetLogEntries().get(i));
+        }
+        return output;
+    }
+    
+    private List<LogEntry> ExtractEventLog(int searchIndex, LoggerConfig config)
     {
 		//Populate the output array
 		List<LogEntry> output = new ArrayList<LogEntry>();
@@ -133,7 +161,7 @@ public class LogFile
 		return output;
     }
 
-    public List<LogEntry> ExtractToggleLog(int searchIndex, LoggerConfig config)
+    private List<LogEntry> ExtractToggleLog(int searchIndex, LoggerConfig config)
     {
     	List<LogEntry> output = new ArrayList<LogEntry>();
 		for(int i=0; i<GetLogEntries().size(); i++)
@@ -152,7 +180,19 @@ public class LogFile
 		return output;
     }
 
-    public float[] ExtractDailyEventTotals(int searchIndex, Calendar startDate, LoggerConfig config)
+    public float[] ExtractDailyTotals(String category, Calendar startDate, LoggerConfig config)
+    {
+		int catIndex = config.Toggles.indexOf(category);
+		if(catIndex >= 0)
+			return ExtractDailyToggleTotals(catIndex, startDate, config);
+		else
+		{
+			catIndex = config.Buttons.indexOf(category);
+			return ExtractDailyEventTotals(catIndex, startDate, config);
+		}
+    }
+    
+    private float[] ExtractDailyEventTotals(int searchIndex, Calendar startDate, LoggerConfig config)
     {
     	List<LogEntry> entries = ExtractEventLog(searchIndex, config);
 		List<Float> countsPerDay = new ArrayList<Float>();
@@ -200,7 +240,7 @@ public class LogFile
     	return ret;
     }
     
-    public float[] ExtractDailyToggleTotals(int searchIndex, Calendar startDate, LoggerConfig config)
+    private float[] ExtractDailyToggleTotals(int searchIndex, Calendar startDate, LoggerConfig config)
     {
     	List<LogEntry> subset = ExtractToggleLog(searchIndex, config);
 		int subsetSize = subset.size();
@@ -304,52 +344,46 @@ public class LogFile
     	return values;
     }
     
-    public float[] GetDailyEventHistogram(int searchIndex, LoggerConfig config)
+    public float[] GetDailyHistogram(String category, LoggerConfig config)
     {
-    	Calendar startDate = Calendar.getInstance();
-    	float[] dailyTotals = ExtractDailyEventTotals(searchIndex, startDate, config);
-    	
-    	float[] weekDays = new float[7];
-    	float[] counts = new float[7];
-    	int curDay = startDate.get(Calendar.DAY_OF_WEEK) % 7;
-    	
-    	for(int i=0; i<dailyTotals.length; i++)
-    	{
-    		weekDays[curDay] += dailyTotals[i];
-    		counts[curDay]++;
-    		curDay = (curDay + 1) %7;
-    	}
-    	
-    	for(int j=0; j<7; j++)
-    		weekDays[j] /= counts[j];
-    	
-    	return weekDays;
+		Calendar startDate = Calendar.getInstance();
+        float[] dailyTotals = ExtractDailyTotals(category, startDate, config);
+		
+        return GetDailyHistogram(dailyTotals, startDate);
     }
     
-    public float[] GetDailyToggleHistogram(int searchIndex, LoggerConfig config)
+    public float[] GetDailyHistogram(float[] dailyTotals, Calendar startDate)
     {
-    	Calendar startDate = Calendar.getInstance();
-    	float[] dailyTotals = ExtractDailyToggleTotals(searchIndex, startDate, config);
-    	
     	float[] weekDays = new float[7];
-    	float[] counts = new float[7];
-    	int curDay = startDate.get(Calendar.DAY_OF_WEEK) % 7;
-    	
-    	for(int i=0; i<dailyTotals.length; i++)
-    	{
-    		weekDays[curDay] += dailyTotals[i];
-    		counts[curDay]++;
-    		curDay = (curDay + 1) %7;
-    	}
-    	
-    	for(int j=0; j<7; j++)
-    		weekDays[j] /= counts[j];
-    	
-    	return weekDays;
-
+        float[] counts = new float[7];
+        int curDay = startDate.get(Calendar.DAY_OF_WEEK) % 7;
+            
+        for(int i=0; i<dailyTotals.length; i++)
+        {
+			weekDays[curDay] += dailyTotals[i];
+			counts[curDay]++;
+			curDay = (curDay + 1) %7;
+        }
+            
+		for(int j=0; j<7; j++)
+			weekDays[j] /= counts[j];
+            
+        return weekDays;
     }
     
-    public String GetEventStats(int searchIndex, LoggerConfig config)
+    public String GetStats(String category, LoggerConfig config)
+	{
+		int catIndex = config.Toggles.indexOf(category);
+		if(catIndex >= 0)
+			return GetToggleStats(catIndex, config);
+		else
+		{
+			catIndex = config.Buttons.indexOf(category);
+			return GetEventStats(catIndex, config);
+		}
+	}
+    
+    private String GetEventStats(int searchIndex, LoggerConfig config)
     {
 		String stats = "";
 		List<LogEntry> subset = ExtractEventLog(searchIndex, config);
@@ -494,7 +528,7 @@ public class LogFile
         return stats;
     }
     
-    public String GetToggleStats(int searchIndex, LoggerConfig config)
+    private String GetToggleStats(int searchIndex, LoggerConfig config)
     {
         String stats = "";
         List<LogEntry> subset = ExtractToggleLog(searchIndex, config);
@@ -676,6 +710,64 @@ public class LogFile
 		return stats;
 	}
 
+    public String GetCommentSummary(String category, LoggerConfig config)
+	{
+		List<LogEntry> subset = null;
+		int catIndex = config.Toggles.indexOf(category);
+		if(catIndex >= 0)
+			subset = ExtractToggleLog(catIndex, config);
+		else
+		{
+			catIndex = config.Buttons.indexOf(category);
+			subset = ExtractEventLog(catIndex, config);
+		}
+		
+		//Build the dictionary of comment instances
+		List<String> comments = new ArrayList<String>();
+		List<Integer> occurrences = new ArrayList<Integer>();
+		for(int i=0; i<subset.size(); i++)
+		{
+			LogEntry entry = subset.get(i);
+			if(entry.GetComment() != null && entry.GetComment().length() > 0)
+			{
+				int index = comments.indexOf(entry.GetComment());
+				if(index < 0)
+				{
+					comments.add(entry.GetComment());
+					occurrences.add(1);
+				}
+				else
+				{
+					occurrences.set(index, occurrences.get(index) + 1);
+				}
+			}
+		}
+		
+		//Extract the entries from most-to-least occurring
+		String result = "";
+		while(comments.size() > 0)
+		{
+			int mostOccurrences = -1;
+			int mostIndex = 0;
+			for(int i=0; i<comments.size(); i++)
+			{
+				int curOccurrence = occurrences.get(i);
+				if(curOccurrence > mostOccurrences)
+				{
+					mostOccurrences = curOccurrence;
+					mostIndex = i;
+				}
+			}
+			
+			result += String.format("%d: %s\n", occurrences.get(mostIndex), comments.get(mostIndex));
+			
+			comments.remove(mostIndex);
+			occurrences.remove(mostIndex);
+		}
+		
+		return result;
+	}
+    
     public void ExportLog(LoggerConfig config)
     {
     	String directory = config.ExportDirectory;

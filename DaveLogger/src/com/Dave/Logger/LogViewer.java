@@ -45,7 +45,7 @@ public class LogViewer extends Activity implements Runnable
 	private com.Dave.Graph.GraphView mGraph = null;
 	private ScrollView mTextScroller = null;
 	private TextView mTextView = null;
-	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Values", "Stats", "Recent History"};
+	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Values", "Stats", "Comments", "Recent History"};
 	private CharSequence[] mCategoryStrings = null;
 	private boolean[] mCategoryTypes = null;
 	private CharSequence[] mTimeOptions = { "All-time", "1 Year", "6 Months", "3 Months", "1 Month", "2 Weeks", "1 Week" };
@@ -293,6 +293,9 @@ public class LogViewer extends Activity implements Runnable
 				DrawStats(category, prepare);
 				break;
 			case 7:
+				DrawComments(category, prepare);
+				break;
+			case 8:
 				DrawRecentHistory(category, timeRange, prepare);
 				break;
 			default:
@@ -346,19 +349,8 @@ public class LogViewer extends Activity implements Runnable
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
-			float[] data = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			boolean isToggle = false;
-			if(catIndex >= 0)
-			{
-				isToggle = true;
-				data = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				data = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
-			}
+			float[] data = mLog.ExtractDailyTotals(category, startDate, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
 	
 			//If this is a toggle, possibly convert from hours to minutes
 			String units = "";
@@ -445,22 +437,10 @@ public class LogViewer extends Activity implements Runnable
 		else
 		{
 			Debug("LogViewer", "Preparing daily timing graph", false);
-			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
-			List<LogEntry> data = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			boolean isToggle = false;
-			if(catIndex >= 0)
-			{
-				isToggle = true;
-				data = mLog.ExtractToggleLog(catIndex, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				data = mLog.ExtractEventLog(catIndex, mConfig);
-			}
+			List<LogEntry> data = mLog.ExtractLog(category, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
 	
 			int historyDays = GetDesiredLengthInDays(timeRange);
 			
@@ -570,19 +550,8 @@ public class LogViewer extends Activity implements Runnable
 			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
-			float[] data = null;
-			boolean isToggle = false;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			if(catIndex >= 0)
-			{
-				isToggle = true;
-				data = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				data = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
-			}
+			float[] data = mLog.ExtractDailyTotals(category, startDate, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
 	
 			//If this is a toggle, possibly convert from hours to minutes
 			int binMultiplier = 1;
@@ -657,20 +626,9 @@ public class LogViewer extends Activity implements Runnable
 		{
 			Debug("LogViewer", "Preparing daily histogram graph", false);
 			//Extract the specified data
-			float[] allData = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
 			Calendar startDate = Calendar.getInstance();
-			boolean isToggle = false;
-			if(catIndex >= 0)
-			{
-				isToggle = true;
-				allData = mLog.ExtractDailyToggleTotals(catIndex, startDate, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				allData = mLog.ExtractDailyEventTotals(catIndex, startDate, mConfig);
-			}
+			float[] allData = mLog.ExtractDailyTotals(category, startDate, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
 	
 			String units = "";
 			if(isToggle)
@@ -688,20 +646,13 @@ public class LogViewer extends Activity implements Runnable
 	
 			//Calculate daily histograms
 			//float max = ArrayMath.GetCeiling(allData);
-			float[] averages = new float[7];
-			int[] dayCounts = new int[7];
+			float[] averages = mLog.GetDailyHistogram(allData, startDate);
 			int[] x = new int[allData.length];
 			for(int i=0; i<allData.length; i++)
 			{
-				x[i] = startDate.get(Calendar.DAY_OF_WEEK) % 7;
-				averages[x[i]] += allData[i];
-				dayCounts[x[i]]++;
-				
+				x[i] = startDate.get(Calendar.DAY_OF_WEEK) % 7;				
 				startDate.add(Calendar.HOUR, 24);
 			}
-			
-			for(int j=0; j<7; j++)
-				averages[j] /= dayCounts[j];
 			
 			mGraph.EasyGraph(averages);
 			mGraph.Plots.get(0).SetColor(Color.WHITE);
@@ -747,13 +698,10 @@ public class LogViewer extends Activity implements Runnable
 			//Extract the specified data
 			int multiplier = 1;
 			int numEntries = 0;
-			List<LogEntry> entries = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			boolean isToggle = false;
-			if(catIndex >= 0)
+			List<LogEntry> entries = mLog.ExtractLog(category, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
+			if(isToggle)
 			{
-				isToggle = true;
-				entries = mLog.ExtractToggleLog(catIndex, mConfig);
 				if(entries.size() % 2 != 0)
 					entries.add(new LogEntry(DateStrings.GetDateTimeString(Calendar.getInstance()),
 							entries.get(entries.size() - 1).GetType(), "off", null));
@@ -762,8 +710,6 @@ public class LogViewer extends Activity implements Runnable
 			}
 			else
 			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				entries = mLog.ExtractEventLog(catIndex, mConfig);
 				entries.add(new LogEntry(DateStrings.GetDateTimeString(Calendar.getInstance()),
 						entries.get(entries.size() - 1).GetType(), null, null));
 				numEntries = entries.size();
@@ -859,22 +805,10 @@ public class LogViewer extends Activity implements Runnable
 		else
 		{
 			Debug("LogViewer", "Preparing values graph", false);
-			Calendar startDate = Calendar.getInstance();
 	
 			//Extract the data specified by "category"
-			List<LogEntry> data = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			boolean isToggle = false;
-			if(catIndex >= 0)
-			{
-				isToggle = true;
-				data = mLog.ExtractToggleLog(catIndex, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				data = mLog.ExtractEventLog(catIndex, mConfig);
-			}
+			List<LogEntry> data = mLog.ExtractLog(category, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
 	
 			int historyDays = GetDesiredLengthInDays(timeRange);
 			
@@ -1072,18 +1006,27 @@ public class LogViewer extends Activity implements Runnable
 		else
 		{
 			Debug("LogViewer", "Preparing stats", false);
-			int catIndex = mConfig.Toggles.indexOf(category);
-			if(catIndex >= 0)
-			{
-				mStatsText = mLog.GetToggleStats(catIndex, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				mStatsText = mLog.GetEventStats(catIndex, mConfig);
-			}
+			mStatsText = mLog.GetStats(category, mConfig);
+			
 		}
 	}
+	
+	private void DrawComments(String category, boolean prepare)
+    {
+		if(!prepare)
+        {
+			Debug("LogViewer", "Drawing comments", false);
+			mGraph.setVisibility(View.GONE);
+            mTextScroller.setVisibility(View.VISIBLE);
+                        
+            mTextView.setText(mStatsText);
+        }
+        else
+        {
+			Debug("LogViewer", "Preparing comments", false);
+			mStatsText = mLog.GetCommentSummary(category, mConfig);
+        }
+    }
 	
 	private void DrawRecentHistory(String category, String timeRange, boolean prepare)
 	{
@@ -1108,17 +1051,7 @@ public class LogViewer extends Activity implements Runnable
 		else
 		{
 			Debug("LogViewer", "Preparing recent history", false);
-			List<LogEntry> entries = null;
-			int catIndex = mConfig.Toggles.indexOf(category);
-			if(catIndex >= 0)
-			{
-				entries = mLog.ExtractToggleLog(catIndex, mConfig);
-			}
-			else
-			{
-				catIndex = mConfig.Buttons.indexOf(category);
-				entries = mLog.ExtractEventLog(catIndex, mConfig);
-			}
+			List<LogEntry> entries = mLog.ExtractLog(category, mConfig);
 			
 			int historyDays = GetDesiredLengthInDays(timeRange);
 			
