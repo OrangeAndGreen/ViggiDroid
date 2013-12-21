@@ -393,7 +393,7 @@ public class GraphView extends View
 			int year = curDate.get(Calendar.YEAR);
 			if(labelDates && lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
 			{
-				if(curDay == 0 || curDay == 1)
+				if( totalDays < 370 && (curDay == 0 || curDay == 1))
 				{
 					//Draw weekend shading
 					float halfColumn = pixelRatio / 2;
@@ -418,6 +418,12 @@ public class GraphView extends View
 					//Label each day
 					labelText = String.format(Locale.getDefault(), "%d", monthDay);
 				}
+				else if(totalDays < 60)
+				{
+					//Label each Saturday
+					if(curDay == 0)
+						labelText = String.format(Locale.getDefault(), "%d", monthDay);
+				}
 				else if(monthDay == 1)
 				{
 					if(totalDays < 730) //Label start-of-month
@@ -431,7 +437,7 @@ public class GraphView extends View
 					//Draw line for start-of-month
 					lineThickness = 1;
 					if(month == 1 || month == 7) //Make January and July thicker lines
-						lineThickness = 2;
+						lineThickness = 3;
 				}
 				
 				if(lineThickness > 0)

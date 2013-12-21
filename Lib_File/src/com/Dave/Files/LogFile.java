@@ -406,7 +406,7 @@ public class LogFile
 		if(isToggle)
 		{
 			//Total time stats
-			float totalTime = 0;
+			long totalTime = 0;
 			Calendar onDate = null;
 			for(int j=0; j<subsetSize; j++)
 			{
@@ -417,13 +417,14 @@ public class LogFile
 				}
 				else if(onDate != null)
 				{
-					totalTime += ((float)(curEntry.GetDate().getTimeInMillis() - onDate.getTimeInMillis())) / 1000 / 3600;
+					totalTime += curEntry.GetDate().getTimeInMillis() - onDate.getTimeInMillis();
 					onDate = null;
 				}
 			}
 			if(onDate != null)
-				totalTime += ((float)(now.getTimeInMillis() - onDate.getTimeInMillis())) / 1000 / 3600;
-			stats += String.format("Time: %.02f days (%.02f hrs/day, %d hrs/yr)\n", totalTime/24, totalTime/elapsedDays, (int)(totalTime/elapsedDays * 365));
+				totalTime += now.getTimeInMillis() - onDate.getTimeInMillis();
+			float totalHours = (float)totalTime / 1000 / 3600;
+			stats += String.format("Time: %s (%.02f hrs/day, %d hrs/yr)\n", DateStrings.GetElapsedTimeString(totalTime, 3), totalHours/elapsedDays, (int)(totalHours/elapsedDays * 365));
         }
 		
         //Calculate the data
@@ -488,17 +489,17 @@ public class LogFile
             curDate.add(Calendar.HOUR, 24);
         }
         
-        float minOff = Float.MAX_VALUE;
-        float maxOff = Float.MIN_VALUE;
+        long minOff = Long.MAX_VALUE;
+        long maxOff = Long.MIN_VALUE;
         Calendar minOffDate = Calendar.getInstance();
         Calendar maxOffDate = Calendar.getInstance();
-        float minOn = Float.MAX_VALUE;
-        float maxOn = Float.MIN_VALUE;
+        long minOn = Long.MAX_VALUE;
+        long maxOn = Long.MIN_VALUE;
         Calendar minOnDate = Calendar.getInstance();
         Calendar maxOnDate = Calendar.getInstance();
 		
-		float minInterval = Float.MAX_VALUE;
-        float maxInterval = Float.MIN_VALUE;
+        long minInterval = Long.MAX_VALUE;
+        long maxInterval = Long.MIN_VALUE;
         Calendar minIntervalDate = Calendar.getInstance();
         Calendar maxIntervalDate = Calendar.getInstance();
 		
@@ -512,37 +513,37 @@ public class LogFile
 			{
 				if(isToggle)
 				{
-					float hours = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float)3600000;
+					long interval = curDate.getTimeInMillis() - lastDate.getTimeInMillis();
 					if(subset.get(i).ToggleState.equals("off"))
 					{
-						if(hours < minOn)
+						if(interval < minOn)
 						{
-							minOn = hours;
+							minOn = interval;
 							minOnDate = lastDate;
 						}
-						if(hours > maxOn)
+						if(interval > maxOn)
 						{
-							maxOn = hours;
+							maxOn = interval;
 							maxOnDate = lastDate;
 						}
 					}
 					else
 					{
-						if(hours < minOff)
+						if(interval < minOff)
 						{
-							minOff = hours;
+							minOff = interval;
 							minOffDate = lastDate;
 						}
-						if(hours > maxOff)
+						if(interval > maxOff)
 						{
-							maxOff = hours;
+							maxOff = interval;
 							maxOffDate = lastDate;
 						}
 					}
 				}
 				else
 				{
-					float interval = (curDate.getTimeInMillis() - lastDate.getTimeInMillis()) / (float) 3600000;
+					long interval = curDate.getTimeInMillis() - lastDate.getTimeInMillis();
                     if(interval < minInterval)
                     {
 						minInterval = interval;
@@ -569,16 +570,16 @@ public class LogFile
 		
 		if(isToggle)
 		{
-			stats += String.format("Shortest off: %.02f hours (%s)\nLongest off: %.02f hours (%s)\n", minOff, DateStrings.GetDateTimeString(minOffDate),
-																									  maxOff, DateStrings.GetDateTimeString(maxOffDate));
-			stats += String.format("Shortest on: %.02f hours (%s)\nLongest on: %.02f hours (%s)\n", minOn, DateStrings.GetDateTimeString(minOnDate),
-																									maxOn, DateStrings.GetDateTimeString(maxOnDate));
+			stats += String.format("Shortest off: %s (%s)\nLongest off: %s (%s)\n", DateStrings.GetElapsedTimeString(minOff, 3), DateStrings.GetDateTimeString(minOffDate),
+																									  DateStrings.GetElapsedTimeString(maxOff, 3), DateStrings.GetDateTimeString(maxOffDate));
+			stats += String.format("Shortest on: %s (%s)\nLongest on: %s (%s)\n", DateStrings.GetElapsedTimeString(minOn, 3), DateStrings.GetDateTimeString(minOnDate),
+																									DateStrings.GetElapsedTimeString(maxOn, 3), DateStrings.GetDateTimeString(maxOnDate));
 		}
 		else
 		{
-			stats += String.format("Shortest interval: %.02f hours (%s)\nLongest interval: %.02f hours (%s)\n",
-                                                                                                    minInterval, DateStrings.GetDateTimeString(minIntervalDate),
-                                                                                                    maxInterval, DateStrings.GetDateTimeString(maxIntervalDate));
+			stats += String.format("Shortest interval: %s (%s)\nLongest interval: %s (%s)\n",
+																									DateStrings.GetElapsedTimeString(minInterval, 3), DateStrings.GetDateTimeString(minIntervalDate),
+																									DateStrings.GetElapsedTimeString(maxInterval, 3), DateStrings.GetDateTimeString(maxIntervalDate));
 		}
 		
         stats += "\n";
