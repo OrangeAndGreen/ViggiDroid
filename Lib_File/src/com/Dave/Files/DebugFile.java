@@ -19,7 +19,7 @@ public class DebugFile
 		String entry = String.format("%s - %s: %s\n", DateStrings.GetDateTimeString(date), tag, message);
 		try
 		{
-			FileWriter fw = new FileWriter(directory + Filename, true);
+			FileWriter fw = new FileWriter(directory + "/" + Filename, true);
 			fw.write(entry);
 			fw.close();
 		}

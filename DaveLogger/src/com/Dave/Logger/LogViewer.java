@@ -102,7 +102,7 @@ public class LogViewer extends Activity implements Runnable
 			//Get the graph categories from the LoggerConfig
 			List<String> categories = new ArrayList<String>();
 			List<Boolean> categoryTypes = new ArrayList<Boolean>();
-   			mConfig = LoggerConfig.FromFile(mRootDirectory + configFile, getApplicationContext());
+   			mConfig = LoggerConfig.FromFile(mRootDirectory + "/" + configFile, getApplicationContext());
    			for(int i=0; i<mConfig.Buttons.size(); i++)
    			{
    				String button = mConfig.Buttons.get(i);
@@ -1093,7 +1093,7 @@ public class LogViewer extends Activity implements Runnable
 			}
 			
 			int numEntries = entries.size();
-			int historyLength = 100;
+			int historyLength = 200;
 			if(numEntries < historyLength)
 				historyLength = numEntries;
 			mStatsText = "";
@@ -1141,7 +1141,7 @@ public class LogViewer extends Activity implements Runnable
 		if(!mInitialized)
 		{
 			Debug("LogViewer", "Loading data", false);
-			mLog = new LogFile(mRootDirectory + mLogFile, true);
+			mLog = new LogFile(mRootDirectory + "/" + mLogFile, true);
 			mInitialized = true;
 		}
 		

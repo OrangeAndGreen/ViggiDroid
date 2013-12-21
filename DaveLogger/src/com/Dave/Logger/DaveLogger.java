@@ -12,6 +12,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,6 +37,7 @@ import com.Dave.DateTimeSlider.DateSlider;
 import com.Dave.DateTimeSlider.DateTimeSlider;
 import com.Dave.DateStrings.DateStrings;
 import com.Dave.Files.DebugFile;
+import com.Dave.Files.DirectoryPicker;
 import com.Dave.Files.ErrorFile;
 import com.Dave.Files.LoggerState;
 import com.Dave.Files.LoggerConfig;
@@ -77,31 +79,6 @@ import com.Dave.Files.LogFile;
  **				Remember history of extras to suggest i.e. common friend's names
  *************************************************************************************
  * 
- * -ConfigFile setting for logger's name (i.e. for DaveLog, or email subject)
- * -Better curve fitting (multiple humps)
- * 
- * -New activity to adjust config settings
- * -Configure extra log options: string (i.e. friend name), int (i.e. weight)
- * 		-Log "other" smoke
- * -Stats to get:
- *		-Average interval (minus 7 hours sleep)
- * -Move log-adding dialogs into LogFile library
- * 		CommentPrompt and comment.xml
- * 		LogFile references DateTimeSlider instead of Logger
- * -Better log storage:
- * 		-DATABASE, with methods to import/export text file
- * 		-Break log files by month
- * 		-Automatically store a second file for backup (interval, i.e. once/day?)
- * -Better graphing:
- * 		-Different graph histories (daily rate, total/day, daily average/week)
- * 				-X-axis: date, Y-axis: 0-24 hours (with 5AM offset) with points at each event/toggle time-of-day
- * 		-Graph options
- * 				-Time span (start and end dates)
- * 				-Time intervals (seconds, minutes, hours, days, weeks, months, years)
- * 		-Zoom/Scroll graph
- * 		-Allow plotting multiple graphs at once, use radio buttons
- * 		-Optionally shade background of graph by percentage (i.e. green for most-common, red for most-rare)
- * 		-Vary horizontal labels depending on history length (days, day-of-month on saturdays, month on first-of-month, year)
  * -Eventually, protect secret logs better:
  *    Run in two modes right from startup
  *    Either way, show "hide" button
@@ -112,8 +89,6 @@ import com.Dave.Files.LogFile;
  *    Different passwords could enable different
  *         different secrets...
  * 
- * BUGS:
- * 		-Crash when viewing toggle after adding entry
  * 
  */
 
@@ -123,8 +98,7 @@ public class DaveLogger extends Activity implements Runnable
 	//Tracking Fields
     private LogAdder mAdder = new LogAdder();
     
-    private String mRootDirectory = null;
-    private String mStorageDirectory = "00Logs";
+    private String mStorageDirectory = null;
     private LoggerConfig mConfig = null;
     private String mConfigFile = "Config.txt";
     
@@ -172,66 +146,68 @@ public class DaveLogger extends Activity implements Runnable
         super.onCreate(savedInstanceState);
         try
         {
-        	//Old
-        	mRootDirectory = Environment.getExternalStorageDirectory().getPath() + "/" + mStorageDirectory + "/";
-        	if(Build.VERSION.SDK_INT >= 9)
-        	{
-        		//New
-        		//DAVE! This is a hack to work on Clay's phone (was /storage/extSdCard/)
-        		//For Clay's phone, use "/storage/sdcard0/"
-        		mRootDirectory = "/storage/extSdCard/" + mStorageDirectory + "/";
-        	}
+        	SharedPreferences prefs = getPreferences(0);
+        	mStorageDirectory = prefs.getString("storageDirectory", null);
         	
-        	File dir = new File(mRootDirectory);
+        	if(mStorageDirectory == null)
+        	{
+        		ShowStorageDirectoryPicker();
+        	}
+        	else
+        	{
+        		InitApp();
+        	}
+        }
+        catch(Exception e)
+        {
+        	Debug("Logger", "Error encountered during startup", false);
+        	Error(e);
+        }
+    }
+    
+    @Override
+    protected void onSaveInstanceState (Bundle outState)
+    {
+    	super.onSaveInstanceState(outState);
+    }
+    
+    private void InitApp()
+    {
+    	try
+        {
+        	File dir = new File(mStorageDirectory);
         	if(!dir.exists() && !dir.mkdirs())
         	{
-        		Toast t = Toast.makeText(this, "Could not create directory " + mRootDirectory, Toast.LENGTH_LONG);
+        		Toast t = Toast.makeText(this, "Could not create directory " + mStorageDirectory, Toast.LENGTH_LONG);
         		t.show();
         	}
         	
         	Debug("Logger", "Starting app", false);
         	
-        	if(savedInstanceState != null)
-            {
-        		Debug("Logger", "Reloaded bundle", false);
-            }
-        	
         	setContentView(R.layout.main);
 
         	Debug("Logger", "Loading config file", false);
-        	//String external = "(missing)";
-        	//try
-        	//{
-        	//	external = Environment.getExternalStoragePublicDirectory(null).getPath();
-        	//}
-        	//catch(Exception e){}
-        	//String msg = String.format("1:%s\n2:%s\n3:%s\nBuild:%d", external,
-    		//		Environment.getExternalStorageDirectory().getPath(),
-    		//		Environment.getDataDirectory().getPath(),
-    		//		Build.VERSION.SDK_INT);
-        	//Toast t2 = Toast.makeText(this, msg, Toast.LENGTH_LONG);
-        	//t2.show();
-        	
-        	mConfig = LoggerConfig.FromFile(mRootDirectory + mConfigFile, getApplicationContext());
+        	String configPath = mStorageDirectory + "/"+ mConfigFile;
+        	mConfig = LoggerConfig.FromFile(configPath, getApplicationContext());
         	if(mConfig == null)
         	{
-        		Debug("Logger", "Creating new config at " + mRootDirectory + mConfigFile, false);
+        		Debug("Logger", "Creating new config at " +configPath, false);
         		
-        		Toast t = Toast.makeText(getApplicationContext(), "Creating new config at " + mRootDirectory + mConfigFile, Toast.LENGTH_SHORT);
+        		Toast t = Toast.makeText(getApplicationContext(), "Creating new config at " + configPath, Toast.LENGTH_SHORT);
         		t.show();
         		
-        		mConfig = LoggerConfig.Create(mRootDirectory + mConfigFile);
+        		mConfig = LoggerConfig.Create(configPath);
         	}
     		int numButtons = mConfig.Buttons.size();
     		int numToggles = mConfig.Toggles.size();
     		
     		Debug("Logger", "Build: " + GetBuildDate(), false);
     		
-    		Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , mRootDirectory + mConfigFile, numButtons, numToggles), false);
-    		Debug("Logger", "External storage: " + Environment.getExternalStorageDirectory().getPath(), false);
+    		Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , configPath, numButtons, numToggles), false);
     		
-        	Debug("Logger", "Loading log file at " + mRootDirectory + mLogFile, false);
-        	mLog = new LogFile(mRootDirectory + mLogFile, false);
+    		String logPath = mStorageDirectory + "/" + mLogFile;
+        	Debug("Logger", "Loading log file at " + logPath, false);
+        	mLog = new LogFile(logPath, false);
         
         	//Create member arrays
         	Debug("Logger", "Creating internal arrays", false);
@@ -243,14 +219,24 @@ public class DaveLogger extends Activity implements Runnable
 
         	//Find and configure common GUI components
         	Debug("Logger", "Finding GUI components", false);
-        	mIntroText = (TextView) findViewById(R.id.introText);
-        	mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
-        	mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
-        	mSafeButton = (Button) findViewById(R.id.safeButton);
-        	mSafeButton.setOnClickListener(new SafeListener());
-        	mViewButton = (Button) findViewById(R.id.viewButton);
-        	mViewButton.setOnClickListener(new GraphViewListener());
-        	mDebugText = (TextView) findViewById(R.id.debugText);
+        	//if(mIntroText == null)
+        		mIntroText = (TextView) findViewById(R.id.introText);
+        	//if(mDateCheck == null)
+        		mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
+        	//if(mCommentCheck == null)
+        		mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
+        	//if(mSafeButton == null)
+        	{
+        		mSafeButton = (Button) findViewById(R.id.safeButton);
+        		mSafeButton.setOnClickListener(new SafeListener());
+        	}
+        	//if(mViewButton == null)
+        	{
+        		mViewButton = (Button) findViewById(R.id.viewButton);
+        		mViewButton.setOnClickListener(new GraphViewListener());
+        	}
+        	//if(mDebugText == null)
+        		mDebugText = (TextView) findViewById(R.id.debugText);
         	mDebugText.setText("");
         	
         	//Setup toggle sets
@@ -284,11 +270,12 @@ public class DaveLogger extends Activity implements Runnable
         	}
         
         	Debug("Logger", "Loading temp file", false);
-        	mState = LoggerState.FromFile(mRootDirectory + mStateFile, mConfig);
+        	String stateFilePath = mStorageDirectory + "/" + mStateFile;
+        	mState = LoggerState.FromFile(stateFilePath, mConfig);
         	if(mState == null)
         	{
         		Debug("Logger", "Temp file not found, creating new", false);
-        		mState = LoggerState.Create(mRootDirectory + mStateFile, mLog.GetLogEntries(), mConfig);
+        		mState = LoggerState.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
         	}
         	
         	for(int i=0; i<numToggles; i++)
@@ -316,12 +303,6 @@ public class DaveLogger extends Activity implements Runnable
         }
     }
     
-    @Override
-    protected void onSaveInstanceState (Bundle outState)
-    {
-    	super.onSaveInstanceState(outState);
-    }
-    
     private String GetBuildDate()
     {
     	try
@@ -338,6 +319,33 @@ public class DaveLogger extends Activity implements Runnable
     	}
     	
     	return "Unknown";
+    }
+    
+    private void ShowStorageDirectoryPicker()
+    {
+    	Intent intent = new Intent(this, DirectoryPicker.class);
+    	intent.putExtra(DirectoryPicker.ONLY_DIRS, false);
+    	intent.putExtra(DirectoryPicker.START_DIR, "/");
+    	startActivityForResult(intent, DirectoryPicker.PICK_DIRECTORY);
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	if(requestCode == DirectoryPicker.PICK_DIRECTORY && resultCode == RESULT_OK) {
+    		Bundle extras = data.getExtras();
+    		String path = (String) extras.get(DirectoryPicker.CHOSEN_DIRECTORY);
+    		
+    		SharedPreferences settings = getPreferences(0);
+    	    SharedPreferences.Editor editor = settings.edit();
+    	    editor.putString("storageDirectory", path);
+    	    editor.commit();
+    		
+    		mStorageDirectory = path;
+    		Debug("Logger", "Storage directory set to " + path, false);
+    		
+    		Shutdown();
+    		InitApp();
+    	}
     }
     
     //Called to update the displayed text
@@ -386,7 +394,7 @@ public class DaveLogger extends Activity implements Runnable
     	Debug("Logger", "Starting LogViewer", false);
 		Intent i = new Intent(getApplicationContext(), LogViewer.class);
 		i.putExtra("safe", mState.Safe);
-		i.putExtra("directory", mRootDirectory);
+		i.putExtra("directory", mStorageDirectory);
 		i.putExtra("configfile", mConfigFile);
 		i.putExtra("logfile", mLogFile);
 		startActivity(i);
@@ -683,6 +691,10 @@ public class DaveLogger extends Activity implements Runnable
         	Debug("Logger", "Exporting log", false);
         	mLog.ExportLog(mConfig);
         	return true;
+        case R.id.mainmenu_directory:
+        	Debug("Logger", "Changing directory", false);
+        	ShowStorageDirectoryPicker();
+        	return true;
         case R.id.mainmenu_email:
         	Debug("Logger", "Emailing log", false);
         	mLog.EmailLog(this, mConfig);
@@ -695,7 +707,7 @@ public class DaveLogger extends Activity implements Runnable
 				@Override
 				public void run()
 				{
-					mState = LoggerState.Create(mRootDirectory + mStateFile, mLog.GetLogEntries(), mConfig);
+					mState = LoggerState.Create(mStorageDirectory + "/" + mStateFile, mLog.GetLogEntries(), mConfig);
 					mProgress.dismiss();
 				}
         	}).start();
@@ -748,6 +760,7 @@ public class DaveLogger extends Activity implements Runnable
     		mUpdateThread.join();
     	}
     	catch(Exception e){}
+    	mQuitThread = false;
     }
 
     
@@ -760,7 +773,7 @@ public class DaveLogger extends Activity implements Runnable
     		Context context = null;
     		if(showToast)
     			context = getApplicationContext();
-    		DebugFile.Write(mRootDirectory, tag, message, context);
+    		DebugFile.Write(mStorageDirectory, tag, message, context);
     	}
     }
     

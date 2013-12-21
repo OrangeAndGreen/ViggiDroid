@@ -12,7 +12,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-	    <activity class="com.Dave.Logger.LogViewer" android:label="View Log" android:name="LogViewer">
+	    <activity class=".LogViewer" android:label="View Log" android:name="LogViewer">
+	    </activity>
+	    <activity class="com.Dave.Files.DirectoryPicker" android:label="Choose directory" android:name="com.Dave.Files.DirectoryPicker">
 	    </activity>
     </application>
 </manifest>
