@@ -14,10 +14,10 @@ public class GraphLine implements IGraphElement
 	
 	public GraphLine()
 	{
-		this(null, null);
+		this(null, null, 1);
 	}
 	
-	public GraphLine(Point start, Point end)
+	public GraphLine(Point start, Point end, int width)
 	{
 		Start = start;
 		End = end;
@@ -25,6 +25,8 @@ public class GraphLine implements IGraphElement
 			Start = new Point(0, 0);
 		if(End == null)
 			End = new Point(0, 0);
+		
+		mPaint.setStrokeWidth(width);
 		SetColor(Color.WHITE);
 	}
 	

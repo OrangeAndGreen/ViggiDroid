@@ -1,9 +1,10 @@
 package com.Dave.Graph;
 
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+
 import com.Dave.DateStrings.DateStrings;
 import com.Dave.Files.ErrorFile;
 import com.Dave.Graph.GraphAxis.EdgeType;
@@ -68,7 +69,7 @@ import android.view.View;
 
 public class GraphView extends View
 {
-	private int mDrawCount = 0;
+	//private int mDrawCount = 0;
 	
 	//Drawing members
 	private int mTotalHeight = 0;
@@ -159,13 +160,15 @@ public class GraphView extends View
 		}
 	}
 	
-	public void EasyLineGraph(float[] xValues, float[] yValues)
+	public void EasyLineGraph(float[] xValues, float[] yValues, FloatRectangle dataBounds)
 	{
 		try
 		{
 			//Draw the default graph
 			ClearGraph();
 		
+			mDataRangeOverride = dataBounds;
+			
 			Title.Text = "Scatter plot";
 		
 			Plots.add(new GraphPlot(xValues, yValues));
@@ -290,7 +293,7 @@ public class GraphView extends View
     public void Draw(Canvas canvas)
     {
     	Log.i("GraphView.Draw", String.format("Drawing graph"));
-    	mDrawCount++;
+    	//mDrawCount++;
     	UpdateParams();
 
     	Paint paint = new Paint();
@@ -387,16 +390,16 @@ public class GraphView extends View
             int curDay = curDate.get(Calendar.DAY_OF_WEEK) % 7;
             int monthDay = curDate.get(Calendar.DAY_OF_MONTH);
 			int month = curDate.get(Calendar.MONTH) + 1;
-			if(lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
+			int year = curDate.get(Calendar.YEAR);
+			if(labelDates && lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
 			{
-				if(curDay == 1 || curDay == 0)
+				if(curDay == 0 || curDay == 1)
 				{
-					//Log.d("DEBUG", String.format("AddDateInfo: Weekend at %s", DateStrings.GetDateTimeString(curDate)));
 					//Draw weekend shading
 					float halfColumn = pixelRatio / 2;
 					float xStart = x - halfColumn;
 					float xEnd = x + halfColumn + 1;
-					
+										
 					if(i == 0)
 						xStart = x;
 					if(i == numDates - 1)
@@ -407,39 +410,43 @@ public class GraphView extends View
 					bar.FillColor = blue;
 					Bars.add(bar);
 				}
-				if(labelDates && monthDay == 1)
+				
+				int lineThickness = 0;
+				String labelText = null;
+				if(totalDays < 30)
 				{
-					//Log.d("DEBUG", String.format("AddDateInfo: Month-line at %s", DateStrings.GetDateTimeString(curDate)));
-					
-					//Draw start-of-month line
-					GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom));
+					//Label each day
+					labelText = String.format(Locale.getDefault(), "%d", monthDay);
+				}
+				else if(monthDay == 1)
+				{
+					if(totalDays < 730) //Label start-of-month
+						labelText = String.format(Locale.getDefault(), "%d", month);
+					else if(month == 1) //Label start-of-year
+						labelText = String.format(Locale.getDefault(), "%d", year);
+				}
+				
+				if(monthDay == 1)
+				{
+					//Draw line for start-of-month
+					lineThickness = 1;
+					if(month == 1 || month == 7) //Make January and July thicker lines
+						lineThickness = 2;
+				}
+				
+				if(lineThickness > 0)
+				{
+					GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom), lineThickness);
 					line.SetColor(Color.DKGRAY);
 					Lines.add(line);
+				}
 					
-					if(month == 1 || month == 7)
-					{
-						//Draw a second line to make January and July thicker
-						line = new GraphLine(new Point((int)x + 1, mGraphBounds.Top), new Point((int)x + 1, mGraphBounds.Bottom));
-						line.SetColor(Color.DKGRAY);
-						Lines.add(line);
-					}
-					
-					if(totalDays < 730) //2 years
-					{
-						String monthText = String.format("%d", month);
-						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), monthText);
-						label.HAlign = Align.CENTER;
-						label.VAlign = VerticalAlign.TOP;
-						Labels.add(label);
-					}
-					else if (month == 1) //January
-					{
-						String yearText = String.format("%d", curDate.get(Calendar.YEAR));
-						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), yearText);
-						label.HAlign = Align.CENTER;
-						label.VAlign = VerticalAlign.TOP;
-						Labels.add(label);
-					}
+				if(labelText != null)
+				{
+					GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), labelText);
+					label.HAlign = Align.CENTER;
+					label.VAlign = VerticalAlign.TOP;
+					Labels.add(label);
 				}
 			}
 			lastMonthDay = monthDay;

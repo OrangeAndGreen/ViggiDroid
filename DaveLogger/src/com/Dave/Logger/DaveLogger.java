@@ -1,19 +1,16 @@
 package com.Dave.Logger;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
@@ -23,7 +20,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -359,7 +355,7 @@ public class DaveLogger extends Activity implements Runnable
     				String hist1 = DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][0], now, 2);
     				String hist2 = DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][1], now, 2);
     				String hist3 = DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][2], now, 2);
-    				String summaryText = String.format("%d today, last: %s\nHistory: %s, %s, %s",
+    				String summaryText = String.format(Locale.getDefault(), "%d today, last: %s\nHistory: %s, %s, %s",
     						mState.EventDailyCounts[index],
     						DateStrings.GetPrintableDateTimeString(mState.EventRecentHistories[index][0], mConfig.MidnightHour),
     						hist1, hist2, hist3);

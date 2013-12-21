@@ -232,7 +232,7 @@ public class GraphAxis implements IGraphElement
 		if(Edge == EdgeType.POLAR)
 			Axis = new GraphCircle(axisStart, PolarRadius);
 		else
-			Axis = new GraphLine(axisStart, axisEnd);
+			Axis = new GraphLine(axisStart, axisEnd, 1);
 		
 		Axis.SetColor(GetColor());
 		

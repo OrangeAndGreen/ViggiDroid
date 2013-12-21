@@ -6,7 +6,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Paint.Align;
-import android.util.Log;
 
 public class GraphLabel implements IGraphElement
 {

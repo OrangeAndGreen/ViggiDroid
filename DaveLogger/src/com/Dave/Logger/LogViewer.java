@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 
 import com.Dave.DateStrings.DateStrings;
 import com.Dave.Graph.FloatRectangle;
@@ -480,8 +479,26 @@ public class LogViewer extends Activity implements Runnable
 			List<Float> yValues = new ArrayList<Float>();
 			if(data.size() > 0)
 			{
+				if(isToggle)
+				{
+					LogEntry lastEntry = data.get(data.size() - 1);
+					if(lastEntry.ToggleState.equals("on"))
+					{
+						LogEntry newLast = new LogEntry(DateStrings.GetDateTimeString(Calendar.getInstance()), lastEntry.GetType(), "off", null);
+						data.add(newLast);
+					}
+				}
+				
 				LogEntry lastEntry = null;
 				int lastX = 0;
+				
+				Calendar start = Calendar.getInstance();
+				start.set(Calendar.MONTH, 10);
+				start.set(Calendar.DAY_OF_MONTH, 3);
+				Calendar end = Calendar.getInstance();
+				end.set(Calendar.MONTH, 10);
+				end.set(Calendar.DAY_OF_MONTH, 5);
+				
 				for(int i=0; i<data.size(); i++)
 				{
 					LogEntry curEntry = data.get(i);
@@ -497,6 +514,9 @@ public class LogViewer extends Activity implements Runnable
 						
 						if(lastEntry != null)
 						{
+							if(date.after(start) && date.before(end))
+								Log.d("DEBUG", String.format("%d from %s to %s", curX - lastX, DateStrings.GetDateTimeString(lastEntry.GetDate()), DateStrings.GetDateTimeString(date)));
+							
 							//Code for "off" entries
 							for(int j=0; j<curX - lastX; j++)
 							{
@@ -822,10 +842,23 @@ public class LogViewer extends Activity implements Runnable
 	
 			//Extract the data specified by "category"
 			List<LogEntry> data = mLog.ExtractLog(category, mConfig);
-			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
-	
-			int historyDays = GetDesiredLengthInDays(timeRange);
+			Calendar[] dates = new Calendar[data.size()];;
+			float[] values = new float[data.size()];
+			for(int i=0; i<data.size(); i++)
+			{
+				dates[i] = data.get(i).GetDate();
+				try
+				{
+					values[i] = Float.parseFloat(data.get(i).GetComment());
+				}
+				catch(Exception e)
+				{ }
+			}
+			float[] allAves = ArrayMath.GetAllTimeRunningAverageCurve(values);
+			float[] runningAves = ArrayMath.GetRunningAverageCurve(values, 30);
 			
+			Calendar firstDate = Calendar.getInstance();
+			int historyDays = GetDesiredLengthInDays(timeRange);
 			if(historyDays > 0)
 			{
 				Calendar filterDate = Calendar.getInstance();
@@ -833,96 +866,69 @@ public class LogViewer extends Activity implements Runnable
 				filterDate.set(Calendar.HOUR, 0);
 				filterDate.set(Calendar.MINUTE, 0);
 				filterDate.set(Calendar.SECOND, 0);
+				firstDate = filterDate;
 				
-				List<LogEntry> tempData = new ArrayList<LogEntry>();
-				
+				List<Calendar> dateSubset = new ArrayList<Calendar>();
+				List<Float> subset = new ArrayList<Float>();
+				List<Float> allAveSubset = new ArrayList<Float>();
+				List<Float> runningAveSubset = new ArrayList<Float>();
 				for(int i=0; i<data.size(); i++)
 					if(data.get(i).GetDate().after(filterDate))
-						tempData.add(data.get(i));
-				
-				if(isToggle && tempData.get(0).ToggleState == "off")
-					tempData.remove(0);
-				
-				data = tempData;
-			}
-			
-			Debug("LogViewer", "Entries: " + data.size(), false);
-			
-			Calendar firstDate = data.get(0).GetDate();
-			
-			List<Float> xValues = new ArrayList<Float>();
-			List<Float> yValues = new ArrayList<Float>();
-			LogEntry lastEntry = null;
-			int lastX = 0;
-			for(int i=0; i<data.size(); i++)
-			{
-				LogEntry curEntry = data.get(i);
-				Calendar date = curEntry.GetDate();
-				
-				float hour = date.get(Calendar.HOUR_OF_DAY);
-				float minute = date.get(Calendar.MINUTE);
-				float second = date.get(Calendar.SECOND);
-				
-				if(isToggle)
-				{
-					int curX = DateStrings.GetActiveDiffInDays(firstDate, date, 0);
-					
-					if(lastEntry != null)
 					{
-						//Code for "off" entries
-						for(int j=0; j<curX - lastX; j++)
-						{
-							xValues.add((float)(lastX + j));
-							yValues.add((float)24);
-							
-							xValues.add((float)(lastX + j + 1));
-							yValues.add((float)0);
-						}
-						
-						lastEntry = null;
+						dateSubset.add(dates[i]);
+						subset.add(values[i]);
+						allAveSubset.add(allAves[i]);
+						runningAveSubset.add(runningAves[i]);
 					}
-					else
-					{
-						//Code for "on" entries
-						lastEntry = curEntry;
-					}
-					
-					lastX = curX;
-				}
 				
-				xValues.add((float)DateStrings.GetActiveDiffInDays(firstDate, date, 0));
+				int subsetSize = subset.size();
+				dates = new Calendar[subsetSize];
+				values = new float[subsetSize];
+				allAves = new float[subsetSize];
+				runningAves = new float[subsetSize];
 				
-				float value = -1;
-				try
+				for(int i=0; i<subsetSize; i++)
 				{
-					value = Float.parseFloat(curEntry.GetComment());
+					dates[i] = dateSubset.get(i);
+					values[i] = subset.get(i);
+					allAves[i] = allAveSubset.get(i);
+					runningAves[i] = runningAveSubset.get(i);
 				}
-				catch(Exception e)
-				{
-					Debug("LogViewer", String.format("Error parsing value %s for entry at %s", curEntry.GetComment(), DateStrings.GetDateTimeString(curEntry.GetDate())), false);
-				}
-				Debug("Viewer", String.format("Parsed value: %f", value), false);
-				yValues.add(value);
 			}
-			
-			//Convert the lists to arrays
-			float[] x = new float[xValues.size()];
-			float[] y = new float[yValues.size()];
-			for(int i = 0; i < xValues.size(); i++)
+			else
 			{
-				x[i] = xValues.get(i);
-				y[i] = yValues.get(i);
+				if(dates.length > 0)
+					firstDate = dates[0];
 			}
 			
-			mGraph.EasyLineGraph(x, y);
+			float[] x = new float[dates.length];
+			for(int i=0; i<dates.length; i++)
+			{
+				x[i] = (float)DateStrings.GetActiveDiffInDays(firstDate, dates[i], 0);
+			}
+			
+			float min = ArrayMath.GetMin(values);
+			float max = ArrayMath.GetMax(values);
+			mGraph.EasyLineGraph(x, values, new FloatRectangle(0, max, (float)DateStrings.GetActiveDiffInDays(firstDate, Calendar.getInstance(), 0), min));
 			mGraph.Plots.get(0).PointColor = Color.YELLOW;
+			mGraph.Plots.get(0).SetColor(Color.WHITE);
+			
+			//Setup the all-time average plot
+			mGraph.Plots.add(new GraphPlot(x, allAves));
+			mGraph.Plots.get(1).SetColor(Color.RED);
+			mGraph.Plots.get(1).DrawPoints = false;
+		        
+			//Setup the running average plot
+			mGraph.Plots.add(new GraphPlot(x, runningAves));
+			mGraph.Plots.get(2).SetColor(Color.GREEN);
+			mGraph.Plots.get(2).DrawPoints = false;
 			
 			//Setup the title
-			//mGraph.Title.Text = String.format("All-time: %.02f%s/day, currently: %.02f%s/day\nFirst entry: %s",
-			//							average, units, ave[ave.length - 1], units, DateStrings.GetDateString(startDate));
+			mGraph.Title.Text = String.format("All-time: %.02f, currently: %.02f",
+					allAves[allAves.length - 1], runningAves[runningAves.length - 1]);
 			
 			//Add the weekend shading and start-of-month indicators
-			//mGraph.AddDateInfo(startDate);
+			mGraph.AddDateInfo(firstDate, Calendar.getInstance(), true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
 			mGraph.BottomAxis.DrawLabels = false;

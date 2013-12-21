@@ -1,8 +1,7 @@
 package com.Dave.DateStrings;
 
 import java.util.Calendar;
-
-import android.util.Log;
+import java.util.Locale;
 
 public class DateStrings
 {
@@ -15,7 +14,7 @@ public class DateStrings
     	int year = curDate.get(Calendar.YEAR);
     	int month = curDate.get(Calendar.MONTH) + 1;
     	int day = curDate.get(Calendar.DAY_OF_MONTH);
-    	String dateStr = String.format("%04d%02d%02d", year, month, day);
+    	String dateStr = String.format(Locale.getDefault(), "%04d%02d%02d", year, month, day);
     	return dateStr;
     }
     
@@ -31,7 +30,7 @@ public class DateStrings
     	int hour = curDate.get(Calendar.HOUR_OF_DAY);
     	int minute = curDate.get(Calendar.MINUTE);
     	int second = curDate.get(Calendar.SECOND);
-    	String dateStr = String.format("%04d%02d%02d_%02d%02d%02d", year, month, day, hour, minute, second);
+    	String dateStr = String.format(Locale.getDefault(), "%04d%02d%02d_%02d%02d%02d", year, month, day, hour, minute, second);
     	return dateStr;
     }
     
@@ -44,7 +43,7 @@ public class DateStrings
     	int year = curDate.get(Calendar.YEAR);
     	int month = curDate.get(Calendar.MONTH) + 1;
     	int day = curDate.get(Calendar.DAY_OF_MONTH);
-    	return String.format("%d/%d/%04d", month, day, year);
+    	return String.format(Locale.getDefault(), "%d/%d/%04d", month, day, year);
     }
     
     public static String GetPrintableDateTimeString(Calendar curDate, int midnightHour)
@@ -58,10 +57,10 @@ public class DateStrings
     	int hour = curDate.get(Calendar.HOUR_OF_DAY);
     	int minute = curDate.get(Calendar.MINUTE);
     	int second = curDate.get(Calendar.SECOND);
-    	String dateString = String.format("%d/%d", month, day);
+    	String dateString = String.format(Locale.getDefault(), "%d/%d", month, day);
     	if(SameDay(curDate, Calendar.getInstance(), midnightHour))
     		dateString = "today";
-    	return String.format("%s %d:%02d:%02d", dateString, hour, minute, second);
+    	return String.format(Locale.getDefault(), "%s %d:%02d:%02d", dateString, hour, minute, second);
     }
     
     public static String GetPresentableDateTimeString(Calendar curDate)
@@ -75,8 +74,8 @@ public class DateStrings
     	int hour = curDate.get(Calendar.HOUR_OF_DAY);
     	int minute = curDate.get(Calendar.MINUTE);
     	int second = curDate.get(Calendar.SECOND);
-    	String dateString = String.format("%d/%d", month, day);
-    	return String.format("%s %d:%02d:%02d", dateString, hour, minute, second);
+    	String dateString = String.format(Locale.getDefault(), "%d/%d", month, day);
+    	return String.format(Locale.getDefault(), "%s %d:%02d:%02d", dateString, hour, minute, second);
     }
     
     public static String GetElapsedTimeString(Calendar oldDate, Calendar newDate, int maxCount)
@@ -87,8 +86,8 @@ public class DateStrings
     	}
     	long elapsed = newDate.getTimeInMillis() - oldDate.getTimeInMillis();
     	
-    	String elapsedStr = GetElapsedTimeString(elapsed, maxCount);
-    	float days = (float)(newDate.getTimeInMillis() - oldDate.getTimeInMillis()) / 1000/3600 /24;
+    	//String elapsedStr = GetElapsedTimeString(elapsed, maxCount);
+    	//float days = (float)(newDate.getTimeInMillis() - oldDate.getTimeInMillis()) / 1000/3600 /24;
     	
     	//Log.d("DateString", String.format("Difference between %s and %s  (%.02f days) is %s", GetDateTimeString(oldDate), GetDateTimeString(newDate), days, elapsedStr));
     	
@@ -246,6 +245,7 @@ public class DateStrings
     	Calendar oldActDate = null;
     	Calendar newActDate = null;
     	int reverser = 1;
+    	//Create clones of the two dates, and put them in chronological order for the calculations 
     	if(oldDate.getTimeInMillis() < newDate.getTimeInMillis())
     	{
     		oldActDate = (Calendar) oldDate.clone();
@@ -257,6 +257,8 @@ public class DateStrings
     		oldActDate = (Calendar) newDate.clone();
     		newActDate = (Calendar) oldDate.clone();
     	}
+    	
+    	//Shift the dates by the midnight hour
     	oldActDate.add(Calendar.HOUR, -midnightHour);
     	newActDate.add(Calendar.HOUR, -midnightHour);
     	
@@ -266,17 +268,24 @@ public class DateStrings
     	int daysApart = 0;
     	while(true)
     	{
-
-    		
     		int oldActYear = oldActDate.get(Calendar.YEAR);
         	int oldActMonth = oldActDate.get(Calendar.MONTH);
         	int oldActDay = oldActDate.get(Calendar.DAY_OF_MONTH);
         	
         	if(newActYear == oldActYear && newActMonth == oldActMonth && newActDay == oldActDay)
         		break;
+        	
+        	//Advance the old date 24 hours at a time until the two dates match
     		oldActDate.add(Calendar.HOUR, 24);
         	daysApart++;
     	}
+    	
+    	//Safety check to handle strangeness that can occur when daylight savings changes 
+    	int actualDiffInDays = (int)(((float)newDate.getTimeInMillis() - oldDate.getTimeInMillis()) / 1000 / 3600 / 24);
+    	if(daysApart - actualDiffInDays > 1)
+    		daysApart--;
+    	if(actualDiffInDays - daysApart > 1)
+    		daysApart++;
     	
     	return daysApart * reverser;
     }
