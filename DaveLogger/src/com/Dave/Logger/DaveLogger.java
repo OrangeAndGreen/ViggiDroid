@@ -16,7 +16,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
@@ -219,24 +218,14 @@ public class DaveLogger extends Activity implements Runnable
 
         	//Find and configure common GUI components
         	Debug("Logger", "Finding GUI components", false);
-        	//if(mIntroText == null)
-        		mIntroText = (TextView) findViewById(R.id.introText);
-        	//if(mDateCheck == null)
-        		mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
-        	//if(mCommentCheck == null)
-        		mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
-        	//if(mSafeButton == null)
-        	{
-        		mSafeButton = (Button) findViewById(R.id.safeButton);
-        		mSafeButton.setOnClickListener(new SafeListener());
-        	}
-        	//if(mViewButton == null)
-        	{
-        		mViewButton = (Button) findViewById(R.id.viewButton);
-        		mViewButton.setOnClickListener(new GraphViewListener());
-        	}
-        	//if(mDebugText == null)
-        		mDebugText = (TextView) findViewById(R.id.debugText);
+        	mIntroText = (TextView) findViewById(R.id.introText);
+        	mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
+        	mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
+        	mSafeButton = (Button) findViewById(R.id.safeButton);
+        	mSafeButton.setOnClickListener(new SafeListener());
+        	mViewButton = (Button) findViewById(R.id.viewButton);
+        	mViewButton.setOnClickListener(new GraphViewListener());
+        	mDebugText = (TextView) findViewById(R.id.debugText);
         	mDebugText.setText("");
         	
         	//Setup toggle sets

@@ -213,7 +213,7 @@ public class LogFile
 				{
 					//Add the current count for the end of the previous day,
 						//then any zero-days to catch up to the current day
-					countsPerDay.add(new Float(dayCount));
+					countsPerDay.add((float)dayCount);
 					dayCount = 0;
 				}
 				dayCount = 1;
