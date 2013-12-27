@@ -102,7 +102,6 @@ public class DaveLogger extends Activity implements Runnable
     private String mConfigFile = "Config.txt";
     
     private LoggerState mState = null;
-    private String mStateFile = "Temp.txt";
 
     private LogFile mLog = null;    
     private String mLogFile = "Log.txt";
@@ -259,12 +258,11 @@ public class DaveLogger extends Activity implements Runnable
         	}
         
         	Debug("Logger", "Loading temp file", false);
-        	String stateFilePath = mStorageDirectory + "/" + mStateFile;
-        	mState = LoggerState.FromFile(stateFilePath, mConfig);
+        	mState = LoggerState.Load(getPreferences(0), mConfig);
         	if(mState == null)
         	{
         		Debug("Logger", "Temp file not found, creating new", false);
-        		mState = LoggerState.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
+        		mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
         	}
         	
         	for(int i=0; i<numToggles; i++)
@@ -469,10 +467,10 @@ public class DaveLogger extends Activity implements Runnable
     			boolean setDate = mDateCheck.isChecked();
     			boolean addComment = mIsValue || mCommentCheck.isChecked();
 
-    			String withDate = null;
+    			String withDate = "";
     			if(setDate)
     				withDate = " with custom date";
-    			String withComment = null;
+    			String withComment = "";
     			if(addComment)
     				withComment = " with comment";
     			Debug("Logger", "Logging button" + withDate + withComment, false);
@@ -696,7 +694,7 @@ public class DaveLogger extends Activity implements Runnable
 				@Override
 				public void run()
 				{
-					mState = LoggerState.Create(mStorageDirectory + "/" + mStateFile, mLog.GetLogEntries(), mConfig);
+					mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
 					mProgress.dismiss();
 				}
         	}).start();
