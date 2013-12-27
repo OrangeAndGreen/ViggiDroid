@@ -62,15 +62,17 @@ public class GraphPoint implements IGraphElement
 	
 	public void RecalculateGraphPosition(GraphRectangle bounds, FloatRectangle dataBounds)
 	{
-    	int x = bounds.Left + Math.round(XValue / (dataBounds.GetWidth() - 1) * bounds.GetWidth());
+    	int x = bounds.Left + Math.round(XValue / (dataBounds.GetWidth()) * bounds.GetWidth());
     	int y = bounds.Bottom - Math.round(YValue / dataBounds.GetHeight() * bounds.GetHeight());
+    	
+    	//if(XValue > 23)
+		//	Log.d("GraphPoint", String.format("Scaling %.02f between %.02f and %.02f, to %d", XValue, dataBounds.Left, dataBounds.Right, x));
     	
     	Location = new Point(x, y);
 	}
 	
 	public void Draw(Canvas canvas, GraphRectangle bounds, FloatRectangle dataBounds)
 	{
-		
 		//Calculate the pixel location from the data value if necessary (used for histogram points)
 		if(Location == null)
 			RecalculateGraphPosition(bounds, dataBounds);

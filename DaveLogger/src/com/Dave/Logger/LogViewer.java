@@ -45,7 +45,7 @@ public class LogViewer extends Activity implements Runnable
 	private com.Dave.Graph.GraphView mGraph = null;
 	private ScrollView mTextScroller = null;
 	private TextView mTextView = null;
-	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Intervals", "Values", "Stats", "Comments", "Recent History"};
+	private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Hourly Histogram", "Intervals", "Values", "Stats", "Comments", "Recent History"};
 	private CharSequence[] mCategoryStrings = null;
 	private boolean[] mCategoryTypes = null;
 	private CharSequence[] mTimeOptions = { "All-time", "1 Year", "6 Months", "3 Months", "1 Month", "2 Weeks", "1 Week" };
@@ -262,6 +262,9 @@ public class LogViewer extends Activity implements Runnable
 			String action = prepare ? "Preparing" : "Drawing";
 			Debug("LogViewer", action + " graph: " + category + ", " + typeIndex, false);
 			
+			if(prepare)
+				mGraph.ClearGraph();
+			
 			switch(typeIndex)
 			{
 			case 0:
@@ -277,9 +280,12 @@ public class LogViewer extends Activity implements Runnable
 				DrawDailyHistogramGraph(category, prepare);
 				break;
 			case 4:
-				DrawIntervalsGraph(category, timeRange, prepare);
+				DrawHourlyHistogramGraph(category, prepare);
 				break;
 			case 5:
+				DrawIntervalsGraph(category, timeRange, prepare);
+				break;
+			case 6:
 				if(categoryType)
 				{
 					DrawValuesGraph(category, timeRange, prepare);
@@ -289,13 +295,13 @@ public class LogViewer extends Activity implements Runnable
 					DrawDailyCountsGraph(category, timeRange, prepare);
 				}
 				break;
-			case 6:
+			case 7:
 				DrawStats(category, prepare);
 				break;
-			case 7:
+			case 8:
 				DrawComments(category, prepare);
 				break;
-			case 8:
+			case 9:
 				DrawRecentHistory(category, timeRange, prepare);
 				break;
 			default:
@@ -492,13 +498,6 @@ public class LogViewer extends Activity implements Runnable
 				LogEntry lastEntry = null;
 				int lastX = 0;
 				
-				Calendar start = Calendar.getInstance();
-				start.set(Calendar.MONTH, 10);
-				start.set(Calendar.DAY_OF_MONTH, 3);
-				Calendar end = Calendar.getInstance();
-				end.set(Calendar.MONTH, 10);
-				end.set(Calendar.DAY_OF_MONTH, 5);
-				
 				for(int i=0; i<data.size(); i++)
 				{
 					LogEntry curEntry = data.get(i);
@@ -513,10 +512,7 @@ public class LogViewer extends Activity implements Runnable
 						int curX = DateStrings.GetActiveDiffInDays(firstDate, date, 0);
 						
 						if(lastEntry != null)
-						{
-							if(date.after(start) && date.before(end))
-								Log.d("DEBUG", String.format("%d from %s to %s", curX - lastX, DateStrings.GetDateTimeString(lastEntry.GetDate()), DateStrings.GetDateTimeString(date)));
-							
+						{							
 							//Code for "off" entries
 							for(int j=0; j<curX - lastX; j++)
 							{
@@ -711,6 +707,52 @@ public class LogViewer extends Activity implements Runnable
 			if(day > 0)
 				startDate.add(Calendar.HOUR, -24 * day);				
 			mGraph.AddDateInfo(startDate, false);
+		}
+	}
+	
+	private void DrawHourlyHistogramGraph(String category, boolean prepare)
+	{
+		if(!prepare)
+		{
+			Debug("LogViewer", "Drawing hourly histogram graph", false);
+			mGraph.setVisibility(View.VISIBLE);
+			mTextScroller.setVisibility(View.GONE);
+			
+			mGraph.invalidate();
+		}
+		else
+		{
+			Debug("LogViewer", "Preparing hourly histogram graph", false);
+			
+			List<LogEntry> entries = mLog.ExtractLog(category, mConfig);
+			boolean isToggle = mConfig.Toggles.indexOf(category) >= 0;
+			
+			float[] hist = mLog.GetHourlyHistogram(entries);
+			float yMax = ArrayMath.GetCeiling(hist);
+			
+			mGraph.EasyGraph(hist, new FloatRectangle(0, yMax, 24, 0));
+			mGraph.Plots.get(0).SetColor(Color.WHITE);
+			mGraph.Plots.get(0).DrawPoints = false;
+			
+			mGraph.BottomAxis.GenerateLabels(0, 24, 1, false);
+			mGraph.BottomAxis.DrawLabels = true;
+			mGraph.Title.Text = "Hourly histogram";
+			
+			//Add a data point for every entry showing the exact time-of-day
+			for(int i=0; i<entries.size(); i++)
+			{
+				float hour = entries.get(i).GetDate().get(Calendar.HOUR_OF_DAY);
+				float minute = entries.get(i).GetDate().get(Calendar.MINUTE);
+				float second = entries.get(i).GetDate().get(Calendar.SECOND);
+				
+				float x = hour + minute / 60 + second / 3600;
+				
+				int color = Color.GREEN;
+				if(isToggle && entries.get(i).ToggleState.equals("off"))
+					color = Color.RED;
+				
+				mGraph.AddDataPoint(x, yMax / 2, color);
+			}
 		}
 	}
 	

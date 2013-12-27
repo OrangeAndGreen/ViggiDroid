@@ -371,6 +371,27 @@ public class LogFile
         return weekDays;
     }
     
+    public float[] GetHourlyHistogram(List<LogEntry> entries)
+    {
+    	float[] hist = new float[24];
+    	
+    	for(int i=0; i<entries.size(); i++)
+    	{
+    		LogEntry entry = entries.get(i);
+    		
+    		int hour = (int) entry.GetDate().get(Calendar.HOUR_OF_DAY);
+    		
+    		hist[hour]++;
+    	}
+    	
+    	//Convert the counts to percentages
+    	if(entries.size() > 0)
+    		for(int i=0; i<hist.length; i++)
+    			hist[i] = hist[i] / entries.size() * 100;
+    	
+    	return hist;
+    }
+    
 	public String GetStats(String category, LoggerConfig config)
     {
         String stats = "";

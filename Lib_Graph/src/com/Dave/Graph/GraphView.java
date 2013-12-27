@@ -121,6 +121,8 @@ public class GraphView extends View
 		Lines.clear();
 		Points.clear();
 		Labels.clear();
+		
+		mDataRangeOverride = null;
 	}
 
 	public void EmptyGraph()
@@ -158,6 +160,12 @@ public class GraphView extends View
 		{
 			ErrorFile.WriteException(e, null);
 		}
+	}
+	
+	public void EasyGraph(float[] data, FloatRectangle dataBounds)
+	{
+		EasyGraph(data);
+		mDataRangeOverride = dataBounds;
 	}
 	
 	public void EasyLineGraph(float[] xValues, float[] yValues, FloatRectangle dataBounds)
@@ -293,6 +301,7 @@ public class GraphView extends View
     public void Draw(Canvas canvas)
     {
     	Log.i("GraphView.Draw", String.format("Drawing graph"));
+    	Log.d("GraphView.Draw", String.format("Graph bounds: %d-%d, %d-%d", mGraphBounds.Left, mGraphBounds.Right, mGraphBounds.Bottom, mGraphBounds.Top));
     	//mDrawCount++;
     	UpdateParams();
 
