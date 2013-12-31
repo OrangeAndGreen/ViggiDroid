@@ -29,7 +29,7 @@ public class PolarPlot extends GraphPlot
 	@Override
 	public FloatRectangle GetDataRange()
 	{
-		//Log.e("GetRectangleRange", String.format("size: (%.02f, %d)", ArrayMath.GetMax(Data), Math.round(Data.length * XInterval)));
+		//Log.e("PolarPlot", String.format("size: (%.02f, %d)", ArrayMath.GetMax(Data), Math.round(Data.length * XInterval)));
 		return new FloatRectangle(0, ArrayMath.GetMax(Data), Math.round(Data.length * XInterval), 0);
 	}
 	
@@ -51,7 +51,7 @@ public class PolarPlot extends GraphPlot
 		float xCenter = ((float)bounds.Left + bounds.Right) / 2;
 		float yCenter = ((float)bounds.Top + bounds.Bottom) / 2;
 		
-		//Log.e("Graphing", String.format("Polar graph center pixel: %.02f, %.02f", xCenter, yCenter));
+		//Log.e("PolarPlot", String.format("Polar graph center pixel: %.02f, %.02f", xCenter, yCenter));
 		
 		//if(dataBounds.Top % 1 != 0)
 		//	dataBounds.Top = dataBounds.Top + 1 - (dataBounds.Top % 1);
@@ -112,7 +112,7 @@ public class PolarPlot extends GraphPlot
 		int xGuide = (int)(xCenter + plotRadius * (float)Math.cos((theta - 90) / 180 * Math.PI));
 		int yGuide = (int)(yCenter + plotRadius * (float)Math.sin((theta - 90) / 180 * Math.PI));
 		canvas.drawLine(xCenter, yCenter, xGuide, yGuide, mPaint);
-		Log.e("Graphing", String.format("(%d, %d)", xGuide, yGuide));
+		Log.e("PolarPlot", String.format("(%d, %d)", xGuide, yGuide));
 		theta = 0;
 		xGuide = (int)(xCenter + Data.length * dataXMultiplier * (float)Math.cos((theta - 90) / 180 * Math.PI));
 		yGuide = (int)(yCenter + Data.length * dataXMultiplier * (float)Math.sin((theta - 90) / 180 * Math.PI));

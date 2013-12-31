@@ -302,17 +302,17 @@ public class GraphView extends View
     	
     	UpdateParams();
     	
-    	Log.d("GraphView.Draw", String.format("Graph bounds: %d-%d, %d-%d", mGraphBounds.Left, mGraphBounds.Right, mGraphBounds.Bottom, mGraphBounds.Top));
+    	Log.i("GraphView.Draw", String.format("Graph bounds: %d-%d, %d-%d", mGraphBounds.Left, mGraphBounds.Right, mGraphBounds.Bottom, mGraphBounds.Top));
     	//mDrawCount++;
 
     	Paint paint = new Paint();
     	paint.setColor(Color.BLACK);
     	canvas.drawRect(0, 0, mTotalWidth, mTotalHeight, paint);
 		//Draw all of the elements for the graph
-    	//Log.e("Graphing", String.format("Number of elements: %d", mGraphElements.size()));
+    	//Log.e("GraphView", String.format("Number of elements: %d", mGraphElements.size()));
 		for(int i=0; i<mGraphElements.size(); i++)
 		{
-			//Log.e("Graphing", String.format("Drawing element %s", mGraphElements.get(i).GetName()));
+			//Log.e("GraphView", String.format("Drawing element %s", mGraphElements.get(i).GetName()));
 			mGraphElements.get(i).Draw(canvas, mGraphBounds, mDataRange);
 		}
 		
@@ -384,7 +384,7 @@ public class GraphView extends View
 		int numDates = dates.size();
 		int totalDays = DateStrings.GetActiveDiffInDays(dates.get(0), Calendar.getInstance(), 0) + 1;
 		
-		Log.d("GraphView", String.format("AddDateInfo: %d dates, %d total days", numDates, totalDays));
+		Log.i("GraphView", String.format("AddDateInfo: %d dates, %d total days", numDates, totalDays));
 		
 		if(totalDays < numDates)
 			totalDays = numDates;
@@ -482,7 +482,7 @@ public class GraphView extends View
 						if(labelText == null)
 							labelText = "";
 						
-						//Log.d("GraphView", "Adding label: '" + labelText + "'");
+						//Log.i("GraphView", "Adding label: '" + labelText + "'");
 						
 						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), labelText);
 						labels.add(label);

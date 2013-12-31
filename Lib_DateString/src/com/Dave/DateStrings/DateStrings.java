@@ -89,7 +89,7 @@ public class DateStrings
     	//String elapsedStr = GetElapsedTimeString(elapsed, maxCount);
     	//float days = (float)(newDate.getTimeInMillis() - oldDate.getTimeInMillis()) / 1000/3600 /24;
     	
-    	//Log.d("DateString", String.format("Difference between %s and %s  (%.02f days) is %s", GetDateTimeString(oldDate), GetDateTimeString(newDate), days, elapsedStr));
+    	//Log.i("DateStrings", String.format("Difference between %s and %s  (%.02f days) is %s", GetDateTimeString(oldDate), GetDateTimeString(newDate), days, elapsedStr));
     	
     	return GetElapsedTimeString(elapsed, maxCount);
     }
@@ -120,7 +120,7 @@ public class DateStrings
     	long minutes = (long) (timeTemp / secondsPerMinute);
     	long seconds = (long) (timeTemp - (minutes * secondsPerMinute));
     	
-    	//Log.d("DateStrings", String.format("%d months, %d weeks, %d days, %d hours", months, weeks, days, hours));
+    	//Log.i("DateStrings", String.format("%d months, %d weeks, %d days, %d hours", months, weeks, days, hours));
     	
     	int outCount = 0;
     	

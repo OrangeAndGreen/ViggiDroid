@@ -101,7 +101,7 @@ public class SudokuGameTwoPlayer
 	{
 		SudokuGameTwoPlayer game = new SudokuGameTwoPlayer();
 		
-		Log.d("SudokuGameTwoPlayer", input);
+		Log.i("SudokuGameTwoPlayer", input);
 		
 		String[] parts = input.split(",");
 		

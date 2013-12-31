@@ -312,7 +312,7 @@ public class LogViewer extends Activity implements Runnable
 		}
 		catch(Exception e)
 		{
-			Log.e("ERROR", "Error: " + e.toString());
+			Log.e("LogViewer", "Error: " + e.toString());
 			ErrorFile.WriteException(e, null);
 		}
 	}
@@ -465,7 +465,6 @@ public class LogViewer extends Activity implements Runnable
 				filterDate.set(Calendar.MINUTE, 0);
 				filterDate.set(Calendar.SECOND, 0);
 				firstDate = filterDate;
-				Log.d("DEBUG", String.format("Filter date: %s", DateStrings.GetDateTimeString(filterDate)));
 				
 				List<LogEntry> tempData = new ArrayList<LogEntry>();
 				
@@ -553,7 +552,6 @@ public class LogViewer extends Activity implements Runnable
 				y[i] = yValues.get(i);
 			}
 			
-			Log.d("DEBUG", String.format("First date: %s", DateStrings.GetDateTimeString(firstDate)));
 			mGraph.EasyScatterPlot(x, y, isToggle, new FloatRectangle(0, 24, (float)DateStrings.GetActiveDiffInDays(firstDate, Calendar.getInstance(), 0), 0));
 			mGraph.Plots.get(0).PointColor = Color.YELLOW;
 			

@@ -577,7 +577,7 @@ public class LogFile
                     }
                     //Use the following debug line when looking for out-of-order dates
 					//if(interval < 0)
-					//        Log.d("CHECK", "Adding interval " + interval + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
+					//        Log.i("LogFile", "Adding interval " + interval + " between " + DateStrings.GetDateTimeString(lastDate) + " and " + DateStrings.GetDateTimeString(curDate));
 				}
 			}
 				

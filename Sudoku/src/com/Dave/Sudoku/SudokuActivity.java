@@ -162,7 +162,7 @@ public class SudokuActivity extends Activity
 
 				public void OnPasswordChanged(List<SudokuGameTwoPlayer> gameList, String newPassword)
 				{
-					Log.d("", "Password changed");
+					Log.i("SudokuActivity", "Password changed");
 
 					Toast t = Toast.makeText(mContext, "Password changed", Toast.LENGTH_SHORT);
 					t.show();
@@ -178,7 +178,7 @@ public class SudokuActivity extends Activity
 
 				public void OnLoginFailed()
 				{
-					Log.d("", "Login failed");
+					Log.i("SudokuActivity", "Login failed");
 					
 					Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
 					t.show();
@@ -188,7 +188,7 @@ public class SudokuActivity extends Activity
 
 				public void OnConnectionFailed()
 				{
-					Log.e("", "Connection failed");
+					Log.e("SudokuActivity", "Connection failed");
 					
 					Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
 					t.show();
@@ -471,7 +471,7 @@ public class SudokuActivity extends Activity
 
 			public void OnLoginFailed()
 			{
-				Log.d("", "Login failed");
+				Log.i("SudokuActivity", "Login failed");
 				
 				Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
 				t.show();
@@ -481,7 +481,7 @@ public class SudokuActivity extends Activity
 
 			public void OnConnectionFailed()
 			{
-				Log.e("", "Connection failed");
+				Log.e("SudokuActivity", "Connection failed");
 				
 				Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
 				t.show();
@@ -667,7 +667,7 @@ public class SudokuActivity extends Activity
 
 				public void OnLoginFailed()
 				{
-					Log.d("", "Login failed when updating game");
+					Log.i("SudokuActivity", "Login failed when updating game");
 					
 					Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
 					t.show();
@@ -677,7 +677,7 @@ public class SudokuActivity extends Activity
 
 				public void OnConnectionFailed()
 				{
-					Log.e("", "Connection failed when updating game");
+					Log.e("SudokuActivity", "Connection failed when updating game");
 					
 					Toast t = Toast.makeText(mContext, "Connection failed", Toast.LENGTH_SHORT);
 					t.show();
@@ -820,7 +820,7 @@ public class SudokuActivity extends Activity
 			mPlayerName = name;
 			mPlayerPassword = password;
 
-			Log.d("", "Logging in");
+			Log.i("SudokuActivity", "Logging in");
 			
 			// Attempt to login
 			mClient.GetGameList(mServer, mPlayerName, mPlayerPassword, mRegisteredId, mGameListReadyListener);
@@ -831,14 +831,14 @@ public class SudokuActivity extends Activity
 			mPlayerName = name;
 			mPlayerPassword = password;
 
-			Log.d("", "Creating new player");
+			Log.i("SudokuActivity", "Creating new player");
 			
 			// Attempt to create player
 			mClient.CreatePlayer(mServer, mPlayerName, mPlayerPassword, mRegisteredId, new CreatePlayerListener()
 			{
 				public void OnPlayerCreated()
 				{
-					Log.d("", "Create player succeeded");
+					Log.i("SudokuActivity", "Create player succeeded");
 
 					Editor editor = mPreferences.edit();
 					editor.putString("PlayerName", mPlayerName);
@@ -850,7 +850,7 @@ public class SudokuActivity extends Activity
 
 				public void OnCreateFailed()
 				{
-					Log.d("", "Failed to create player");
+					Log.i("SudokuActivity", "Failed to create player");
 					
 					Toast t = Toast.makeText(mContext, "Player already exists", Toast.LENGTH_SHORT);
 					t.show();
@@ -880,7 +880,7 @@ public class SudokuActivity extends Activity
 	{
 		public void OnGameListReady(List<SudokuGameTwoPlayer> gameList)
 		{
-			Log.d("", "Login succeeded");
+			Log.i("SudokuActivity", "Login succeeded");
 
 			Editor editor = mPreferences.edit();
 			editor.putString("PlayerName", mPlayerName);
@@ -892,7 +892,7 @@ public class SudokuActivity extends Activity
 
 		public void OnLoginFailed()
 		{
-			Log.d("", "Login failed");
+			Log.i("SudokuActivity", "Login failed");
 			
 			Toast t = Toast.makeText(mContext, "Login failed", Toast.LENGTH_SHORT);
 			t.show();

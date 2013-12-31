@@ -66,7 +66,7 @@ public class GraphPoint implements IGraphElement
     	int y = bounds.Bottom - Math.round(YValue / dataBounds.GetHeight() * bounds.GetHeight());
     	
     	//if(XValue > 23)
-		//	Log.d("GraphPoint", String.format("Scaling %.02f between %.02f and %.02f, to %d", XValue, dataBounds.Left, dataBounds.Right, x));
+		//	Log.i("GraphPoint", String.format("Scaling %.02f between %.02f and %.02f, to %d", XValue, dataBounds.Left, dataBounds.Right, x));
     	
     	Location = new Point(x, y);
 	}

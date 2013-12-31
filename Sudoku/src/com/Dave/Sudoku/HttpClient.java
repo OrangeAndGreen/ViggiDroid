@@ -356,7 +356,7 @@ public class HttpClient
 		
 		String strResult = DownloadText(server, headers);
 
-		//Log.d("", "Gamelist response: " + strResult);
+		//Log.i("HttpClient", "Gamelist response: " + strResult);
 			
 		String[] lines = strResult.split("\n");
 		if(!CheckHttpResponse(lines[0]))
@@ -552,7 +552,7 @@ public class HttpClient
 		
 		String strResult = DownloadText(server, headers);
 
-		//Log.d("", "Gamelist response: " + strResult);
+		//Log.i("HttpClient", "Gamelist response: " + strResult);
 			
 		String[] lines = strResult.split("\n");
 		if(!CheckHttpResponse(lines[0]))

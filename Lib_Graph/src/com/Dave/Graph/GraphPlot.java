@@ -107,7 +107,7 @@ public class GraphPlot implements IGraphElement
 		
 		//if(XValues != null)
 		//	xMax = ArrayMath.GetMax(XValues);
-		//Log.d("DEBUG", String.format("Data max: %f, bounds.right: %f", xMax, dataBounds.Right));
+		//Log.i("GraphPlot", String.format("Data max: %f, bounds.right: %f", xMax, dataBounds.Right));
 		
 		//if(Data != null && Data.length > 1)
 		//	dataXMultiplier = (float)graphWidth / (xMax) * XInterval;

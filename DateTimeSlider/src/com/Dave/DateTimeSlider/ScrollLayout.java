@@ -103,7 +103,7 @@ public class ScrollLayout extends LinearLayout {
 		TimeView currelem = (TimeView)getChildAt(pos);
 		if (loops>2 || currelem.getStartTime() <= time && currelem.getEndTime() >= time) {
 			if (loops>2) {
-				Log.d(TAG,String.format("time: %d, start: %d, end: %d", time, currelem.getStartTime(), currelem.getStartTime()));
+				Log.i(TAG,String.format("time: %d, start: %d, end: %d", time, currelem.getStartTime(), currelem.getStartTime()));
 				return;
 			}
 			double center = getWidth()/2.0;
