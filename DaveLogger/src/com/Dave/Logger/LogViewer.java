@@ -381,6 +381,9 @@ public class LogViewer extends Activity implements Runnable
 			
 			if(desiredLength > 0)
 			{
+				if(desiredLength > data.length)
+					desiredLength = data.length;
+				
 				float[] tempData = new float[desiredLength];
 				float[] tempAve = new float[desiredLength];
 				float[] tempAllAve = new float[desiredLength];
@@ -425,7 +428,7 @@ public class LogViewer extends Activity implements Runnable
 			mGraph.AddDateInfo(startDate, true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
-			mGraph.BottomAxis.DrawLabels = false;
+			//mGraph.BottomAxis.DrawLabels = false;
 		}
 	}
 
@@ -453,6 +456,9 @@ public class LogViewer extends Activity implements Runnable
 			Calendar firstDate = Calendar.getInstance();
 			if(historyDays > 0)
 			{
+				if(historyDays > data.size())
+					historyDays = data.size();
+				
 				Calendar filterDate = Calendar.getInstance();
 				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
 				filterDate.set(Calendar.HOUR, 0);
@@ -559,7 +565,7 @@ public class LogViewer extends Activity implements Runnable
 			mGraph.AddDateInfo(firstDate, Calendar.getInstance(), true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
-			mGraph.BottomAxis.DrawLabels = false;
+			//mGraph.BottomAxis.DrawLabels = false;
 		}
 	}
 	
@@ -696,10 +702,6 @@ public class LogViewer extends Activity implements Runnable
 			mGraph.RightAxis.GenerateLabels(0, Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
 			mGraph.LeftAxis.GenerateLabels(0, Math.round(mGraph.GetDataRange().GetHeight()), 1, false);
 			
-			String[] labels = {"S", "S", "M", "T", "W", "T", "F"};
-			mGraph.BottomAxis.SetLabels(labels);
-			mGraph.BottomAxis.DrawLabels = true;
-			
 			mGraph.Title.Text = String.format("Histogram" + units);
 			
 			startDate = Calendar.getInstance();
@@ -707,6 +709,10 @@ public class LogViewer extends Activity implements Runnable
 			if(day > 0)
 				startDate.add(Calendar.HOUR, -24 * day);				
 			mGraph.AddDateInfo(startDate, false);
+			
+			String[] labels = {"S", "S", "M", "T", "W", "T", "F"};
+			mGraph.BottomAxis.SetLabels(labels);
+			mGraph.BottomAxis.DrawLabels = true;
 		}
 	}
 	
@@ -795,6 +801,9 @@ public class LogViewer extends Activity implements Runnable
 			
 			if(historyDays > 0)
 			{
+				if(historyDays > entries.size())
+					historyDays = entries.size();
+				
 				Calendar filterDate = Calendar.getInstance();
 				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
 				filterDate.set(Calendar.HOUR, 0);
@@ -903,6 +912,9 @@ public class LogViewer extends Activity implements Runnable
 			int historyDays = GetDesiredLengthInDays(timeRange);
 			if(historyDays > 0)
 			{
+				if(historyDays > data.size())
+					historyDays = data.size();
+				
 				Calendar filterDate = Calendar.getInstance();
 				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
 				filterDate.set(Calendar.HOUR, 0);
@@ -973,7 +985,7 @@ public class LogViewer extends Activity implements Runnable
 			mGraph.AddDateInfo(firstDate, Calendar.getInstance(), true);
 	
 			//Turn off labels for the bottom axis since they are drawn with the date info
-			mGraph.BottomAxis.DrawLabels = false;
+			//mGraph.BottomAxis.DrawLabels = false;
 		}
 	}
 	
@@ -1119,6 +1131,9 @@ public class LogViewer extends Activity implements Runnable
 			
 			if(historyDays > 0)
 			{
+				if(historyDays > entries.size())
+					historyDays = entries.size();
+				
 				Calendar filterDate = Calendar.getInstance();
 				filterDate.add(Calendar.HOUR, (historyDays - 1) * -24);
 				filterDate.set(Calendar.HOUR, 0);

@@ -88,7 +88,7 @@ public class GraphAxis implements IGraphElement
 		Ticks.clear();
 		Lines.clear();
 		mLabels = labels;
-		if(mLabels != null && mLabels.length > 0 && !mLabels[0].equals(""))
+		if(mLabels != null && mLabels.length > 0)// && !mLabels[0].equals(""))
 			for(int i=0; i<mLabels.length; i++)
 			{
 				Labels.add(new GraphLabel(null, mLabels[i]));
@@ -124,6 +124,54 @@ public class GraphAxis implements IGraphElement
 					break;
 				}
 			}
+	}
+	
+	public void SetLabels(List<GraphLabel> labels, GraphRectangle bounds)
+	{
+		Labels.clear();
+		Ticks.clear();
+		Lines.clear();
+		
+		for(int i=0; i<labels.size(); i++)
+		{
+			GraphLabel label = labels.get(i);
+			
+			GraphLine tick = new GraphLine();
+			tick.SetColor(GetColor());
+			
+			switch(Edge)
+			{
+			case LEFT:
+				label.HAlign = Align.RIGHT;
+				label.VAlign = VerticalAlign.MIDDLE;
+				tick.Start = new Point(bounds.Left, label.Location.y);
+				tick.End = new Point(bounds.Left - TickLength, label.Location.y);
+				break;
+			case RIGHT:
+				label.HAlign = Align.LEFT;
+				label.VAlign = VerticalAlign.MIDDLE;
+				tick.Start = new Point(bounds.Right, label.Location.y);
+				tick.End = new Point(bounds.Right + TickLength, label.Location.y);
+				break;
+			case TOP:
+				label.HAlign = Align.CENTER;
+				label.VAlign = VerticalAlign.BOTTOM;
+				tick.Start = new Point(label.Location.x, bounds.Top);
+				tick.End = new Point(label.Location.x, bounds.Top - TickLength);
+				break;
+			case BOTTOM:
+				label.HAlign = Align.CENTER;
+				label.VAlign = VerticalAlign.TOP;
+				tick.Start = new Point(label.Location.x, bounds.Bottom);
+				tick.End = new Point(label.Location.x, bounds.Bottom + TickLength);
+				break;
+			default:
+				break;
+			}
+			
+			Labels.add(label);
+			Ticks.add(tick);
+		}
 	}
 	
     public void GenerateLabels(int min, int max, float labelMultiplier, boolean forceAll)
@@ -250,10 +298,17 @@ public class GraphAxis implements IGraphElement
 				switch(Edge)
 				{
 				case LEFT:
-					gl.Location.x = bounds.Left - TickLength - 2;
-					gl.Location.y = bounds.Bottom - Math.round(((float)i/(Labels.size() - 1)) * axisHeight);
-					tick.Start = new Point(bounds.Left, gl.Location.y);
-					tick.End = new Point(bounds.Left - TickLength, gl.Location.y);
+					if(gl.Location == null)
+					{
+						gl.Location = new Point(0,0);
+						gl.Location.x = bounds.Left - TickLength - 2;
+						gl.Location.y = bounds.Bottom - Math.round(((float)i/(Labels.size() - 1)) * axisHeight);
+					}
+					if(tick.Start == null || tick.End == null)
+					{
+						tick.Start = new Point(bounds.Left, gl.Location.y);
+						tick.End = new Point(bounds.Left - TickLength, gl.Location.y);
+					}
 					if(DrawLines)
 					{
 						line.Start = new Point(bounds.Left, gl.Location.y);
@@ -261,10 +316,17 @@ public class GraphAxis implements IGraphElement
 					}
 					break;
 				case RIGHT:
-					gl.Location.x = bounds.Right + TickLength + 2;
-					gl.Location.y = bounds.Bottom - Math.round(((float)i/(Labels.size() - 1)) * axisHeight);
-					tick.Start = new Point(bounds.Right, gl.Location.y);
-					tick.End = new Point(bounds.Right + TickLength, gl.Location.y);
+					if(gl.Location == null)
+					{
+						gl.Location = new Point(0,0);
+						gl.Location.x = bounds.Right + TickLength + 2;
+						gl.Location.y = bounds.Bottom - Math.round(((float)i/(Labels.size() - 1)) * axisHeight);
+					}
+					if(tick.Start == null || tick.End == null)
+					{
+						tick.Start = new Point(bounds.Right, gl.Location.y);
+						tick.End = new Point(bounds.Right + TickLength, gl.Location.y);
+					}
 					if(DrawLines)
 					{
 						line.Start = new Point(bounds.Left, gl.Location.y);
@@ -272,10 +334,17 @@ public class GraphAxis implements IGraphElement
 					}
 					break;
 				case TOP:
-					gl.Location.x = bounds.Left + Math.round(((float)i/(Labels.size() - 1)) * axisWidth);
-					gl.Location.y = bounds.Top - TickLength - 2;
-					tick.Start = new Point(gl.Location.x, bounds.Top);
-					tick.End = new Point(gl.Location.x, bounds.Top - TickLength);
+					if(gl.Location == null)
+					{
+						gl.Location = new Point(0,0);
+						gl.Location.x = bounds.Left + Math.round(((float)i/(Labels.size() - 1)) * axisWidth);
+						gl.Location.y = bounds.Top - TickLength - 2;
+					}
+					if(tick.Start == null || tick.End == null)
+					{
+						tick.Start = new Point(gl.Location.x, bounds.Top);
+						tick.End = new Point(gl.Location.x, bounds.Top - TickLength);
+					}
 					if(DrawLines)
 					{
 						line.Start = new Point(gl.Location.x, bounds.Top);
@@ -283,10 +352,17 @@ public class GraphAxis implements IGraphElement
 					}
 					break;
 				case BOTTOM:
-					gl.Location.x = bounds.Left + Math.round(((float)i/(Labels.size() - 1)) * axisWidth);
-					gl.Location.y = bounds.Bottom + TickLength + 2;
-					tick.Start = new Point(gl.Location.x, bounds.Bottom);
-					tick.End = new Point(gl.Location.x, bounds.Bottom + TickLength);
+					if(gl.Location == null)
+					{
+						gl.Location = new Point(0,0);
+						gl.Location.x = bounds.Left + Math.round(((float)i/(Labels.size() - 1)) * axisWidth);
+						gl.Location.y = bounds.Bottom + TickLength + 2;
+					}
+					if(tick.Start == null || tick.End == null)
+					{
+						tick.Start = new Point(gl.Location.x, bounds.Bottom);
+						tick.End = new Point(gl.Location.x, bounds.Bottom + TickLength);
+					}
 					if(DrawLines)
 					{
 						line.Start = new Point(gl.Location.x, bounds.Top);
@@ -328,7 +404,7 @@ public class GraphAxis implements IGraphElement
 				if(DrawLabels)
 					Labels.get(i).Draw(canvas, bounds, dataBounds);
 				Ticks.get(i).Draw(canvas, bounds, dataBounds);
-				if(DrawLines)
+				if(DrawLines && i < Lines.size())
 					Lines.get(i).Draw(canvas, bounds, dataBounds);
 			}
 		}

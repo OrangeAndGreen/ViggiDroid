@@ -21,10 +21,10 @@ public class GraphLine implements IGraphElement
 	{
 		Start = start;
 		End = end;
-		if(Start == null)
-			Start = new Point(0, 0);
-		if(End == null)
-			End = new Point(0, 0);
+		//if(Start == null)
+		//	Start = new Point(0, 0);
+		//if(End == null)
+		//	End = new Point(0, 0);
 		
 		mPaint.setStrokeWidth(width);
 		SetColor(Color.WHITE);

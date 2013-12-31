@@ -51,6 +51,7 @@ public class ErrorFile
 	   	if(e.getLocalizedMessage() != null)
 	   		entry += e.getLocalizedMessage() + "\n";
 	   	entry += stackTrace + "\n";
+	   	Log.e("ErrorFile", entry);
 	   	try
 	   	{
 	   		FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/" + ErrorFile, true);

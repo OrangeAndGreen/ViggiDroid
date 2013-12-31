@@ -8,7 +8,6 @@ import java.util.Locale;
 import com.Dave.DateStrings.DateStrings;
 import com.Dave.Files.ErrorFile;
 import com.Dave.Graph.GraphAxis.EdgeType;
-import com.Dave.Graph.GraphLabel.VerticalAlign;
 import com.Dave.Graph.GraphPoint.PointType;
 
 import android.content.Context;
@@ -17,7 +16,6 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Paint.Align;
 import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -301,9 +299,11 @@ public class GraphView extends View
     public void Draw(Canvas canvas)
     {
     	Log.i("GraphView.Draw", String.format("Drawing graph"));
+    	
+    	UpdateParams();
+    	
     	Log.d("GraphView.Draw", String.format("Graph bounds: %d-%d, %d-%d", mGraphBounds.Left, mGraphBounds.Right, mGraphBounds.Bottom, mGraphBounds.Top));
     	//mDrawCount++;
-    	UpdateParams();
 
     	Paint paint = new Paint();
     	paint.setColor(Color.BLACK);
@@ -384,8 +384,12 @@ public class GraphView extends View
 		int numDates = dates.size();
 		int totalDays = DateStrings.GetActiveDiffInDays(dates.get(0), Calendar.getInstance(), 0) + 1;
 		
-		//Log.d("DEBUG", String.format("AddDateInfo: %d dates, %d total days", numDates, totalDays));
+		Log.d("GraphView", String.format("AddDateInfo: %d dates, %d total days", numDates, totalDays));
 		
+		if(totalDays < numDates)
+			totalDays = numDates;
+		
+		List<GraphLabel> labels = new ArrayList<GraphLabel>();
         int graphWidth = mGraphBounds.GetWidth();
         float pixelRatio = (float) graphWidth / (totalDays - 1);
 		int lastMonthDay = -1;
@@ -393,6 +397,7 @@ public class GraphView extends View
         for(int i=0; i<numDates; i++)
         {
 			Calendar curDate = dates.get(i);
+			Log.i("GraphView", "Adding date info for " + DateStrings.GetDateTimeString(curDate));
 		
 			//Add weekend shading and first-of-month lines/labels
             float x = (pixelRatio * DateStrings.GetActiveDiffInDays(dates.get(0), curDate, 0)) + mGraphBounds.Left;
@@ -400,10 +405,11 @@ public class GraphView extends View
             int monthDay = curDate.get(Calendar.DAY_OF_MONTH);
 			int month = curDate.get(Calendar.MONTH) + 1;
 			int year = curDate.get(Calendar.YEAR);
-			if(labelDates && lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
+			if(lastMonthDay != monthDay) //TODO: Should probably use day of year here instead
 			{
 				if( totalDays < 370 && (curDay == 0 || curDay == 1))
 				{
+					Log.i("GraphView", "Adding weekend shading for " + DateStrings.GetDateTimeString(curDate));
 					//Draw weekend shading
 					float halfColumn = pixelRatio / 2;
 					float xStart = x - halfColumn;
@@ -420,52 +426,73 @@ public class GraphView extends View
 					Bars.add(bar);
 				}
 				
-				int lineThickness = 0;
-				String labelText = null;
-				if(totalDays < 30)
+				if(labelDates)
 				{
-					//Label each day
-					labelText = String.format(Locale.getDefault(), "%d", monthDay);
-				}
-				else if(totalDays < 60)
-				{
-					//Label each Saturday
-					if(curDay == 0)
-						labelText = String.format(Locale.getDefault(), "%d", monthDay);
-				}
-				else if(monthDay == 1)
-				{
-					if(totalDays < 730) //Label start-of-month
-						labelText = String.format(Locale.getDefault(), "%d", month);
-					else if(month == 1) //Label start-of-year
-						labelText = String.format(Locale.getDefault(), "%d", year);
-				}
-				
-				if(monthDay == 1)
-				{
-					//Draw line for start-of-month
-					lineThickness = 1;
-					if(month == 1 || month == 7) //Make January and July thicker lines
-						lineThickness = 3;
-				}
-				
-				if(lineThickness > 0)
-				{
-					GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom), lineThickness);
-					line.SetColor(Color.DKGRAY);
-					Lines.add(line);
-				}
+					boolean drawTick = false;
+					int lineThickness = 0;
+					String labelText = null;
 					
-				if(labelText != null)
-				{
-					GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), labelText);
-					label.HAlign = Align.CENTER;
-					label.VAlign = VerticalAlign.TOP;
-					Labels.add(label);
+					//if(i == 0 || i == numDates - 1)
+					//	drawTick = true;
+					
+					if(totalDays < 30)
+					{
+						//Label each day
+						labelText = String.format(Locale.getDefault(), "%d", monthDay);
+						drawTick = true;
+					}
+					else if(totalDays < 60)
+					{
+						drawTick = true;
+						
+						//Label each Saturday
+						if(curDay == 0)
+							labelText = String.format(Locale.getDefault(), "%d", monthDay);
+					}
+					else if(monthDay == 1)
+					{
+						drawTick = true;
+						if(totalDays < 730) //Label start-of-month
+							labelText = String.format(Locale.getDefault(), "%d", month);
+						else if(month == 1) //Label start-of-year
+							labelText = String.format(Locale.getDefault(), "%d", year);
+					}
+					else if(totalDays < 730 && curDay == 0)
+					{
+						drawTick = true;
+					}
+					
+					if(monthDay == 1)
+					{
+						//Draw line for start-of-month
+						lineThickness = 1;
+						if(month == 1 || month == 7) //Make January and July thicker lines
+							lineThickness = 3;
+					}
+					
+					if(lineThickness > 0)
+					{
+						GraphLine line = new GraphLine(new Point((int)x, mGraphBounds.Top), new Point((int)x, mGraphBounds.Bottom), lineThickness);
+						line.SetColor(Color.DKGRAY);
+						Lines.add(line);
+					}
+						
+					if(drawTick)
+					{
+						if(labelText == null)
+							labelText = "";
+						
+						//Log.d("GraphView", "Adding label: '" + labelText + "'");
+						
+						GraphLabel label = new GraphLabel(new Point((int)x, mGraphBounds.Bottom + BottomAxis.TickLength + 2), labelText);
+						labels.add(label);
+					}
 				}
 			}
 			lastMonthDay = monthDay;
         }
+        
+        BottomAxis.SetLabels(labels, mGraphBounds);
     }
         
     public void AddDataPoint(float x, float y, int color)

@@ -24,15 +24,15 @@ public class GraphLabel implements IGraphElement
 	
 	public GraphLabel(boolean title)
 	{
-		this(new Point(0, 0));
+		this(null);
 		mTitle = title;
 	}
 	
 	public GraphLabel(Point location)
 	{
 		Location = location;
-		if(Location == null)
-			Location = new Point(0, 0);
+		//if(Location == null)
+		//	Location = new Point(0, 0);
 		SetColor(Color.WHITE);
 		Text = "";
 	}
@@ -62,6 +62,10 @@ public class GraphLabel implements IGraphElement
 		{
 			HAlign = Align.CENTER;
 			VAlign = VerticalAlign.TOP;
+			
+			if(Location == null)
+				Location = new Point(0,0);
+			
 			Location.x = viewSize.x / 2;
 			Location.y = 0;
 		}
