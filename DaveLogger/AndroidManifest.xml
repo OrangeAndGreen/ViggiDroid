@@ -3,7 +3,7 @@
       package="com.Dave.Logger"
       android:versionCode="1"
       android:versionName="1.0">
-
+	<uses-sdk android:minSdkVersion="3"/>
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".DaveLogger" android:label="@string/app_name">
@@ -12,9 +12,103 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".TriggerActivity" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+        </activity>
 	    <activity class=".LogViewer" android:label="View Log" android:name="LogViewer">
 	    </activity>
 	    <activity class="com.Dave.Files.DirectoryPicker" android:label="Choose directory" android:name="com.Dave.Files.DirectoryPicker">
 	    </activity>
+	    
+	    <activity android:name=".Trigger1" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger2" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger3" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger4" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger5" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger6" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger7" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger8" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger9" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger10" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger11" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger12" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger13" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger14" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Trigger15" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
     </application>
 </manifest>

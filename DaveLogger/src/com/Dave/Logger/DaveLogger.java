@@ -38,7 +38,7 @@ import com.Dave.DateStrings.DateStrings;
 import com.Dave.Files.DebugFile;
 import com.Dave.Files.DirectoryPicker;
 import com.Dave.Files.ErrorFile;
-import com.Dave.Files.LoggerState;
+import com.Dave.Files.LoggerStateFile;
 import com.Dave.Files.LoggerConfig;
 import com.Dave.Files.LogFile;
 
@@ -101,7 +101,8 @@ public class DaveLogger extends Activity implements Runnable
     private LoggerConfig mConfig = null;
     private String mConfigFile = "Config.txt";
     
-    private LoggerState mState = null;
+    private LoggerStateFile mState = null;
+    private String mStateFile = "Temp.txt";
 
     private LogFile mLog = null;    
     private String mLogFile = "Log.txt";
@@ -232,7 +233,8 @@ public class DaveLogger extends Activity implements Runnable
         	DisplayMetrics metrics = new DisplayMetrics();
         	getWindowManager().getDefaultDisplay().getMetrics(metrics);
         	int width =  metrics.widthPixels;
-        	int toggleWidth = width / numToggles;
+        	int numForCalc = Math.min(numToggles, 6);
+        	int toggleWidth = width / numForCalc;
         	for(int i=0; i<numToggles; i++)
         	{
         		View stub = ((ViewStub) findViewById(mToggleIds[i])).inflate();
@@ -258,11 +260,20 @@ public class DaveLogger extends Activity implements Runnable
         	}
         
         	Debug("Logger", "Loading temp file", false);
-        	mState = LoggerState.Load(getPreferences(0), mConfig);
+        	
+        	//Internal storage version
+        	//mState = LoggerState.Load(getPreferences(0), mConfig);
+        	//File version
+        	String stateFilePath = mStorageDirectory + "/" + mStateFile;
+        	mState = LoggerStateFile.FromFile(stateFilePath, mConfig);
+        	
         	if(mState == null)
         	{
         		Debug("Logger", "Temp file not found, creating new", false);
-        		mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+        		//Internal storage version
+        		//mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+        		//File version
+        		mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
         	}
         	
         	for(int i=0; i<numToggles; i++)
@@ -694,7 +705,12 @@ public class DaveLogger extends Activity implements Runnable
 				@Override
 				public void run()
 				{
-					mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+					//Internal storage version
+	        		//mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+	        		//File version
+					String stateFilePath = mStorageDirectory + "/" + mStateFile;
+	        		mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
+	        		
 					mProgress.dismiss();
 				}
         	}).start();

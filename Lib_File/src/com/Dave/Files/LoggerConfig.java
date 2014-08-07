@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
@@ -25,6 +27,7 @@ public class LoggerConfig
 	public int MidnightHour = 5;
 	public String EmailAddress = "";
 	public String EmailAutoSubject = "Auto Email from Droid Logger";
+	public HashMap<Integer, String> Triggers = new HashMap<Integer, String>();
 
 	private LoggerConfig(String filename)
 	{
@@ -58,39 +61,47 @@ public class LoggerConfig
     			
     			if(tag.equals("Username"))
     				ret.Username = value.trim();
-    			if(tag.equals("Simulation"))
+    			else if(tag.equals("Simulation"))
     			{
     				ret.Simulation = value.equals("on");
     				if(!ret.Simulation)
     					ret.Simulation = value.equals("true");
     			}
-    			if(tag.equals("Debug"))
+    			else if(tag.equals("Debug"))
     			{
     				ret.Debug = value.equals("on");
     				if(!ret.Debug)
     					ret.Debug = value.equals("true");
     			}
-    			if(tag.equals("AveragingWindow"))
+    			else if(tag.equals("AveragingWindow"))
     				ret.AveragingWindow = Integer.parseInt(value);
-    			if(tag.equals("Toggle"))
+    			else if(tag.equals("Toggle"))
     				ret.Toggles.add(value);
-    			if(tag.equals("Button") || tag.equals("Value"))
+    			else if(tag.equals("Button") || tag.equals("Value"))
     			{
     				ret.Buttons.add(value);
     				ret.ButtonValues.add(tag.equals("Value"));
     			}
-    			if(tag.equals("Safe"))
+    			else if(tag.equals("Safe"))
     				ret.SafeItems.add(value);
-    			if(tag.equals("LogFilePath"))
+    			else if(tag.equals("LogFilePath"))
     				ret.LogFilePath = value;
-    			if(tag.equals("ExportDirectory"))
+    			else if(tag.equals("ExportDirectory"))
     				ret.ExportDirectory = value;
-    			if(tag.equals("MidnightHour"))
+    			else if(tag.equals("MidnightHour"))
     				ret.MidnightHour = Integer.parseInt(value);
-    			if(tag.equals("EmailAddress"))
+    			else if(tag.equals("EmailAddress"))
     				ret.EmailAddress = value;
-    			if(tag.equals("EmailAutoSubject"))
+    			else if(tag.equals("EmailAutoSubject"))
     				ret.EmailAutoSubject = value;
+    			else if(tag.startsWith("Trigger"))
+    			{
+    				String[] tagParts = tag.split(" ");
+    				
+    				int triggerNum = Integer.parseInt(tagParts[1]);
+    				
+    				ret.Triggers.put(triggerNum, value);
+    			}
     		}
     		br.close();
     		
