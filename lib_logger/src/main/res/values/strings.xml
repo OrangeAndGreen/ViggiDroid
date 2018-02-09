@@ -1,0 +1,23 @@
+<resources>
+    <string name="hello">\nDave\'s Logger!\n</string>
+    <string name="app_name">Log-a-Life</string>
+    <string name="safe_short">S</string>
+    <string name="menu_short">M</string>
+    <string name="view">View</string>
+    <string name="date_edit">Edit date</string>
+    <string name="comment_add">Add comment</string>
+    <string name="close">Close</string>
+    <string name="dateSliderTitle">Selected date</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="title_activity_logger_config">LoggerConfigActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string-array name="config_types">
+        <item>Buttons</item>
+        <item>Toggles</item>
+    </string-array>
+
+</resources>

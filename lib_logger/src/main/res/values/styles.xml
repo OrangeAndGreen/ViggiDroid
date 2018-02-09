@@ -1,0 +1,13 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <!-- Theme.AppCompat.Light.DarkActionBar -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:background">#000000</item>
+    </style>
+
+    <style name="labelStyle" parent="@style/AppTheme">
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+</resources>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.dave.logger_lite" >
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.viggi.lib_logger.LoggerActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:label="View Log" android:name="com.viggi.lib_logger.LogViewer">
+        </activity>
+        <activity android:label="Choose directory" android:name="com.viggi.lib_file.DirectoryPicker">
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.TriggerActivity" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+        </activity>
+
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger1" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger2" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger3" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger4" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger5" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger6" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger7" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger8" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger9" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger10" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger11" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger12" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger13" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger14" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.viggi.lib_logger.trigger.Trigger15" android:theme="@android:style/Theme.NoDisplay" android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

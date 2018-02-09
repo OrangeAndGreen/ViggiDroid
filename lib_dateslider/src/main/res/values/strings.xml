@@ -1,0 +1,5 @@
+<resources>
+    <string name="hello">Hello World!</string>
+    <string name="app_name">DateTimeSlider</string>
+    <string name="dateSliderTitle">Selected date</string>
+</resources>

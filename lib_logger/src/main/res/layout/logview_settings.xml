@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    style="@style/AppTheme"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.viggi.lib_logger.LoggerConfigActivity"
+    >
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/labelStyle"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Graph Settings"
+        android:id="@+id/textView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Done"
+        android:id="@+id/doneButton"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="false"
+        android:layout_alignParentRight="true" />
+
+    <View   android:id="@+id/divider1"
+        android:layout_height="2dp"
+        android:layout_width="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/doneButton"
+        android:background="@color/divider"
+        />
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/mainScroll"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:layout_below="@id/divider1"
+        >
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView
+                android:layout_width="170sp"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Filter"
+                android:id="@+id/filterLabel"
+                android:layout_marginTop="20sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="false"
+                android:layout_alignParentTop="true" />
+            <EditText
+                android:id="@+id/filterText"
+                android:layout_width="200sp"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/filterLabel"
+                android:layout_alignTop="@id/filterLabel"
+                />
+            <TextView
+                android:layout_width="170sp"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Data"
+                android:id="@+id/dataSelectorLabel"
+                android:layout_marginTop="20sp"
+                android:layout_below="@id/filterLabel"
+                android:layout_alignParentLeft="true" />
+
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/dataSpinner"
+                android:background="@drawable/border"
+                android:spinnerMode="dropdown"
+                android:layout_marginTop="20px"
+                android:layout_alignTop="@id/dataSelectorLabel"
+                android:layout_toRightOf="@id/dataSelectorLabel"
+                android:layout_alignParentRight="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="History Length"
+                android:id="@+id/lengthLabel"
+                android:layout_marginTop="20sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="false"
+                android:layout_below="@id/dataSpinner" />
+
+            <EditText
+                android:layout_width="50sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/timeLengthText"
+                android:layout_alignTop="@id/lengthLabel"
+                android:layout_alignLeft="@id/dataSpinner"/>
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/lengthSpinner"
+                android:background="@drawable/border"
+                android:layout_below="@id/lengthLabel"
+                android:spinnerMode="dropdown"
+                android:layout_marginTop="20px"
+                android:layout_alignTop="@id/lengthLabel"
+                android:layout_toRightOf="@id/timeLengthText"
+                android:layout_alignParentRight="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Data"
+                android:id="@+id/typeSelectorLabel"
+                android:layout_marginTop="20sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="false"
+                android:layout_below="@id/lengthSpinner" />
+
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/typeSpinner"
+                android:background="@drawable/border"
+                android:layout_below="@id/typeSelectorLabel"
+                android:spinnerMode="dropdown"
+                android:layout_marginTop="20px"
+                android:layout_alignTop="@id/typeSelectorLabel"
+                android:layout_alignLeft="@id/dataSpinner"
+                android:layout_alignParentRight="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Secondary"
+                android:id="@+id/secondarySelectorLabel"
+                android:layout_marginTop="20sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="false"
+                android:layout_below="@id/typeSpinner" />
+
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/secondarySpinner"
+                android:background="#555555"
+                android:layout_below="@id/secondarySelectorLabel"
+                android:spinnerMode="dropdown"
+                android:layout_marginTop="20px"
+                android:layout_alignTop="@id/secondarySelectorLabel"
+                android:layout_alignLeft="@id/dataSpinner"
+                android:layout_alignParentRight="true"/>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/daysLabel"
+                android:text="Day Filters (Monday first)"
+                android:layout_marginTop="25px"
+                android:layout_below="@+id/secondarySelectorLabel"
+                android:layout_alignParentLeft="true"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/mondayInput"
+                android:textOn="M"
+                android:textOff="M"
+                android:layout_below="@+id/daysLabel"
+                android:layout_alignParentLeft="true"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tuesdayInput"
+                android:textOn="T"
+                android:textOff="T"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/mondayInput"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/wednesdayInput"
+                android:textOn="W"
+                android:textOff="W"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/tuesdayInput"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/thursdayInput"
+                android:textOn="T"
+                android:textOff="T"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/wednesdayInput"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/fridayInput"
+                android:textOn="F"
+                android:textOff="F"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/thursdayInput"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/saturdayInput"
+                android:textOn="S"
+                android:textOff="S"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/fridayInput"
+                />
+            <ToggleButton
+                android:layout_width="40sp"
+                android:layout_height="wrap_content"
+                android:id="@+id/sundayInput"
+                android:textOn="S"
+                android:textOff="S"
+                android:layout_below="@+id/daysLabel"
+                android:layout_toRightOf="@id/saturdayInput"
+                />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:text="Show All-time Average"
+                android:id="@+id/allHistoryLabel"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/mondayInput"
+                android:layout_marginTop="25px"
+                android:paddingTop="15px" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/allHistoryInput"
+                android:layout_alignTop="@+id/allHistoryLabel"
+                android:layout_alignParentRight="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:text="Plot Values"
+                android:id="@+id/valueLabel"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/allHistoryInput"
+                android:layout_marginTop="25px"
+                android:paddingTop="15px" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/valueInput"
+                android:layout_alignTop="@+id/valueLabel"
+                android:layout_alignParentRight="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:text="Draw Points"
+                android:id="@+id/drawPointsLabel"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/valueInput"
+                android:layout_marginTop="25px"
+                android:paddingTop="15px" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/drawPointsInput"
+                android:layout_alignTop="@+id/drawPointsLabel"
+                android:layout_alignParentRight="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:text="Draw Lines"
+                android:id="@+id/drawLinesLabel"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/drawPointsInput"
+                android:layout_marginTop="25px"
+                android:paddingTop="15px" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/drawLinesInput"
+                android:layout_alignTop="@+id/drawLinesLabel"
+                android:layout_alignParentRight="true" />
+
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>

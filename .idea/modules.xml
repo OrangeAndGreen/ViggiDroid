@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Logger Lite/Logger Lite.iml" filepath="$PROJECT_DIR$/Logger Lite/Logger Lite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ViggiDroidAS.iml" filepath="$PROJECT_DIR$/ViggiDroidAS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_dateslider/lib_dateslider.iml" filepath="$PROJECT_DIR$/lib_dateslider/lib_dateslider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_datestring/lib_datestring.iml" filepath="$PROJECT_DIR$/lib_datestring/lib_datestring.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_file/lib_file.iml" filepath="$PROJECT_DIR$/lib_file/lib_file.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_graph/lib_graph.iml" filepath="$PROJECT_DIR$/lib_graph/lib_graph.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_logger/lib_logger.iml" filepath="$PROJECT_DIR$/lib_logger/lib_logger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_math/lib_math.iml" filepath="$PROJECT_DIR$/lib_math/lib_math.iml" />
+      <module fileurl="file://$PROJECT_DIR$/logger/logger.iml" filepath="$PROJECT_DIR$/logger/logger.iml" />
+    </modules>
+  </component>
+</project>
