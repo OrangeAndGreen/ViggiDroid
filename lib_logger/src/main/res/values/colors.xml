@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="divider">#000080</color>
+    <color name="spinner">#888888</color>
 </resources>

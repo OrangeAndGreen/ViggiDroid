@@ -105,31 +105,19 @@
         android:background="@color/divider"
         />
 
-    <Spinner
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/typeSpinner"
-        android:layout_below="@+id/divider2"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="false"
-        android:spinnerMode="dropdown"
-        android:layout_marginTop="20px"
-        android:entries="@array/config_types"
-        android:layout_alignParentRight="true" />
-
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
         android:text="+"
         android:id="@+id/addButton"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="false"
-        android:layout_below="@+id/typeSpinner"
+        android:layout_below="@+id/divider2"
         android:layout_marginTop="10px" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
         android:text="-"
         android:id="@+id/deleteButton"
@@ -138,15 +126,7 @@
         android:layout_alignTop="@+id/addButton" />
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Edit"
-        android:id="@+id/editButton"
-        android:layout_alignTop="@+id/deleteButton"
-        android:layout_centerHorizontal="true" />
-
-    <Button
-        android:layout_width="wrap_content"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
         android:text="v"
         android:id="@+id/moveDownButton"
@@ -154,22 +134,26 @@
         android:layout_alignParentRight="true" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
         android:text="^"
         android:id="@+id/moveUpButton"
         android:layout_alignTop="@+id/addButton"
         android:layout_toLeftOf="@+id/moveDownButton" />
 
-    <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/itemsList"
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:layout_below="@+id/addButton"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="false"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:choiceMode="singleChoice" />
+        >
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/itemsList"
+            android:orientation="vertical"
+            android:choiceMode="singleChoice" />
+    </ScrollView>
+
 
 </RelativeLayout>

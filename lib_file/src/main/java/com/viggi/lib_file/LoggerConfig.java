@@ -1,43 +1,39 @@
 package com.viggi.lib_file;
 
-import android.content.Context;
 import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Dave on 2/22/2015.
+ * Holds config info for the logger
  */
 public class LoggerConfig
 {
-    public String ConfigFilename = "/sdcard/00Logs/DaveConfig.txt";
-    public boolean Simulation = true;
+    private String ConfigFilename = null;
+    private boolean Simulation = true;
+    public boolean SafeMode = false;
     public boolean Debug = true;
-    public String Username = "Dave";
+    public boolean LogGPS = false;
+    public boolean LogPhone = false;
+    private String Username = "Dave";
     public int AveragingWindow = 30;
-    public List<String> Toggles = new ArrayList<String>();
-    public List<String> Buttons = new ArrayList<String>();
-    public List<Boolean> ButtonValues = new ArrayList<Boolean>();
-    public List<String> SafeItems = new ArrayList<String>();
-    public List<String> BackupTriggers = new ArrayList<String>();
-    public String LogFilePath = "/sdcard/00Logs/DaveLog.txt";
-    public String ExportDirectory = "/sdcard/01Files/";
     public int MidnightHour = 5;
     public String EmailAddress = "";
     public String EmailAutoSubject = "Auto Email from Droid Logger";
-    public HashMap<Integer, String> Triggers = new HashMap<Integer, String>();
+
+    public List<LogItem> Items = new ArrayList<>();
 
     private LoggerConfig(String filename)
     {
         ConfigFilename = filename;
     }
 
-    public static LoggerConfig FromFile(String filename, Context context)
+    public static LoggerConfig FromFile(String filename)
     {
         Log.i("LoggerConfig", "Loading from file " + filename);
 
@@ -46,8 +42,7 @@ public class LoggerConfig
         try
         {
             BufferedReader br = new BufferedReader(new FileReader(ret.ConfigFilename));
-            ret.Toggles.clear();
-            ret.Buttons.clear();
+            ret.Items.clear();
 
             while(true)
             {
@@ -55,62 +50,153 @@ public class LoggerConfig
                 if(line == null)
                     break;
 
+                if(line.startsWith("//"))
+                {
+                    continue;
+                }
+
                 String[] parts = line.split("=");
-                if(parts==null || parts.length < 2)
+                if(parts.length < 2)
                     continue;
 
-                String tag = parts[0].trim();
+                String tagString = parts[0].trim();
                 String value = parts[1].trim();
 
-                if(tag.equals("Username"))
-                    ret.Username = value.trim();
-                else if(tag.equals("Simulation"))
+                //General keys: Username, AveragingWindow, MidnightHour, EmailAddress, EmailAutoSubject, Debug, GPS, Simulation
+                switch(tagString)
                 {
-                    ret.Simulation = value.equals("on");
-                    if(!ret.Simulation)
-                        ret.Simulation = value.equals("true");
-                }
-                else if(tag.equals("Debug"))
-                {
-                    ret.Debug = value.equals("on");
-                    if(!ret.Debug)
-                        ret.Debug = value.equals("true");
-                }
-                else if(tag.equals("AveragingWindow"))
-                    ret.AveragingWindow = Integer.parseInt(value);
-                else if(tag.equals("Toggle"))
-                    ret.Toggles.add(value);
-                else if(tag.equals("Button") || tag.equals("Value"))
-                {
-                    ret.Buttons.add(value);
-                    ret.ButtonValues.add(tag.equals("Value"));
-                }
-                else if(tag.equals("Safe"))
-                    ret.SafeItems.add(value);
-                else if(tag.equals("Backup"))
-                    ret.BackupTriggers.add(value);
-                else if(tag.equals("LogFilePath"))
-                    ret.LogFilePath = value;
-                else if(tag.equals("ExportDirectory"))
-                    ret.ExportDirectory = value;
-                else if(tag.equals("MidnightHour"))
-                    ret.MidnightHour = Integer.parseInt(value);
-                else if(tag.equals("EmailAddress"))
-                    ret.EmailAddress = value;
-                else if(tag.equals("EmailAutoSubject"))
-                    ret.EmailAutoSubject = value;
-                else if(tag.startsWith("Trigger"))
-                {
-                    String[] tagParts = tag.split(" ");
+                    case "Username":
+                        ret.Username = value.trim();
+                        break;
+                    case "AveragingWindow":
+                        ret.AveragingWindow = Integer.parseInt(value);
+                        break;
+                    case "MidnightHour":
+                        ret.MidnightHour = Integer.parseInt(value);
+                        break;
+                    case "EmailAddress":
+                        ret.EmailAddress = value;
+                        break;
+                    case "EmailAutoSubject":
+                        ret.EmailAutoSubject = value;
+                        break;
+                    case "Debug":
+                        ret.Debug = value.equals("on");
+                        if(!ret.Debug)
+                            ret.Debug = value.equals("true");
+                        break;
+                    case "GPS":
+                        ret.LogGPS = value.equals("on");
+                        if(!ret.LogGPS)
+                            ret.LogGPS = value.equals("true");
+                        break;
+                    case "Phone":
+                        ret.LogPhone = value.equals("on");
+                        if(!ret.LogPhone)
+                            ret.LogPhone = value.equals("true");
+                        break;
+                    case "Simulation":
+                        ret.Simulation = value.equals("on");
+                        if(!ret.Simulation)
+                            ret.Simulation = value.equals("true");
+                        break;
+                    default:
+                        //Remaining assumption is that this is a log item
+                        String[] tagComponents = tagString.split(",");
+                        List<String> allTags = new ArrayList<>();
 
-                    int triggerNum = Integer.parseInt(tagParts[1]);
+                        //Trim white space from all the entries (to handle ", ")
+                        for(int i=0; i<tagComponents.length; i++)
+                        {
+                            allTags.add(i, tagComponents[i].trim());
+                        }
 
-                    ret.Triggers.put(triggerNum, value);
+                        if(allTags.contains("Button") || allTags.contains("Toggle"))
+                        {
+                            //See if we already created this item
+                            LogItem item = null;
+                            for (LogItem searchItem: ret.Items)
+                            {
+                                if(searchItem.Name.equals(value))
+                                {
+                                    item = searchItem;
+                                    break;
+                                }
+                            }
+
+                            if(item == null)
+                            {
+                                item = new LogItem();
+                                item.Name = value;
+                                ret.Items.add(item);
+                            }
+
+                            //LogItem keys: Toggle, Button, Safe, Location, Backup/On/Off, Value/On/Off, Remind #, Trigger #
+                            if(allTags.contains("Toggle"))
+                            {
+                                item.IsToggle = true;
+                            }
+                            if(allTags.contains("Button"))
+                            {
+                                item.IsToggle = false;
+                            }
+                            if(allTags.contains("Safe"))
+                            {
+                                item.IsSafe = true;
+                            }
+                            if(allTags.contains("Location"))
+                            {
+                                item.IsLocation = true;
+                            }
+                            if(allTags.contains("Backup"))
+                            {
+                                item.IsBackup = true;
+                            }
+                            if(allTags.contains("BackupOn"))
+                            {
+                                item.IsBackupOn = true;
+                            }
+                            if(allTags.contains("BackupOff"))
+                            {
+                                item.IsBackupOff = true;
+                            }
+                            if(allTags.contains("Value"))
+                            {
+                                item.IsValue = true;
+                            }
+                            if(allTags.contains("ValueOn"))
+                            {
+                                item.IsValueOn = true;
+                            }
+                            if(allTags.contains("ValueOff"))
+                            {
+                                item.IsValueOff = true;
+                            }
+
+                            //Now search for the tags with dynamic names
+                            for (String tag: allTags)
+                            {
+                                if(tag.startsWith("Trigger"))
+                                {
+                                    String[] tagParts = tag.split(" ");
+
+                                    item.TriggerID = Integer.parseInt(tagParts[1]);
+                                }
+                                else if(tag.startsWith("Remind"))
+                                {
+                                    String[] tagParts = tag.split(" ");
+
+                                    item.ReminderDays = Integer.parseInt(tagParts[1]);
+                                }
+                            }
+                        }
+                        break;
                 }
             }
             br.close();
 
-            Log.i("LoggerConfig", String.format("%d buttons, %d toggles", ret.Buttons.size(), ret.Toggles.size()));
+            //Log.i("LoggerConfig", String.format("%d buttons, %d toggles", ret.Buttons.size(), ret.Toggles.size()));
+            Log.i("LoggerConfig", String.format("%d items", ret.Items.size()));
 
             return ret;
         }
@@ -133,22 +219,25 @@ public class LoggerConfig
         ret.Simulation = false;
         ret.Username = "Me";
 
-        String directory = filename.substring(0, filename.lastIndexOf('/'));
-        ret.LogFilePath = directory + "/Log.txt";
-        ret.ExportDirectory = directory + '/';
-
         String[] toggles = { "Home", "Sleep", "Wash", "Drive", "Work", "Fish"};
 
-        for(int i=0; i<toggles.length; i++)
-            ret.Toggles.add(toggles[i]);
+        for(String toggleName : toggles)
+        {
+            LogItem toggle = new LogItem();
+            toggle.Name = toggleName;
+            toggle.IsToggle = true;
+            ret.Items.add(toggle);
+        }
 
         String[] buttons = { "Caffeine", "Weight", "Eat", "Friend", "Family", "Teeth", "Trash", "Diaper"};
         boolean[] buttonTypes = { false, true, false, false, false, false, false, false};
 
         for(int i=0; i<buttons.length; i++)
         {
-            ret.Buttons.add(buttons[i]);
-            ret.ButtonValues.add(buttonTypes[i]);
+            LogItem event = new LogItem();
+            event.Name = buttons[i];
+            event.IsValue = buttonTypes[i];
+            ret.Items.add(event);
         }
 
         ret.Save();
@@ -156,7 +245,7 @@ public class LoggerConfig
         return ret;
     }
 
-    public void Save()
+    private void Save()
     {
         Log.i("LoggerConfig", "Saving file");
 
@@ -164,32 +253,44 @@ public class LoggerConfig
         {
             FileWriter fw = new FileWriter(ConfigFilename, false);
 
-            String sim = "off";
-            if(Simulation)
-                sim="on";
-            fw.write("Simulation = " + sim + "\n");
-
-            String debug = "off";
-            if(Debug)
-                debug="on";
-            fw.write("Debug = " + debug + "\n");
-
+            //General keys: Username, AveragingWindow, MidnightHour, EmailAddress, EmailAutoSubject, Debug, GPS, Simulation
+            fw.write("Simulation = " + (Simulation ? "on" : "off") + "\n");
+            fw.write("Debug = " + (Debug ? "on" : "off") + "\n");
+            fw.write("GPS = " + (LogGPS ? "on" : "off") + "\n");
+            fw.write("Phone = " + (LogPhone ? "on" : "off") + "\n");
             fw.write("Username = " + Username + "\n");
-            fw.write("LogFilePath = " + LogFilePath + "\n");
-            fw.write("ExportDirectory = " + ExportDirectory + "\n");
             fw.write("AveragingWindow = " + AveragingWindow + "\n");
             fw.write("MidnightHour = " + MidnightHour + "\n");
             fw.write("EmailAddress = " + EmailAddress + "\n");
             fw.write("EmailAutoSubject = " + EmailAutoSubject + "\n");
 
-            for(int i=0; i<Toggles.size(); i++)
-                fw.write("Toggle = " + Toggles.get(i) + "\n");
-            for(int i=0; i<Buttons.size(); i++)
-                fw.write("Button = " + Buttons.get(i) + "\n");
-            for(int i=0; i<SafeItems.size(); i++)
-                fw.write("Safe = " + SafeItems.get(i) + "\n");
-            for(int i=0; i<BackupTriggers.size(); i++)
-                fw.write("Backup = " + BackupTriggers.get(i) + "\n");
+            for(LogItem item : Items)
+            {
+                //LogItem keys: Toggle, Button, Safe, Location, Backup/On/Off, Value/On/Off, Remind #, Trigger #
+                String tags = item.IsToggle ? "Toggle" : "Button";
+                if(item.IsSafe)
+                    tags += ",Safe";
+                if(item.IsLocation)
+                    tags += ",Location";
+                if(item.IsValue)
+                    tags += ",Value";
+                if(item.IsValueOn)
+                    tags += ",ValueOn";
+                if(item.IsValueOff)
+                    tags += ",ValueOff";
+                if(item.IsBackup)
+                    tags += ",Backup";
+                if(item.IsBackupOn)
+                    tags += ",BackupOn";
+                if(item.IsBackupOff)
+                    tags += ",BackupOff";
+                if(item.ReminderDays > 0)
+                    tags += String.format(Locale.getDefault(), ",Remind %d", item.ReminderDays);
+                if(item.TriggerID > 0)
+                    tags += String.format(Locale.getDefault(), ",Trigger %d", item.TriggerID);
+
+                fw.write(tags + " = " + item.Name + "\n");
+            }
 
             fw.close();
         }
@@ -197,5 +298,18 @@ public class LoggerConfig
         {
             Log.e("LoggerConfig", "Failed to save file");
         }
+    }
+
+    public LogItem GetEntryByName(String name)
+    {
+        for(LogItem item : Items)
+        {
+            if(item.Name.equals(name))
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 }

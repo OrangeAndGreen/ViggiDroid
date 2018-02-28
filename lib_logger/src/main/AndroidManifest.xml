@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.dave.lib_logger" >
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
@@ -10,11 +15,16 @@
             android:name="com.viggi.lib_logger.LoggerConfigActivity"
             android:label="@string/title_activity_logger_config" >
         </activity>
+        <!-- Crashlytics -->
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="3513aee7ad766598747cd670847a178a7b5f6971"
             />
+        <!-- End Crashlytics -->
     </application>
+
+    <!-- Crashlytics -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- End Crashlytics -->
 
 </manifest>

@@ -1,6 +1,5 @@
 package com.viggi.lib_logger;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -8,44 +7,53 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.CallLog;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewStub;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ListPopupWindow;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+//import com.google.android.gms.cast.framework.media.uicontroller.UIMediaController;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+//import com.google.android.gms.common.GoogleApiAvailability;
+//import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.ConnectionResult;
+//import com.google.android.gms.common.ConnectionResult;
 //import com.google.android.gms.common.GooglePlayServicesClient;
 //import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 //import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.plus.Plus;
+//import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+//import com.google.android.gms.plus.Plus;
 import com.example.dave.lib_logger.R;
 import com.google.android.gms.drive.Drive;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.crash.FirebaseCrash;
 import com.viggi.lib_dateslider.DateSlider;
 import com.viggi.lib_dateslider.DateTimeSlider;
 import com.viggi.lib_datestring.DateStrings;
@@ -53,17 +61,27 @@ import com.viggi.lib_file.DebugFile;
 import com.viggi.lib_file.DirectoryPicker;
 import com.viggi.lib_file.ErrorFile;
 import com.viggi.lib_file.LogFile;
+import com.viggi.lib_file.LogItem;
 import com.viggi.lib_file.LoggerConfig;
 import com.viggi.lib_file.LoggerStateFile;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+//Crashlytics
 import com.crashlytics.android.Crashlytics;
+import com.viggi.lib_file.LoggerStateItem;
+import com.viggi.lib_file.PhoneLogFile;
+
 import io.fabric.sdk.android.Fabric;
+//import io.fabric.sdk.android.Logger;
 
 /*
  * HINTS:
@@ -119,6 +137,8 @@ import io.fabric.sdk.android.Fabric;
 
 public class LoggerActivity extends FragmentActivity implements Runnable, AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 {
+    private Boolean mViewAsGrid = true;
+
     //Tracking Fields
     private LogAdder mAdder = new LogAdder();
 
@@ -132,37 +152,25 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
     private LogFile mLog = null;
     private String mLogFile = "Log.txt";
 
+    private PhoneLogFile mPhoneLog = null;
+    private String mPhoneLogFile = "PhoneLog.txt";
+
     private boolean mHadUpdateError = false;
 
     private int mStatsSelector = 0;
-
-    //Fields to edit when adding new log sets
-    private int[] mButtonIds = { R.id.logstub0, R.id.logstub1, R.id.logstub2, R.id.logstub3, R.id.logstub4, R.id.logstub5, R.id.logstub6, R.id.logstub7, R.id.logstub8, R.id.logstub9,
-            R.id.logstub10, R.id.logstub11, R.id.logstub12, R.id.logstub13, R.id.logstub14, R.id.logstub15, R.id.logstub16, R.id.logstub17, R.id.logstub18, R.id.logstub19,
-            R.id.logstub20, R.id.logstub21, R.id.logstub22, R.id.logstub23, R.id.logstub24, R.id.logstub25, R.id.logstub26, R.id.logstub27, R.id.logstub28, R.id.logstub29,
-            R.id.logstub30, R.id.logstub31, R.id.logstub32, R.id.logstub33, R.id.logstub34, R.id.logstub35, R.id.logstub36, R.id.logstub37, R.id.logstub38, R.id.logstub39,
-            R.id.logstub40, R.id.logstub41, R.id.logstub42, R.id.logstub43, R.id.logstub44, R.id.logstub45, R.id.logstub46, R.id.logstub47, R.id.logstub48, R.id.logstub49
-    };
-    private int[] mToggleIds = { R.id.toggleStub0, R.id.toggleStub1, R.id.toggleStub2, R.id.toggleStub3, R.id.toggleStub4, R.id.toggleStub5,
-            R.id.toggleStub6, R.id.toggleStub7, R.id.toggleStub8, R.id.toggleStub9
-    };
 
     //GUI components
     private TextView mIntroText = null;
     private CheckBox mDateCheck = null;
     private CheckBox mCommentCheck = null;
     private Button mSafeButton = null;
-    private Button mMenuButton = null;
     private ListPopupWindow mPopup;
     private String[] mMenuOptions={"Backup", "Refresh", "Directory", "Email", "Settings"};
-    //private Button mViewButton = null;
-    //private TextView mDebugText = null;
-    //private TextView[] mToggleLabels = null;
-    private ToggleButton[] mToggleButtons = null;
-    private TextView[] mToggleElapsedLabels = null;
-    private View[] mLayouts = null;
-    //private Button[] mAddButtons = null;
-    private TextView[] mSummaryTextViews = null;
+
+    private HashMap<String, ToggleButton> mToggleButtonMap = new HashMap<>();
+    private HashMap<String, TextView> mToggleLabelMap = new HashMap<>();
+    private HashMap<String, Button> mEventButtonMap = new HashMap<>();
+    private HashMap<String, TextView> mEventLabelMap = new HashMap<>();
 
     //Timed update thread
     private Thread mUpdateThread = null;
@@ -173,12 +181,18 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
     private GoogleApiClient mGoogleApiClient = null;
     private static final int REQUEST_CODE_RESOLUTION = 3;
 
+    private Location mLocation = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try
         {
-            //Debug("Logger", "App starting", false);
+            Log.i("Logger", "App starting up");
+
+            //Toast.makeText(this, "Hi Mike!!!", Toast.LENGTH_LONG).show();
+
+            //Crashlytics
             Fabric.with(this, new Crashlytics());
 
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -188,8 +202,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
                     .addOnConnectionFailedListener(this)
                     .build();
 
-            SharedPreferences prefs = getPreferences(0);
-            mStorageDirectory = prefs.getString("storageDirectory", null);
+            LoadAppStorage();
 
             if(mStorageDirectory == null)
             {
@@ -197,7 +210,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
             }
             else
             {
-                InitApp();
+                InitApp(mViewAsGrid);
             }
         }
         catch(Exception e)
@@ -233,7 +246,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult result)
+    public void onConnectionFailed(@NonNull ConnectionResult result)
     {
         // An unresolvable error has occurred and a connection to Google APIs
         // could not be established. Display an error message, or handle
@@ -262,10 +275,31 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         }
     }
 
-    private void InitApp()
+    public void LoadAppStorage()
+    {
+        SharedPreferences prefs = getPreferences(0);
+        mStorageDirectory = prefs.getString("storageDirectory", null);
+        mViewAsGrid = prefs.getBoolean("gridView", true);
+    }
+
+    public void SaveAppStorage()
+    {
+        SharedPreferences settings = getPreferences(0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("storageDirectory", mStorageDirectory);
+        editor.putBoolean("gridView", mViewAsGrid);
+        editor.apply();
+    }
+
+    private void InitApp(Boolean viewAsGrid)
     {
         try
         {
+            Shutdown();
+
+            mViewAsGrid = viewAsGrid;
+            mStatsSelector = 0;
+
             File dir = new File(mStorageDirectory);
             if(!dir.exists() && !dir.mkdirs())
             {
@@ -275,7 +309,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
             Debug("Logger", "Starting app", false);
 
-            setContentView(R.layout.activity_logger);
+            setContentView(R.layout.activity_logger2);
 
             mFullVersion = !getPackageName().toLowerCase().contains("lite");
             if(!mFullVersion)
@@ -285,7 +319,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
             Debug("Logger", "Loading config file", false);
             String configPath = mStorageDirectory + "/"+ mConfigFile;
-            mConfig = LoggerConfig.FromFile(configPath, getApplicationContext());
+            mConfig = LoggerConfig.FromFile(configPath);
             if(mConfig == null)
             {
                 Debug("Logger", "Creating new config at " +configPath, false);
@@ -295,152 +329,268 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
                 mConfig = LoggerConfig.Create(configPath);
             }
-            int numButtons = mConfig.Buttons.size();
-            int numToggles = mConfig.Toggles.size();
 
             Debug("Logger", "Build: " + GetBuildDate(), false);
 
-            Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , configPath, numButtons, numToggles), false);
+            Debug("Logger", String.format(Locale.getDefault(), "Loaded config from: %s (%d items)" , configPath, mConfig.Items.size()), false);
+
 
             String logPath = mStorageDirectory + "/" + mLogFile;
             Debug("Logger", "Loading log file at " + logPath, false);
             mLog = new LogFile(logPath, false);
 
-            //Create member arrays
-            Debug("Logger", "Creating internal arrays", false);
-            mToggleButtons = new ToggleButton[numToggles];
-            mToggleElapsedLabels = new TextView[numToggles];
-            mLayouts = new View[numButtons];
-            Button[] addButtons = new Button[numButtons];
-            mSummaryTextViews = new TextView[numButtons];
+            String phoneLogPath = mStorageDirectory + "/" + mPhoneLogFile;
+            Debug("Logger", "Loading phone log file at " + phoneLogPath, false);
+            mPhoneLog = new PhoneLogFile(phoneLogPath);
 
             //Find and configure common GUI components
-            Debug("Logger", "Finding GUI components", false);
-            mIntroText = (TextView) findViewById(R.id.introText);
-            mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
-            mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
-            mSafeButton = (Button) findViewById(R.id.safeButton);
-            mSafeButton.setOnClickListener(new SafeListener());
+            LoadMainUIComponents(viewAsGrid);
 
-            mMenuButton = (Button) findViewById(R.id.menuButton);
-            mMenuButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Debug("Logger", "User clicked Menu button", true);
-                    mPopup.show();
-                }
-            });
+            ConfigureGPS();
 
-            mPopup = new ListPopupWindow(this);
-            mPopup.setAdapter(new ArrayAdapter(this, R.layout.list_item, mMenuOptions));
-            mPopup.setAnchorView(mMenuButton);
-            mPopup.setWidth(300);
-            mPopup.setHeight(400);
-            mPopup.setModal(true);
-            mPopup.setOnItemClickListener(this);
+            LoadStateFile();
 
-
-
-
-
-
-
-
-            Button viewButton = (Button) findViewById(R.id.viewButton);
-            viewButton.setOnClickListener(new GraphViewListener());
-            //TextView debugText = (TextView) findViewById(R.id.debugText);
-            //debugText.setText("");
-
-            //Setup toggle sets
-            Debug("Logger", "Configuring toggles", false);
-            DisplayMetrics metrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            int width =  metrics.widthPixels;
-            int numForCalc = Math.min(numToggles, 5);
-            int toggleWidth = width / numForCalc;
-            for(int i=0; i<numToggles; i++)
+            if(mConfig.LogPhone)
             {
-                View stub = ((ViewStub) findViewById(mToggleIds[i])).inflate();
-                mToggleButtons[i] = (ToggleButton) stub.findViewById(R.id.toggleButton);
-                mToggleElapsedLabels[i] = (TextView) stub.findViewById(R.id.toggleElapsed);
-                mToggleButtons[i].setOnClickListener(new ToggleListener(i));
-                mToggleButtons[i].setTextOff(mConfig.Toggles.get(i));
-                mToggleButtons[i].setTextOn(mConfig.Toggles.get(i));
-                mToggleButtons[i].setLayoutParams(new LinearLayout.LayoutParams(toggleWidth, LinearLayout.LayoutParams.WRAP_CONTENT));
-                mToggleElapsedLabels[i].setLayoutParams(new LinearLayout.LayoutParams(toggleWidth, LinearLayout.LayoutParams.WRAP_CONTENT));
-                //mToggleButtons[i].setChecked(false);
+                LogPhoneCalls();
             }
 
-            //Setup log sets
-            Debug("Logger", "Configuring buttons", false);
-            //LinearLayout listLayout = (LinearLayout) findViewById(R.id.listLayout);
-            for(int i=0; i<numButtons; i++)
+            LoadLogItemUIComponents(viewAsGrid);
+
+            for(LogItem item : mConfig.Items)
             {
-                //mLayouts[i] = LayoutInflater.from(this).inflate(R.layout.logstub, null);
-                mLayouts[i] = ((ViewStub) findViewById(mButtonIds[i])).inflate();
-                addButtons[i] = (Button) mLayouts[i].findViewById(R.id.addButton);
-                addButtons[i].setText(mConfig.Buttons.get(i));
-                addButtons[i].setOnClickListener(new AddListener(i, mConfig.ButtonValues.get(i)));
-                mSummaryTextViews[i] = (TextView) mLayouts[i].findViewById(R.id.summaryText);
-                mSummaryTextViews[i].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        mStatsSelector++;
+                if(item.IsToggle)
+                {
+                    LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+
+                    boolean state = false;
+                    if(stateItem != null)
+                    {
+                        state = stateItem.ToggleState;
                     }
-                });
-
-                //listLayout.addView(mLayouts[i]);
+                    UpdateToggle(item, state);
+                }
             }
 
-            Debug("Logger", "Loading temp file", false);
-
-            //Internal storage version
-            //mState = LoggerState.Load(getPreferences(0), mConfig);
-            //File version
-            String stateFilePath = mStorageDirectory + "/" + mStateFile;
-            try
+            int numSafe = 0;
+            for(LogItem safeItem : mConfig.Items)
             {
-                mState = LoggerStateFile.FromFile(stateFilePath, mConfig);
+                if(safeItem.IsSafe)
+                {
+                    numSafe ++;
+                }
             }
-            catch(Exception e)
+            if(numSafe == 0 || mState.Safe)
+                mSafeButton.setVisibility(View.GONE);
+
+            //Check for expired reminders (key=name, value=reminderDays)
+
+            List<String> reminders = new ArrayList<>();
+            for(LogItem item : mConfig.Items)
             {
-                Debug("Logger", String.format("Error loading temp file: %s", e.toString()), false);
+                if(item.ReminderDays > 0)
+                {
+                    LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+                    Calendar last = stateItem.RecentHistory[0];
+                    Calendar now = Calendar.getInstance();
+
+                    long elapsed = now.getTimeInMillis() - last.getTimeInMillis();
+                    elapsed /= (1000 * 3600 * 24);
+
+                    if(elapsed > item.ReminderDays)
+                    {
+                        reminders.add(String.format(Locale.getDefault(), "%s: %d day%s", item.Name, (int)elapsed, elapsed >= 2 ? "s" : ""));
+                    }
+                }
             }
 
-            if(mState == null)
+            //See if we need to show any reminders
+            if(reminders.size() > 0)
             {
-                Debug("Logger", "Temp file not found, creating new", false);
-                //Internal storage version
-                //mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
-                //File version
-                mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
-            }
+                String message = "Overdue entries:\n";
+                for(String reminder : reminders)
+                {
+                    message += reminder + "\n";
+                }
 
-            for(int i=0; i<numToggles; i++)
-            {
-                mToggleButtons[i].setChecked(mState.ToggleStates[i]);
-
-                //Need to clean this up, duplicated elsewhere in this file
-                mToggleButtons[i].setTextColor(mState.ToggleStates[i] ? Color.CYAN : Color.WHITE);
+                Toast t = Toast.makeText(this, message, Toast.LENGTH_LONG);
+                t.show();
             }
 
             Debug("Logger", "Launching GUI update thread", false);
             mUpdateThread = new Thread(this);
             mUpdateThread.start();
-
-            if(mConfig.SafeItems.size() == 0 || mState.Safe)
-                mSafeButton.setVisibility(View.GONE);
-
-            if(mState.Safe)
-            {
-                Debug("Logger", "Going into safe mode during startup", false);
-                EnterSafeMode();
-            }
         }
         catch(Exception e)
         {
             Debug("Logger", "Error encountered during startup", false);
             Error(e);
+        }
+    }
+
+    private void LoadMainUIComponents(boolean viewAsGrid)
+    {
+        Debug("Logger", "Finding GUI components", false);
+        mIntroText = (TextView) findViewById(R.id.introText);
+        mDateCheck = (CheckBox) findViewById(R.id.dateCheck);
+        mCommentCheck = (CheckBox) findViewById(R.id.commentCheck);
+        mSafeButton = (Button) findViewById(R.id.safeButton);
+        mSafeButton.setOnClickListener(new SafeListener());
+
+        if(mState != null && mState.Safe)
+        {
+            mSafeButton.setVisibility(View.GONE);
+        }
+
+        CheckBox gridCheck = (CheckBox) findViewById(R.id.gridCheck);
+        gridCheck.setChecked(viewAsGrid);
+        gridCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                InitApp(b);
+
+                SaveAppStorage();
+            }
+        });
+
+        Button menuButton = (Button) findViewById(R.id.menuButton);
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Debug("Logger", "User clicked Menu button", false);
+                mPopup.show();
+            }
+        });
+
+        mPopup = new ListPopupWindow(this);
+        mPopup.setAdapter(new ArrayAdapter<>(this, R.layout.list_item, mMenuOptions));
+        mPopup.setAnchorView(menuButton);
+        mPopup.setWidth(400);
+        mPopup.setHeight(600);
+        mPopup.setModal(true);
+        mPopup.setOnItemClickListener(this);
+
+        Button viewButton = (Button) findViewById(R.id.viewButton);
+        viewButton.setOnClickListener(new GraphViewListener());
+    }
+
+    private void LoadLogItemUIComponents(boolean viewAsGrid)
+    {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        LinearLayout container = (LinearLayout) findViewById(R.id.buttonContainer);
+
+        LinearLayout listLayout = (LinearLayout)View.inflate(this, mViewAsGrid ? R.layout.logger_view_grid : R.layout.logger_view_list, null);
+        container.addView(listLayout);
+
+        int cellID = 1;
+        int buttonsPerRow = 4;
+        LinearLayout grid = null;
+        LinearLayout row = null;
+        int insertIndex = 0;
+
+        int width =  metrics.widthPixels;
+        int buttonWidth = width / buttonsPerRow;
+
+        if(mViewAsGrid)
+        {
+            grid = (LinearLayout) listLayout.findViewById(R.id.grid_container);
+            row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            grid.addView(row);
+        }
+
+        for(LogItem item : mConfig.Items)
+        {
+            try
+            {
+                if(!mState.Safe || !item.IsSafe)
+                {
+                    if(viewAsGrid && insertIndex % buttonsPerRow == 0)
+                    {
+                        row = new LinearLayout(this);
+                        row.setOrientation(LinearLayout.HORIZONTAL);
+                        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                        grid.addView(row);
+                    }
+
+                    int itemResource = item.IsToggle ?
+                            (mViewAsGrid ? R.layout.toggleset_grid : R.layout.toggleset2) :
+                            (mViewAsGrid ? R.layout.logset_grid : R.layout.logset);
+
+                    View stub = View.inflate(this, itemResource, null);
+                    stub.setId(1000 + cellID);
+                    cellID++;
+
+                    if(item.IsToggle)
+                    {
+                        mToggleButtonMap.put(item.Name, (ToggleButton) stub.findViewById(R.id.toggleButton));
+                        mToggleButtonMap.get(item.Name).setOnClickListener(new ToggleListener(item.Name));
+                        mToggleButtonMap.get(item.Name).setTextOff(item.Name);
+                        mToggleButtonMap.get(item.Name).setTextOn(item.Name);
+
+                        mToggleLabelMap.put(item.Name, (TextView) stub.findViewById(R.id.toggleElapsed));
+                        mToggleLabelMap.get(item.Name).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                mStatsSelector++;
+                            }
+                        });
+
+                        if(viewAsGrid)
+                        {
+                            int buttonHeight = mToggleButtonMap.get(item.Name).getLayoutParams().height;
+                            mToggleButtonMap.get(item.Name).setLayoutParams(new LinearLayout.LayoutParams(buttonWidth, buttonHeight));
+
+                            int labelHeight = mToggleLabelMap.get(item.Name).getLayoutParams().height;
+                            mToggleLabelMap.get(item.Name).setLayoutParams(new LinearLayout.LayoutParams(buttonWidth, labelHeight));
+                        }
+                    }
+                    else
+                    {
+                        mEventButtonMap.put(item.Name, (Button) stub.findViewById(R.id.addButton));
+                        mEventButtonMap.get(item.Name).setText(item.Name);
+
+                        mEventButtonMap.get(item.Name).setOnClickListener(new AddListener(item.Name, item.IsValue));
+
+                        mEventLabelMap.put(item.Name, (TextView) stub.findViewById(R.id.summaryText));
+                        mEventLabelMap.get(item.Name).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                mStatsSelector++;
+                            }
+                        });
+
+                        if(viewAsGrid)
+                        {
+                            int buttonHeight = mEventButtonMap.get(item.Name).getLayoutParams().height;
+                            mEventButtonMap.get(item.Name).setLayoutParams(new LinearLayout.LayoutParams(buttonWidth, buttonHeight));
+
+                            int labelHeight = mEventLabelMap.get(item.Name).getLayoutParams().height;
+                            mEventLabelMap.get(item.Name).setLayoutParams(new LinearLayout.LayoutParams(buttonWidth, labelHeight));
+                        }
+                    }
+
+                    if(mViewAsGrid)
+                    {
+                        row.addView(stub);
+                    }
+                    else
+                    {
+                        listLayout.addView(stub);
+                    }
+
+                    insertIndex++;
+                }
+            }
+            catch(NullPointerException e)
+            {
+                Log.e("Logger", "Null exception while loading log items");
+            }
+
         }
     }
 
@@ -463,6 +613,139 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         return "Unknown";
     }
 
+    private void ConfigureGPS()
+    {
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            FusedLocationProviderClient locationClient = LocationServices.getFusedLocationProviderClient(this);
+            locationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location)
+                        {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null)
+                            {
+                                Debug("Logger", "Got GPS", false);
+                                mLocation = location;
+
+                                Toast t = Toast.makeText(getApplicationContext(), "Got GPS", Toast.LENGTH_SHORT);
+                                t.show();
+                            }
+                        }
+                    });
+        }
+        else
+        {
+            Toast t = Toast.makeText(this, "No GPS permission", Toast.LENGTH_SHORT);
+            t.show();
+        }
+    }
+
+    private void LogPhoneCalls()
+    {
+        //Determine the last time we checked for calls
+        //if(mState.LastPhoneCall == null)
+        //{
+        //    mState.LastPhoneCall = Calendar.getInstance();
+
+            //TODO: Load phone log and find most recent entry
+
+        //    mState.Save();
+        //}
+
+        try
+        {
+            Cursor c = this.getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DATE + " ASC");
+
+            int numberIndex = c.getColumnIndex(CallLog.Calls.NUMBER);
+            int typeIndex = c.getColumnIndex(CallLog.Calls.TYPE);
+            int dateIndex = c.getColumnIndex(CallLog.Calls.DATE);
+            int nameIndex = c.getColumnIndex(CallLog.Calls.CACHED_NAME);
+            int durationIndex = c.getColumnIndex(CallLog.Calls.DURATION);
+
+            Calendar curDate = Calendar.getInstance();
+            int newEntries = 0;
+            while(c.moveToNext())
+            {
+                long dateInSeconds = Long.parseLong(c.getString(dateIndex));
+
+                curDate.setTimeInMillis(dateInSeconds);
+
+                if(mState.LastPhoneCall == null || mState.LastPhoneCall.getTimeInMillis()-curDate.getTimeInMillis() < -1000)
+                {
+                    String num = c.getString(numberIndex);
+                    String name = c.getString(nameIndex);
+                    String duration = c.getString(durationIndex);
+                    int type = Integer.parseInt(c.getString(typeIndex));
+                    String oldDate = mState.LastPhoneCall == null ? "" : String.format(Locale.getDefault(), " (%d, %s)", mState.LastPhoneCall.getTimeInMillis()-curDate.getTimeInMillis(), DateStrings.GetDateTimeString(mState.LastPhoneCall));
+                    Debug("Logger", String.format(Locale.getDefault(), "Writing entry for date %s%s", DateStrings.GetDateTimeString(curDate),oldDate), false);
+
+                    mPhoneLog.AddLogEntry(curDate, type, num, name, duration);
+                    newEntries++;
+                }
+
+                //Debug("Logger", String.format("%s: %s (%s)", date, num, duration), false);
+            }
+            c.close();
+
+            mState.LastPhoneCall = curDate;
+            mState.Save();
+
+            String message = String.format(Locale.getDefault(), "Logged %d phone calls", newEntries);
+            Debug("Logger", message, false);
+            if(newEntries > 0)
+            {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        }
+        catch(SecurityException ex)
+        {
+            Debug("Logger", "Phone permission denied", true);
+            Error(ex);
+        }
+        catch(NullPointerException ex)
+        {
+            Debug("Logger", "Phone cursor error", false);
+            Error(ex);
+        }
+    }
+
+    private void LoadStateFile()
+    {
+        Debug("Logger", "Loading temp file", false);
+
+        //Internal storage version
+        //mState = LoggerState.Load(getPreferences(0), mConfig);
+        //File version
+        String stateFilePath = mStorageDirectory + "/" + mStateFile;
+        try
+        {
+            mState = LoggerStateFile.FromFile(stateFilePath, mConfig);
+        }
+        catch(Exception e)
+        {
+            Debug("Logger", String.format("Error loading temp file: %s", e.toString()), false);
+        }
+
+        if(mState == null)
+        {
+            Debug("Logger", "Temp file not found, creating new", false);
+            //Internal storage version
+            //mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+            //File version
+            mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
+        }
+        else if (mState.NumItems() != mConfig.Items.size())
+        {
+            Debug("Logger", "State does not match config, creating new", false);
+            //Internal storage version
+            //mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+            //File version
+            mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
+        }
+    }
+
     private void ShowStorageDirectoryPicker()
     {
         Intent intent = new Intent(this, DirectoryPicker.class);
@@ -479,16 +762,12 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
             Bundle extras = data.getExtras();
             String path = (String) extras.get(DirectoryPicker.CHOSEN_DIRECTORY);
 
-            SharedPreferences settings = getPreferences(0);
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString("storageDirectory", path);
-            editor.apply();
-
             mStorageDirectory = path;
+            SaveAppStorage();
+
             Debug("Logger", "Storage directory set to " + path, false);
 
-            Shutdown();
-            InitApp();
+            InitApp(mViewAsGrid);
         }
         else if(requestCode == REQUEST_CODE_RESOLUTION)
         {
@@ -500,6 +779,14 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         }
     }
 
+    private void UpdateToggle(LogItem item, boolean state)
+    {
+        mToggleButtonMap.get(item.Name).setChecked(state);
+
+        //Need to clean this up, duplicated elsewhere in this file
+        mToggleButtonMap.get(item.Name).setTextColor(state ? Color.CYAN : Color.WHITE);
+    }
+
     //Called to update the displayed text
     private void UpdateSummaries()
     {
@@ -507,93 +794,27 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         {
             try
             {
+                if(mStatsSelector > 4)
+                    mStatsSelector = 0;
+
                 Calendar now = Calendar.getInstance();
                 mIntroText.setText(DateStrings.GetPresentableDateTimeString(now));
-                for(int index=0; index<mConfig.Buttons.size(); index++)
+
+                for(LogItem item : mConfig.Items)
                 {
-                    if(mStatsSelector > 4)
-                        mStatsSelector = 0;
+                    LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+                    String summaryText = GetLogItemLabel(item, now);
 
-                    //Log.e("DaveLogger", "Check " + mState.ActiveDate.toString());
-
-                    String summaryText = String.format(Locale.getDefault(), " %d today\n",
-                            mState.EventRecentCounts[index][0]);
-
-                    switch(mStatsSelector)
+                    if(item.IsToggle)
                     {
-                        case 0:
-                        {
-                            summaryText = String.format(Locale.getDefault(), "%s     Last (1): %s, %s",
-                                    summaryText,
-                                    DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][0], now, 2),
-                                    DateStrings.GetPrintableDateTimeString(mState.EventRecentHistories[index][0], mConfig.MidnightHour));
+                        UpdateToggle(item, stateItem.ToggleState);
 
-                            break;
-                        }
-                        case 1:
-                        {
-                            summaryText = String.format(Locale.getDefault(), "%s     Last (2): %s, %s",
-                                    summaryText,
-                                    DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][1], now, 2),
-                                    DateStrings.GetPrintableDateTimeString(mState.EventRecentHistories[index][1], mConfig.MidnightHour));
-
-                            break;
-                        }
-                        case 2:
-                        {
-                            summaryText = String.format(Locale.getDefault(), "%s     Last (3): %s, %s",
-                                    summaryText,
-                                    DateStrings.GetElapsedTimeString(mState.EventRecentHistories[index][2], now, 2),
-                                    DateStrings.GetPrintableDateTimeString(mState.EventRecentHistories[index][2], mConfig.MidnightHour));
-
-                            break;
-                        }
-                        case 3:
-                        {
-                            String totalsString = "";
-                            for(int j=1; j<LoggerStateFile.RecentTotalsHistoryLength; j++)
-                            {
-                                if(j > 1)
-                                {
-                                    totalsString += ",  ";
-                                }
-
-                                totalsString += String.format("%d", mState.EventRecentCounts[index][j]);
-                            }
-
-                            summaryText = String.format(Locale.getDefault(), "%s     Recent days: %s",
-                                    summaryText,
-                                    totalsString);
-
-                            break;
-                        }
-                        case 4:
-                        {
-                            summaryText = String.format(Locale.getDefault(), "%s     All-time: %.02f/day",
-                                    summaryText,
-                                    mState.EventAllTimeAverages[index]);
-
-                            break;
-                        }
-                        default:
-                        {
-                            summaryText = "ERROR";
-                            break;
-                        }
+                        mToggleLabelMap.get(item.Name).setText(summaryText);
                     }
-
-                    mSummaryTextViews[index].setText(summaryText);
-                }
-                for(int i=0; i<mConfig.Toggles.size(); i++)
-                {
-                    //Errors.Write("Logger Summary", "Toggle " + ConfigFile.Toggles.get(i) + " = " + TempFile.ToggleStates[i]);
-                    mToggleButtons[i].setChecked(mState.ToggleStates[i]);
-
-                    //Need to clean this up, duplicated elsewhere in this file
-                    mToggleButtons[i].setTextColor(mState.ToggleStates[i] ? Color.CYAN : Color.WHITE);
-
-                    String elapsedLabel = DateStrings.GetElapsedTimeString(mState.ToggleLastDates[i], now, 2);
-                    mToggleElapsedLabels[i].setText(elapsedLabel);
+                    else
+                    {
+                        mEventLabelMap.get(item.Name).setText(summaryText);
+                    }
                 }
             }
             catch(Exception e)
@@ -612,17 +833,146 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
             Log.e("DaveLogger", "UpdateSummaries Error");
     }
 
+    private String GetLogItemLabel(LogItem item, Calendar time)
+    {
+        LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+        String summaryText;
+        if(item.IsToggle)
+        {
+            //For toggles, need to add current "on time" if the toggle is on
+            double elapsedToday = stateItem.RecentCounts[0];
+            if(stateItem.ToggleState)
+            {
+                Calendar onTime = stateItem.RecentHistory[0];
+                if(DateStrings.SameDay(time, onTime, mConfig.MidnightHour))
+                {
+                    //Toggle turned on today
+                    elapsedToday += (time.getTimeInMillis() - onTime.getTimeInMillis()) / (float)3600000;
+                }
+                else
+                {
+                    //Toggle was already on at start of day
+                    elapsedToday += (time.getTimeInMillis() - DateStrings.GetStartOfActiveDay(time, mConfig.MidnightHour).getTimeInMillis()) / (float)3600000;
+                }
+            }
+            summaryText = String.format(Locale.getDefault(), " %s today\n", DateStrings.GetElapsedTimeString((long)(elapsedToday * 3600000), 1));
+        }
+        else
+        {
+            summaryText = String.format(Locale.getDefault(), " %d today\n", (int)stateItem.RecentCounts[0]);
+        }
+
+        int selector = mStatsSelector % (mViewAsGrid ? 2 : 1000);
+
+        switch(selector)
+        {
+            case 0:
+            {
+                if(mViewAsGrid)
+                {
+                    summaryText = DateStrings.GetElapsedTimeString(stateItem.RecentHistory[0], time, 2);
+                }
+                else
+                {
+                    summaryText = String.format(Locale.getDefault(), "%s     Last (1): %s, %s",
+                            summaryText,
+                            DateStrings.GetElapsedTimeString(stateItem.RecentHistory[0], time, 2),
+                            DateStrings.GetPrintableDateTimeString(stateItem.RecentHistory[0], mConfig.MidnightHour));
+                }
+
+                break;
+            }
+            case 1:
+            {
+                if(mViewAsGrid)
+                {
+                    if(item.IsToggle)
+                    {
+                        summaryText = DateStrings.GetElapsedTimeString((long)(stateItem.RecentCounts[0] * 3600000), 2);
+                    }
+                    else
+                    {
+                        summaryText = String.format(Locale.getDefault(), " %d", (int)stateItem.RecentCounts[0]);
+                    }
+                }
+                else
+                {
+                    summaryText = String.format(Locale.getDefault(), "%s     Last (2): %s, %s",
+                            summaryText,
+                            DateStrings.GetElapsedTimeString(stateItem.RecentHistory[1], time, 2),
+                            DateStrings.GetPrintableDateTimeString(stateItem.RecentHistory[1], mConfig.MidnightHour));
+                }
+
+                break;
+            }
+            case 2:
+            {
+                summaryText = String.format(Locale.getDefault(), "%s     Last (3): %s, %s",
+                        summaryText,
+                        DateStrings.GetElapsedTimeString(stateItem.RecentHistory[2], time, 2),
+                        DateStrings.GetPrintableDateTimeString(stateItem.RecentHistory[2], mConfig.MidnightHour));
+
+                break;
+            }
+            case 3:
+            {
+                String totalsString = "";
+                for(int j=1; j<LoggerStateFile.RecentTotalsHistoryLength; j++)
+                {
+                    if(j > 1)
+                    {
+                        totalsString += ",  ";
+                    }
+
+                    if(item.IsToggle)
+                    {
+                        totalsString += stateItem.RecentCounts[j] > 0 ? String.format(Locale.getDefault(), "%.01f", stateItem.RecentCounts[j]) : "0";
+                    }
+                    else
+                    {
+                        totalsString += String.format(Locale.getDefault(), "%d", (int)stateItem.RecentCounts[j]);
+                    }
+                }
+
+                summaryText = String.format(Locale.getDefault(), "%s     Week: %s",
+                        summaryText,
+                        totalsString);
+
+                break;
+            }
+            case 4:
+            {
+                summaryText = String.format(Locale.getDefault(), "%s     All-time: %.02f/day",
+                        summaryText,
+                        stateItem.AllTimeAverage);
+
+                break;
+            }
+            default:
+            {
+                summaryText = "ERROR";
+                break;
+            }
+        }
+
+        return summaryText;
+    }
+
     //Shows the LogViewer Activity
     private void ShowViewer()
     {
         Debug("Logger", "Starting LogViewer", false);
         Intent i = new Intent(getApplicationContext(), LogViewer.class);
+
+        //For testing the AndroidPlot_Demo
+        //Intent i = new Intent(getApplicationContext(), AndroidPlot_Demo.class);
+
         i.putExtra("safe", mState.Safe);
         i.putExtra("directory", mStorageDirectory);
         i.putExtra("configfile", mConfigFile);
         i.putExtra("logfile", mLogFile);
+        i.putExtra("phonelogfile", mPhoneLogFile);
         startActivity(i);
-        //startActivityForResult(i, 0);
     }
 
     //Shows the Settings Activity
@@ -630,6 +980,8 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
     {
         Debug("Logger", "Starting Config Activity", false);
         Intent i = new Intent(getApplicationContext(), LoggerConfigActivity.class);
+        i.putExtra("directory", mStorageDirectory);
+        i.putExtra("configfile", mConfigFile);
         startActivity(i);
         //startActivityForResult(i, 0);
     }
@@ -639,21 +991,9 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         try
         {
             mState.Safe = true;
-            mState.Save(mConfig);
-            //Hide safe button
-            mSafeButton.setVisibility(View.GONE);
+            mState.Save();
 
-            for(int x = 0; x<mConfig.SafeItems.size(); x++)
-            {
-                int foundId = -1;
-                for(int i=0; i<mConfig.Buttons.size(); i++)
-                    if(mConfig.Buttons.get(i).equals(mConfig.SafeItems.get(x)))
-                        foundId = i;
-                if(foundId >= 0)
-                {
-                    mLayouts[foundId].setVisibility(View.GONE);
-                }
-            }
+            InitApp(mViewAsGrid);
         }
         catch(Exception e)
         {
@@ -665,40 +1005,53 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
     //Button Listeners
     private class ToggleListener implements View.OnClickListener
     {
-        private int mIndex = -1;
+        private String mName = null;
 
-        public ToggleListener(int id)
+        private ToggleListener(String name)
         {
-            mIndex = id;
+            mName = name;
         }
         public void onClick(View v)
         {
             try
             {
                 Debug("Logger", "Logging toggle", false);
-                Calendar gc = Calendar.getInstance();
-                boolean checked =mToggleButtons[mIndex].isChecked();
-                mState.UpdateToggle(mIndex, gc, checked, mConfig);
-                String state = "off";
-                if(checked)
-                    state = "on";
-                mLog.AddLogEntry(gc, mIndex+1000, state, null, mConfig);
+                LogItem item = mConfig.GetEntryByName(mName);
 
-                //Need to clean this up, duplicated elsewhere in this file
-                mToggleButtons[mIndex].setTextColor(checked ? Color.CYAN : Color.WHITE);
+                Calendar gc = Calendar.getInstance();
+                boolean checked =mToggleButtonMap.get(mName).isChecked();
+
+                LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+                stateItem.ToggleState = checked;
+                mState.UpdateItem(stateItem, gc, mConfig.MidnightHour);
+                String state = checked ? "on" : "off";
+
+                Location location = mConfig.LogGPS || item.IsLocation ? mLocation : null;
+
+                mLog.AddLogEntry(gc, item.Name, state, null, location);
+
+                UpdateToggle(item, checked);
 
                 Debug("Logger", "Added toggle entry", false);
                 Toast t = Toast.makeText(getApplicationContext(), "Added toggle entry", Toast.LENGTH_SHORT);
                 t.show();
 
-                String triggerString = mConfig.Toggles.get(mIndex) + " " + (checked ? "on" : "off");
-                for(int i=0; i<mConfig.BackupTriggers.size(); i++)
+                if((item.IsBackup || (item.IsBackupOn && checked) || (item.IsBackupOff && !checked)))
                 {
-                    if(mConfig.BackupTriggers.get(i).equals(triggerString))
-                    {
-                        backupLogFile();
-                    }
+                    backupLogFile();
                 }
+
+//                //OLD WAY
+//                String toggleString = mConfig.Toggles.get(mIndex) + " " + (checked ? "on" : "off");
+//                for(int i=0; i<mConfig.BackupTriggers.size(); i++)
+//                {
+//                    //Look for the backup trigger in the fully-built toggle string
+//                    //i.e. so toggle triggers "Sleep" and "Sleep on" will both work
+//                    if(toggleString.contains(mConfig.BackupTriggers.get(i)))
+//                    {
+//                        backupLogFile();
+//                    }
+//                }
             }
             catch(Exception e)
             {
@@ -709,12 +1062,12 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
     private class AddListener implements View.OnClickListener
     {
-        private int mIndex = -1;
+        private String mName = null;
         private boolean mIsValue = false;
 
-        public AddListener(int id, boolean isValue)
+        private AddListener(String name, boolean isValue)
         {
-            mIndex = id;
+            mName = name;
             mIsValue = isValue;
         }
 
@@ -733,7 +1086,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
                     withComment = " with comment";
                 Debug("Logger", "Logging button" + withDate + withComment, false);
 
-                mAdder.PromptAndSave(mIndex, setDate, addComment);
+                mAdder.PromptAndSave(mName, setDate, addComment);
             }
             catch(Exception e)
             {
@@ -864,15 +1217,15 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         /*
          * This class is used to show the prompts when adding a log entry
          */
-        public int Index = -1;
-        public Calendar Date = null;
-        public String Comment = null;
+        private String Name = null;
+        private Calendar Date = null;
+        private String Comment = null;
         private boolean mDate = false;
         private boolean mComment = false;
 
-        public void PromptAndSave(int index, boolean customDate, boolean getComment)
+        private void PromptAndSave(String name, boolean customDate, boolean getComment)
         {
-            Index = index;
+            Name = name;
             Date = Calendar.getInstance();
             mDate = customDate;
             mComment = getComment;
@@ -882,7 +1235,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
                 GetCommentAndSave();
         }
 
-        public void GetCommentAndSave()
+        private void GetCommentAndSave()
         {
             if(mComment)
                 showDialog(1);
@@ -890,25 +1243,33 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
                 SaveLog();
         }
 
-        public void SaveLog()
+        private void SaveLog()
         {
             try
             {
-                mLog.AddLogEntry(Date, Index, null, Comment, mConfig);
+                LogItem item = mConfig.GetEntryByName(Name);
+                LoggerStateItem stateItem = mState.GetEntryByName(item.Name);
+                Location location = mConfig.LogGPS || item.IsLocation ? mLocation : null;
+                mLog.AddLogEntry(Date, item.Name, null, Comment, location);
                 Comment = null;
-                mState.UpdateEvent(Index, Date, mConfig);
+                mState.UpdateItem(stateItem, Date, mConfig.MidnightHour);
                 UpdateSummaries();
 
                 Toast t = Toast.makeText(getApplicationContext(), "Added log entry", Toast.LENGTH_SHORT);
                 t.show();
 
-                for(int i=0; i<mConfig.BackupTriggers.size(); i++)
+                if(item.IsBackup)
                 {
-                    if(mConfig.BackupTriggers.get(i).equals(mConfig.Buttons.get(Index)))
-                    {
-                        backupLogFile();
-                    }
+                    backupLogFile();
                 }
+
+//                for(int i=0; i<mConfig.BackupTriggers.size(); i++)
+//                {
+//                    if(mConfig.BackupTriggers.get(i).equals(mConfig.Buttons.get(Index)))
+//                    {
+//
+//                    }
+//                }
             }
             catch(Exception e)
             {
@@ -968,7 +1329,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
                 break;
             case 3:
                 Debug("Logger", "Emailing log", false);
-                mLog.EmailLog(this, mConfig);
+                mLog.EmailLog(this, mConfig, mStorageDirectory);
                 break;
             case 4:
                 Debug("Logger", "User clicked Settings", false);
@@ -1004,7 +1365,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         }
         if (id == R.id.mainmenu_export) {
             Debug("Logger", "Exporting log", false);
-            mLog.ExportLog(mConfig);
+            mLog.ExportLogToDirectory(mStorageDirectory);
             return true;
         }
         if (id == R.id.mainmenu_directory) {
@@ -1014,7 +1375,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         }
         if (id == R.id.mainmenu_email) {
             Debug("Logger", "Emailing log", false);
-            mLog.EmailLog(this, mConfig);
+            mLog.EmailLog(this, mConfig, mStorageDirectory);
             return true;
         }
         if (id == R.id.mainmenu_refresh) {
@@ -1050,7 +1411,10 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
         {
             handler.sendEmptyMessage(0);
             try { Thread.sleep(1000); }
-            catch (Exception e) {}
+            catch (Exception e)
+            {
+                Log.e("LoggerActivity", "Error doing thread sleep");
+            }
         }
     }
 
@@ -1076,14 +1440,21 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
     private void Shutdown()
     {
-        Debug("Logger", "Shutting down", false);
-        mQuitThread = true;
-        try
+        if(mUpdateThread != null)
         {
-            mUpdateThread.join();
+            Debug("Logger", "Shutting down", false);
+            mQuitThread = true;
+            try
+            {
+                mUpdateThread.join();
+            }
+            catch(Exception e)
+            {
+                Log.e("LoggerActivity", "Error joining update thread");
+            }
+            mQuitThread = false;
+            mUpdateThread = null;
         }
-        catch(Exception e){}
-        mQuitThread = false;
     }
 
 
@@ -1102,6 +1473,7 @@ public class LoggerActivity extends FragmentActivity implements Runnable, Adapte
 
     private void Error(Exception e)
     {
+        FirebaseCrash.report(e);
         String entry = ErrorFile.WriteException(e, getApplicationContext());
         Debug("Error", entry, false);
     }

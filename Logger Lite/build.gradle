@@ -1,3 +1,4 @@
+//For Crashlytics
 buildscript {
     repositories {
         maven { url 'https://maven.fabric.io/public' }
@@ -12,24 +13,27 @@ buildscript {
         classpath 'io.fabric.tools:gradle:1.+'
     }
 }
+//End Crashlytics
 
 apply plugin: 'com.android.application'
 
+//For Crashlytics
 apply plugin: 'io.fabric'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
+//End Crashlytics
 
 android {
     compileSdkVersion 24
-
     defaultConfig {
         applicationId "com.example.dave.logger_lite"
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -37,13 +41,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:24.0.0'
     compile project(':lib_logger')
+    //For AndroidPlot
+    compile 'com.androidplot:androidplot-core:1.5.1'
+    //End AndroidPlot
+    //For Crashlytics
     compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
         transitive = true;
     }
+    //End Crashlytics
 }

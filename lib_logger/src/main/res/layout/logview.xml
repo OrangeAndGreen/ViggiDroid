@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ap="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     style="@style/AppTheme"
@@ -15,6 +16,19 @@
         android:id="@+id/graphView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
+    <com.androidplot.xy.XYPlot
+        style="@style/APDefacto.Dark"
+        android:id="@+id/APPlot"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        ap:title="A Simple XY Plot"
+        ap:titleTextSize="12sp"
+        ap:rangeTitle="range"
+        ap:domainTitle="domain"
+        ap:lineLabels="left|bottom"
+        ap:lineLabelInsetBottom="0dp"
+        ap:lineLabelRotationBottom="0"
+        />
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="fill_parent"

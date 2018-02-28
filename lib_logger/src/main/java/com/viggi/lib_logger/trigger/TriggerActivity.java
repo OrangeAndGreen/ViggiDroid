@@ -15,11 +15,14 @@ import com.viggi.lib_file.DebugFile;
 import com.viggi.lib_file.DirectoryPicker;
 import com.viggi.lib_file.ErrorFile;
 import com.viggi.lib_file.LogFile;
+import com.viggi.lib_file.LogItem;
 import com.viggi.lib_file.LoggerConfig;
 import com.viggi.lib_file.LoggerStateFile;
+import com.viggi.lib_file.LoggerStateItem;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -30,12 +33,10 @@ public class TriggerActivity extends Activity
 {
     private int mTriggerNumber = -1;
     private String mStorageDirectory = null;
-    private String mConfigFile = "Config.txt";
-    private String mLogFile = "Log.txt";
+    private final String mConfigFile = "Config.txt";
+    private final String mLogFile = "Log.txt";
     private LoggerConfig mConfig = null;
-    private LogFile mLog = null;
-    private LoggerStateFile mState = null;
-    private String mStateFile = "Temp.txt";
+    private final String mStateFile = "Temp.txt";
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -67,7 +68,7 @@ public class TriggerActivity extends Activity
 
     private void InitApp()
     {
-        String toastMessage = null;
+        String toastMessage;
         try
         {
             File dir = new File(mStorageDirectory);
@@ -83,7 +84,7 @@ public class TriggerActivity extends Activity
 
             Debug("Logger", "Loading config file", false);
             String configPath = mStorageDirectory + "/"+ mConfigFile;
-            mConfig = LoggerConfig.FromFile(configPath, getApplicationContext());
+            mConfig = LoggerConfig.FromFile(configPath);
             if(mConfig == null)
             {
                 Debug("Logger", "Creating new config at " +configPath, false);
@@ -93,81 +94,76 @@ public class TriggerActivity extends Activity
 
                 mConfig = LoggerConfig.Create(configPath);
             }
-            int numButtons = mConfig.Buttons.size();
-            int numToggles = mConfig.Toggles.size();
 
             Debug("Logger", "Build: " + GetBuildDate(), false);
 
-            Debug("Logger", String.format("Loaded config from: %s (%d buttons, %d toggles)" , configPath, numButtons, numToggles), false);
+            Debug("Logger", String.format(Locale.getDefault(), "Loaded config from: %s (%d items)" , configPath, mConfig.Items.size()), false);
 
             String logPath = mStorageDirectory + "/" + mLogFile;
             Debug("Logger", "Loading log file at " + logPath, false);
-            mLog = new LogFile(logPath, false);
+            LogFile log = new LogFile(logPath, false);
 
             Debug("Logger", "Loading temp file", false);
+            LoggerStateFile state;
             //Internal storage version
-            //mState = LoggerState.Load(getPreferences(0), mConfig);
+            //state = LoggerState.Load(getPreferences(0), mConfig);
             //File version
             String stateFilePath = mStorageDirectory + "/" + mStateFile;
-            mState = LoggerStateFile.FromFile(stateFilePath, mConfig);
+            state = LoggerStateFile.FromFile(stateFilePath, mConfig);
 
-            if(mState == null)
+            if(state == null)
             {
                 Debug("Logger", "Temp file not found, creating new", false);
 
                 //Internal storage version
-                //mState = LoggerState.Create(getPreferences(0), mLog.GetLogEntries(), mConfig, mStorageDirectory);
+                //state = LoggerState.Create(getPreferences(0), log.GetLogEntries(), mConfig, mStorageDirectory);
                 //File version
-                mState = LoggerStateFile.Create(stateFilePath, mLog.GetLogEntries(), mConfig);
+                state = LoggerStateFile.Create(stateFilePath, log.GetLogEntries(), mConfig);
             }
 
-            String category = mConfig.Triggers.get(mTriggerNumber);
-
-            if(category != null)
+            LogItem item = null;
+            for(LogItem searchItem : mConfig.Items)
             {
-                String type = null;
-                String state = null;
+                if(searchItem.TriggerID == mTriggerNumber)
+                {
+                    item = searchItem;
+                    break;
+                }
+            }
+
+            if(item != null)
+            {
+                String type;
+                String logState = null;
                 Calendar date = Calendar.getInstance();
 
-                int index = mConfig.Buttons.indexOf(category);
-                if(index >= 0)
+                LoggerStateItem stateItem = state.GetEntryByName(item.Name);
+
+                if(item.IsToggle)
                 {
                     //Button
                     type = "button";
-                    toastMessage = String.format("Logged %s", category);
-                    mState.UpdateEvent(index, date, mConfig);
+                    toastMessage = String.format("Logged %s", item.Name);
                 }
                 else
                 {
-                    index = mConfig.Toggles.indexOf(category);
-                    if(index >= 0)
-                    {
-                        //Toggle
-                        type = "toggle";
-                        boolean checked = !mState.ToggleStates[index];
-                        state = checked ? "on" : "off";
-                        toastMessage = String.format("Logged %s %s", category, state);
-
-                        mState.UpdateToggle(index, date, checked, mConfig);
-
-                        index += 1000;
-                    }
+                    //Toggle
+                    type = "toggle";
+                    stateItem.ToggleState = !stateItem.ToggleState;
+                    logState = stateItem.ToggleState ? "on" : "off";
+                    toastMessage = String.format("Logged %s %s", item.Name, state);
                 }
 
-                if(type != null)
-                {
-                    String comment = null;
-                    Debug("Logger", String.format("Logging %s", type), false);
-                    mLog.AddLogEntry(date, index, state, comment, mConfig);
-                }
-                else
-                {
-                    toastMessage = String.format("Could not find category %s in the config file", category);
-                }
+                state.UpdateItem(stateItem, date, mConfig.MidnightHour);
+
+                Debug("Logger", String.format("Logging %s", type), false);
+                //TODO: Get location for entries configured to record it
+                log.AddLogEntry(date, item.Name, logState, null, null);
+
             }
             else
             {
-                toastMessage = String.format("Trigger %d is not configured", mTriggerNumber);
+                toastMessage = String.format(Locale.getDefault(), "Trigger %d is not configured", mTriggerNumber);
             }
         }
         catch(Exception e)
@@ -196,6 +192,7 @@ public class TriggerActivity extends Activity
         }
         catch(Exception e)
         {
+            Log.e("TriggerActivity", "Exception getting build date");
         }
 
         return "Unknown";
@@ -218,7 +215,7 @@ public class TriggerActivity extends Activity
             SharedPreferences settings = getPreferences(0);
             SharedPreferences.Editor editor = settings.edit();
             editor.putString("storageDirectory", path);
-            editor.commit();
+            editor.apply();
 
             mStorageDirectory = path;
             Debug("Logger", "Storage directory set to " + path, false);

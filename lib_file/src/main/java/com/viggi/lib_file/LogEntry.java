@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * Created by Dave on 2/22/2015.
+ * Holds a single log entry
  */
 public class LogEntry
 {
@@ -15,8 +16,6 @@ public class LogEntry
     private String Type = null;
     private String Comment = null;
     private Calendar mDate = null;
-    private int mIndex = -1;
-    private int mToggleIndex = -1;
     public String ToggleState = null;
 
     public LogEntry(String inDate, String inType, String inState, String inComment)
@@ -44,28 +43,16 @@ public class LogEntry
         return mDate;
     }
 
-    public void SetDate(String date)
-    {
-        Date = date;
-        mDate = null;
-    }
-
-    public String GetDateString()
-    {
-        return Date;
-    }
-
-    public int GetId(LoggerConfig config)
-    {
-        mIndex = config.Buttons.indexOf(Type.trim());
-        return mIndex;
-    }
-
-    public int GetToggleId(LoggerConfig config)
-    {
-        mToggleIndex = config.Toggles.indexOf(Type.trim());
-        return mToggleIndex;
-    }
+//    public void SetDate(String date)
+//    {
+//        Date = date;
+//        mDate = null;
+//    }
+//
+//    public String GetDateString()
+//    {
+//        return Date;
+//    }
 
     public String GetToggleState()
     {
@@ -84,23 +71,23 @@ public class LogEntry
         return Type;
     }
 
-    public void SetType(String type)
-    {
-        Type = type;
-        mIndex = -1;
-    }
+//    public void SetType(String type)
+//    {
+//        Type = type;
+//        //mIndex = -1;
+//    }
 
     public String GetComment()
     {
         return Comment;
     }
 
-    public void SetComment(String inComment)
-    {
-        Comment = inComment;
-    }
+//    public void SetComment(String inComment)
+//    {
+//        Comment = inComment;
+//    }
 
-    public static List<LogEntry> ExtractEventLog(List<LogEntry> allEntries, int searchIndex, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public static List<LogEntry> ExtractEventLog(List<LogEntry> allEntries, String name, String filter, List<Boolean> dayFilters)
     {
         int numDayFilters = 0;
         for (int i=0; i<dayFilters.size(); i++)
@@ -117,10 +104,9 @@ public class LogEntry
         for(int i=0; i<allEntries.size(); i++)
         {
             boolean addLine = true;
-            if(searchIndex >=0)
+            if(name != null)
             {
-                int index = allEntries.get(i).GetId(config);
-                addLine = index == searchIndex;
+                addLine = name.equals(allEntries.get(i).GetType());
             }
 
             if(dayFilteringEnabled)
@@ -140,9 +126,9 @@ public class LogEntry
         return output;
     }
 
-    public static float[] ExtractDailyEventTotals(List<LogEntry> allEntries, int searchIndex, Calendar startDate, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public static float[] ExtractDailyEventTotals(List<LogEntry> allEntries, String name, Calendar startDate, int midnightHour, String filter, List<Boolean> dayFilters)
     {
-        List<LogEntry> entries = ExtractEventLog(allEntries, searchIndex, config, filter, dayFilters);
+        List<LogEntry> entries = ExtractEventLog(allEntries, name, filter, dayFilters);
         List<Float> countsPerDay = new ArrayList<>();
         Calendar lastDate = null;
         int dayCount = 0;
@@ -153,11 +139,11 @@ public class LogEntry
             if(curDate == null)
                 continue;
 
-            if(lastDate != null && !DateStrings.SameDay(lastDate, curDate, config.MidnightHour))
+            if(lastDate != null && !DateStrings.SameDay(lastDate, curDate, midnightHour))
             {
                 //This entry starts a new day
                 //Add entries for every day between the last entry and this entry
-                int days = DateStrings.GetActiveDiffInDays(lastDate, curDate, config.MidnightHour);
+                int days = DateStrings.GetActiveDiffInDays(lastDate, curDate, midnightHour);
                 for(int k=0; k<days; k++)
                 {
                     //Add the current count for the end of the previous day,
@@ -174,7 +160,7 @@ public class LogEntry
         }
 
         //Add entries for every day between the last entry and now
-        int days = DateStrings.GetActiveDiffInDays(lastDate, Calendar.getInstance(), config.MidnightHour) + 1;
+        int days = DateStrings.GetActiveDiffInDays(lastDate, Calendar.getInstance(), midnightHour) + 1;
         for(int d=0; d<days; d++)
         {
             countsPerDay.add((float)dayCount);
@@ -189,7 +175,7 @@ public class LogEntry
         return ret;
     }
 
-    public static List<LogEntry> ExtractToggleLog(List<LogEntry> allEntries, int searchIndex, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public static List<LogEntry> ExtractToggleLog(List<LogEntry> allEntries, String name, String filter, List<Boolean> dayFilters)
     {
         int numDayFilters = 0;
         for (int i=0; i<dayFilters.size(); i++)
@@ -207,10 +193,9 @@ public class LogEntry
         for(int i=0; i<allEntries.size(); i++)
         {
             boolean addLine = true;
-            if(searchIndex >=0)
+            if(name != null)
             {
-                int index = allEntries.get(i).GetToggleId(config);
-                addLine = index == searchIndex;
+                addLine = name.equals(allEntries.get(i).GetType());
             }
 
             if(dayFilteringEnabled)
@@ -257,9 +242,9 @@ public class LogEntry
         return output;
     }
 
-    public static float[] ExtractDailyToggleTotals(List<LogEntry> allEntries, int searchIndex, Calendar startDate, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public static float[] ExtractDailyToggleTotals(List<LogEntry> allEntries, String name, Calendar startDate, int midnightHour, String filter, List<Boolean> dayFilters)
     {
-        List<LogEntry> subset = ExtractToggleLog(allEntries, searchIndex, config, filter, dayFilters);
+        List<LogEntry> subset = ExtractToggleLog(allEntries, name, filter, dayFilters);
         int subsetSize = subset.size();
         LogEntry lastEntry = null;
         if(subsetSize > 0)
@@ -288,7 +273,7 @@ public class LogEntry
                 {
                     //Turned a toggle on
                     onDate = curDate;
-                    int days = DateStrings.GetActiveDiffInDays(endDate, curDate, config.MidnightHour);
+                    int days = DateStrings.GetActiveDiffInDays(endDate, curDate, midnightHour);
                     for(int d=0; d<days; d++)
                     {
                         totals.add(dayTotal);
@@ -298,15 +283,14 @@ public class LogEntry
                 else if(onDate != null)
                 {
                     //Turned a toggle off
-                    int days = DateStrings.GetActiveDiffInDays(onDate, curDate, config.MidnightHour);
+                    int days = DateStrings.GetActiveDiffInDays(onDate, curDate, midnightHour);
                     float totalElapsed = (curDate.getTimeInMillis() - onDate.getTimeInMillis()) / (float)3600000;
                     Calendar firstMidnight = (Calendar) onDate.clone();
-                    int midnightShift = config.MidnightHour;
-                    if(firstMidnight.get(Calendar.HOUR_OF_DAY) >= midnightShift)
+                    if(firstMidnight.get(Calendar.HOUR_OF_DAY) >= midnightHour)
                     {
                         firstMidnight.add(Calendar.HOUR, 24);
                     }
-                    firstMidnight.set(Calendar.HOUR_OF_DAY, midnightShift);
+                    firstMidnight.set(Calendar.HOUR_OF_DAY, midnightHour);
                     firstMidnight.set(Calendar.MINUTE, 0);
                     firstMidnight.set(Calendar.SECOND, 0);
 
@@ -342,7 +326,7 @@ public class LogEntry
             }
 
             //Add entries from the last "off" date to now
-            int days = DateStrings.GetActiveDiffInDays(endDate, Calendar.getInstance(), config.MidnightHour) + 1;
+            int days = DateStrings.GetActiveDiffInDays(endDate, Calendar.getInstance(), midnightHour) + 1;
             for(int d=0; d<days; d++)
             {
                 if(d==0)

@@ -2,7 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.viggi.logger" >
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -25,6 +29,8 @@
             </intent-filter>
         </activity>
         <activity android:label="View Log" android:name="com.viggi.lib_logger.LogViewer">
+        </activity>
+        <activity android:label="AP Demo" android:name="com.viggi.lib_logger.AndroidPlot_Demo">
         </activity>
         <activity android:label="Choose directory" android:name="com.viggi.lib_file.DirectoryPicker">
         </activity>
@@ -121,12 +127,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Crashlytics -->
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="3513aee7ad766598747cd670847a178a7b5f6971"
             />
+        <!-- End Crashlytics -->
     </application>
 
+    <!-- Crashlytics -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- End Crashlytics -->
 
 </manifest>

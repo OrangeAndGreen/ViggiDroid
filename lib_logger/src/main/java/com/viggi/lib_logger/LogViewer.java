@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,19 +26,24 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.androidplot.xy.XYPlot;
+import com.crashlytics.android.Crashlytics;
 import com.example.dave.lib_logger.R;
 import com.viggi.lib_datestring.DateStrings;
 import com.viggi.lib_file.DebugFile;
 import com.viggi.lib_file.ErrorFile;
-import com.viggi.lib_file.LogEntry;
 import com.viggi.lib_file.LogFile;
+import com.viggi.lib_file.LogItem;
 import com.viggi.lib_file.LoggerConfig;
+import com.viggi.lib_file.PhoneLogFile;
 
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by Dave on 2/22/2015.
@@ -46,12 +52,13 @@ import java.util.List;
 public class LogViewer extends Activity implements Runnable
 {
     //Graph view controls
-    private Button mSettingsButton = null;
     private com.viggi.lib_graph.GraphView mGraph = null;
+    private XYPlot mXYPlot = null;
     private ScrollView mTextScroller = null;
     private TextView mTextView = null;
 
     //Settings view controls
+    private CheckBox mNewGraphInput = null;
     private Spinner mTypeSpinner = null;
     private Spinner mDataSpinner = null;
     private Spinner mTimeSpinner = null;
@@ -75,8 +82,8 @@ public class LogViewer extends Activity implements Runnable
     private ToggleButton mSundayInput = null;
     private List<Boolean> mDayFilters = null;
 
-    private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Hourly Histogram", "Intervals", "Values", "Stats", "Comments", "Recent History"};
-    private CharSequence[] mGraphTypesNew = {"Totals", "Values", "Daily Timing", "Distribution", "Intervals", "Histogram", "Info"};
+    //private CharSequence[] mGraphTypes = {"Daily Totals", "Daily Timing", "Distribution", "Weekly Histogram", "Hourly Histogram", "Intervals", "Values", "Stats", "Comments", "Recent History"};
+    private CharSequence[] mGraphTypes = {"Totals", "Values", "Daily Timing", "Distribution", "Intervals", "Histogram", "Info"};
     private CharSequence[] mTimeScales = {"Daily", "Monthly", "Yearly"};
     private CharSequence[] mHistTimeScales = {"Hour of day", "Day of week", "Day of month", "Day of year", "Week of year", "Month of year"};
     private CharSequence[] mInfoTypes = {"Stats", "Comments", "Recent History"};
@@ -85,12 +92,14 @@ public class LogViewer extends Activity implements Runnable
     private CharSequence[] mTimeOptions = { "Days", "Weeks", "Months", "Years" };
     private LoggerConfig mConfig = null;
     private LogFile mLog = null;
+    private PhoneLogFile mPhoneLog = null;
 
     private boolean mShowingSettings = false;
 
     private boolean mSafe = false;
     private String mRootDirectory = null;
     private String mLogFile = null;
+    private String mPhoneLogFile = null;
 
     private Context mContext = null;
     private ProgressDialog mDialog = null;
@@ -110,7 +119,7 @@ public class LogViewer extends Activity implements Runnable
     private boolean mDrawPointsChecked = false;
     private boolean mDrawLinesChecked = false;
     private String mFilter = null;
-
+    private boolean mNewGraphChecked = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -119,13 +128,17 @@ public class LogViewer extends Activity implements Runnable
         {
             super.onCreate(savedInstanceState);
 
+            //Crashlytics
+            Fabric.with(this, new Crashlytics());
+
             Intent intent = getIntent();
             mSafe = intent.getBooleanExtra("safe", false);
             mRootDirectory = intent.getStringExtra("directory");
             String configPath = intent.getStringExtra("configfile");
             mLogFile = intent.getStringExtra("logfile");
+            mPhoneLogFile = intent.getStringExtra("phonelogfile");
 
-            mDayFilters = new ArrayList<Boolean>();
+            mDayFilters = new ArrayList<>();
             for(int i=0; i<7; i++)
             {
                 mDayFilters.add(false);
@@ -134,9 +147,11 @@ public class LogViewer extends Activity implements Runnable
             Debug("LogViewer", "Loading activity", false);
             mContext = this;
 
-            mConfig = LoggerConfig.FromFile(mRootDirectory + "/" + configPath, getApplicationContext());
+            mConfig = LoggerConfig.FromFile(mRootDirectory + "/" + configPath);
 
             IdentifyDataTypesAndCategories();
+
+            LoadAppStorage();
 
             ShowSettings();
         }
@@ -145,6 +160,57 @@ public class LogViewer extends Activity implements Runnable
             Debug("LogViewer", "Error loading activity", false);
             ErrorFile.WriteException(e, this);
         }
+    }
+
+    public void LoadAppStorage()
+    {
+        SharedPreferences prefs = getPreferences(0);
+        mDataIndex = prefs.getInt("dataIndex", mDataIndex);
+        mHistoryIndex = prefs.getInt("historyIndex", mHistoryIndex);
+        mGraphTypeIndex = prefs.getInt("graphTypeIndex", mGraphTypeIndex);
+        mSecondaryIndex = prefs.getInt("secondaryIndex", mSecondaryIndex);
+        mAllTimeAverageChecked = prefs.getBoolean("aveChecked", mAllTimeAverageChecked);
+        mValueChecked = prefs.getBoolean("valueChecked", mValueChecked);
+        mDrawPointsChecked = prefs.getBoolean("pointsChecked", mDrawPointsChecked);
+        mDrawLinesChecked = prefs.getBoolean("linesChecked", mDrawLinesChecked);
+        mNewGraphChecked = prefs.getBoolean("newGraph", mNewGraphChecked);
+        mFilter = prefs.getString("filter", mFilter);
+        mHistoryLength = prefs.getString("historyLength", mHistoryLength);
+        mDayFilters.set(0, prefs.getBoolean("day0Checked", mDayFilters.get(0)));
+        mDayFilters.set(1, prefs.getBoolean("day1Checked", mDayFilters.get(1)));
+        mDayFilters.set(2, prefs.getBoolean("day2Checked", mDayFilters.get(2)));
+        mDayFilters.set(3, prefs.getBoolean("day3Checked", mDayFilters.get(3)));
+        mDayFilters.set(4, prefs.getBoolean("day4Checked", mDayFilters.get(4)));
+        mDayFilters.set(5, prefs.getBoolean("day5Checked", mDayFilters.get(5)));
+        mDayFilters.set(6, prefs.getBoolean("day6Checked", mDayFilters.get(6)));
+    }
+
+    public void SaveAppStorage()
+    {
+        SharedPreferences settings = getPreferences(0);
+        SharedPreferences.Editor editor = settings.edit();
+
+        editor.putInt("dataIndex", mDataIndex);
+        editor.putInt("historyIndex", mHistoryIndex);
+        editor.putInt("graphTypeIndex", mGraphTypeIndex);
+        editor.putInt("secondaryIndex", mSecondaryIndex);
+        editor.putBoolean("aveChecked", mAllTimeAverageChecked);
+        editor.putBoolean("valueChecked", mValueChecked);
+        editor.putBoolean("pointsChecked", mDrawPointsChecked);
+        editor.putBoolean("linesChecked", mDrawLinesChecked);
+        editor.putBoolean("newGraph", mNewGraphChecked);
+        editor.putString("filter", mFilter);
+        editor.putString("historyLength", mHistoryLength);
+        editor.putBoolean("day0Checked", mDayFilters.get(0));
+        editor.putBoolean("day1Checked", mDayFilters.get(1));
+        editor.putBoolean("day2Checked", mDayFilters.get(2));
+        editor.putBoolean("day3Checked", mDayFilters.get(3));
+        editor.putBoolean("day4Checked", mDayFilters.get(4));
+        editor.putBoolean("day5Checked", mDayFilters.get(5));
+        editor.putBoolean("day6Checked", mDayFilters.get(6));
+
+
+        editor.apply();
     }
 
     private void ShowGraph()
@@ -156,8 +222,8 @@ public class LogViewer extends Activity implements Runnable
             mShowingSettings = false;
 
             //Find GUI Views
-            mSettingsButton = (Button) findViewById(R.id.settingsButton);
-            mSettingsButton.setOnClickListener(new View.OnClickListener() {
+            Button settingsButton = (Button) findViewById(R.id.settingsButton);
+            settingsButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ShowSettings();
@@ -165,6 +231,7 @@ public class LogViewer extends Activity implements Runnable
             });
 
             mGraph = (com.viggi.lib_graph.GraphView) findViewById(R.id.graphView);
+            mXYPlot= (XYPlot) findViewById(R.id.APPlot);
             mTextScroller = (ScrollView) findViewById(R.id.scrollView);
             mTextView = (TextView) findViewById(R.id.textView);
 
@@ -203,6 +270,7 @@ public class LogViewer extends Activity implements Runnable
             mDrawPointsInput = (CheckBox) findViewById(R.id.drawPointsInput);
             mDrawLinesLabel = (TextView) findViewById(R.id.drawLinesLabel);
             mDrawLinesInput = (CheckBox) findViewById(R.id.drawLinesInput);
+            mNewGraphInput = (CheckBox) findViewById(R.id.newGraphInput);
 
             mMondayInput = (ToggleButton) findViewById(R.id.mondayInput);
             mTuesdayInput = (ToggleButton) findViewById(R.id.tuesdayInput);
@@ -224,6 +292,7 @@ public class LogViewer extends Activity implements Runnable
                     mValueChecked = mValueInput.isChecked();
                     mDrawPointsChecked = mDrawPointsInput.isChecked();
                     mDrawLinesChecked = mDrawLinesInput.isChecked();
+                    mNewGraphChecked = mNewGraphInput.isChecked();
                     mFilter = filterText.getText().toString().trim();
                     if(mFilter.length() == 0)
                     {
@@ -243,6 +312,8 @@ public class LogViewer extends Activity implements Runnable
                     mDayFilters.set(5, mFridayInput.isChecked());
                     mDayFilters.set(6, mSaturdayInput.isChecked());
 
+                    SaveAppStorage();
+
                     View view = getCurrentFocus();
                     if (view != null) {
                         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -254,18 +325,18 @@ public class LogViewer extends Activity implements Runnable
             });
 
             //Setup the data types Spinner
-            ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_spinner_item, mCategoryStrings);
-            dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<>(mContext, R.layout.spinner_item, mCategoryStrings);
+            dataAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
             mDataSpinner.setAdapter(dataAdapter);
 
             //Setup the graph times Spinner
-            ArrayAdapter<CharSequence> timeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, mTimeOptions);
-            timeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            ArrayAdapter<CharSequence> timeAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, mTimeOptions);
+            timeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
             mTimeSpinner.setAdapter(timeAdapter);
 
             //Setup the graph types Spinner
-            ArrayAdapter<CharSequence> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, mGraphTypesNew);
-            typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            ArrayAdapter<CharSequence> typeAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, mGraphTypes);
+            typeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
             mTypeSpinner.setAdapter(typeAdapter);
 
             //Prepare the Spinner listeners
@@ -337,6 +408,7 @@ public class LogViewer extends Activity implements Runnable
             mValueInput.setChecked(mValueChecked);
             mDrawPointsInput.setChecked(mDrawPointsChecked);
             mDrawLinesInput.setChecked(mDrawLinesChecked);
+            mNewGraphInput.setChecked(mNewGraphChecked);
 
             //Debug code
             //mLog = new LogFile(mRootDirectory + "/" + mLogFile, true);
@@ -356,22 +428,13 @@ public class LogViewer extends Activity implements Runnable
         //Get the graph categories from the LoggerConfig
         List<String> categories = new ArrayList<>();
         List<Boolean> categoryTypes = new ArrayList<>();
-        for(int i=0; i<mConfig.Buttons.size(); i++)
+        for(LogItem item : mConfig.Items)
         {
-            String button = mConfig.Buttons.get(i);
-            boolean isValue = mConfig.ButtonValues.get(i);
-            if((!mSafe || !button.equals("Smoke")))// && typeCounts.get(button) > 0)
+            if(!mSafe || !item.IsSafe)
             {
-                categories.add(button);
-                categoryTypes.add(isValue);
+                categories.add(item.Name);
+                categoryTypes.add(item.IsValue);
             }
-        }
-        for(int i=0; i<mConfig.Toggles.size(); i++)
-        {
-            String button = mConfig.Toggles.get(i);
-            //if(typeCounts.get(button) > 0)
-            categories.add(button);
-            categoryTypes.add(false);
         }
 
         //Sort the categories in alhpabetical order
@@ -392,8 +455,9 @@ public class LogViewer extends Activity implements Runnable
         }
 
         //Setup the graph categories Spinner
-        mCategoryStrings = new CharSequence[sortedCategories.size() + 1];
-        mCategoryTypes = new boolean[sortedCategories.size() + 1];
+        int numCategories = sortedCategories.size() + 2;
+        mCategoryStrings = new CharSequence[numCategories];
+        mCategoryTypes = new boolean[numCategories];
         mCategoryStrings[0] = "All";
         mCategoryTypes[0] = false;
         for(int i=0; i<sortedCategories.size(); i++)
@@ -401,6 +465,9 @@ public class LogViewer extends Activity implements Runnable
             mCategoryStrings[i + 1] = sortedCategories.get(i);
             mCategoryTypes[i + 1] = sortedCategoryTypes.get(i);
         }
+
+        mCategoryStrings[numCategories-1] = "Phone calls";
+        mCategoryTypes[numCategories-1] = false;
     }
 
     private void SetControlsForActiveType()
@@ -446,8 +513,8 @@ public class LogViewer extends Activity implements Runnable
         mSecondarySpinner.setVisibility(secondaryOptions != null ? View.VISIBLE : View.INVISIBLE);
         if(secondaryOptions != null)
         {
-            ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, secondaryOptions);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, R.layout.spinner_item, secondaryOptions);
+            adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
             mSecondarySpinner.setAdapter(adapter);
         }
 
@@ -531,7 +598,7 @@ public class LogViewer extends Activity implements Runnable
         int typeIndex = mTypeSpinner.getSelectedItemPosition();
         int dataIndex = mDataSpinner.getSelectedItemPosition();
         Bitmap bitmap = mGraph.GetBitmap();
-        String filename = String.format("%s%s_%s_%s.png", mConfig.ExportDirectory,
+        String filename = String.format("%s%s_%s_%s.png", mRootDirectory,
                 DateStrings.GetDateTimeString(Calendar.getInstance()),
                 mCategoryStrings[dataIndex], mGraphTypes[typeIndex]);
         try
@@ -550,7 +617,7 @@ public class LogViewer extends Activity implements Runnable
         int typeIndex = mTypeSpinner.getSelectedItemPosition();
         int dataIndex = mDataSpinner.getSelectedItemPosition();
         Bitmap bitmap = mGraph.GetBitmap();
-        String filename = mConfig.ExportDirectory + mCategoryStrings[dataIndex] + "_" + mGraphTypes[typeIndex] + ".png";
+        String filename = mRootDirectory + mCategoryStrings[dataIndex] + "_" + mGraphTypes[typeIndex] + ".png";
         try
         {
             FileOutputStream out = new FileOutputStream(filename);
@@ -583,7 +650,7 @@ public class LogViewer extends Activity implements Runnable
         try
         {
             int typeIndex = mGraphTypeIndex;
-            String graphType = mGraphTypesNew[mGraphTypeIndex].toString();
+            String graphType = mGraphTypes[mGraphTypeIndex].toString();
 
             int dataIndex = mDataIndex;
             String dataType = mCategoryStrings[dataIndex].toString();
@@ -597,7 +664,8 @@ public class LogViewer extends Activity implements Runnable
             {
                 Debug("LogViewer", "Drawing " + graphType + " graph", false);
                 //Set the graph visible and text invisible
-                mGraph.setVisibility(showGraph ? View.VISIBLE : View.GONE);
+                mXYPlot.setVisibility(showGraph && mNewGraphChecked ? View.VISIBLE : View.GONE);
+                mGraph.setVisibility(showGraph && !mNewGraphChecked ? View.VISIBLE : View.GONE);
                 mTextScroller.setVisibility(showGraph ? View.GONE : View.VISIBLE);
 
                 if(showGraph)
@@ -607,6 +675,17 @@ public class LogViewer extends Activity implements Runnable
             }
             else
             {
+                LogItem item;
+                if(dataType.equals("Phone calls"))
+                {
+                    item = new LogItem();
+                    item.Name = "Phone calls";
+                }
+                else
+                {
+                    item = mConfig.GetEntryByName(dataType);
+                }
+
                 boolean dataCategory = mCategoryTypes[dataIndex];
 
                 int timeLength = -1;
@@ -634,40 +713,41 @@ public class LogViewer extends Activity implements Runnable
 
                 mGraph.ClearGraph();
 
+                XYPlot xyPlot = mNewGraphChecked ? mXYPlot : null;
+
                 //{"Totals", "Values", "Daily Timing", "Distribution", "Intervals", "Histogram", "Info"};
                 switch (typeIndex)
                 {
-                    //mTimeScales = {"Daily", "Monthly", "Yearly"};
                     case 0: //Totals
                         //TODO: mTimeScales = {"Daily", "Monthly", "Yearly"};
-                        GraphHelpers.DrawDailyCountsGraph(mGraph, mLog, mConfig, settings);
+                        GraphHelpers.DrawDailyCountsGraph(this, mGraph, xyPlot, mLog, mPhoneLog, item, mConfig.MidnightHour, settings);
                         break;
                     case 1: //Values
                         if (dataCategory)
                         {
-                            GraphHelpers.DrawValuesGraph(mGraph, mLog, mConfig, settings);
+                            GraphHelpers.DrawValuesGraph(this, mGraph, xyPlot, mLog, mPhoneLog, mConfig, settings);
                         }
                         else
                         {
-                            GraphHelpers.DrawDailyCountsGraph(mGraph, mLog, mConfig, settings);
+                            GraphHelpers.DrawDailyCountsGraph(this, mGraph, xyPlot, mLog, mPhoneLog, item, mConfig.MidnightHour, settings);
                         }
                         break;
                     case 2: //Daily Timing
-                        GraphHelpers.DrawDailyTimingGraph(mGraph, mLog, mConfig, settings);
+                        GraphHelpers.DrawDailyTimingGraph(this, mGraph, xyPlot, mLog, mPhoneLog, mConfig, settings);
                         break;
                     case 3: //Distribution
                         //TODO: mTimeScales = {"Daily", "Monthly", "Yearly"};
-                        GraphHelpers.DrawDistribution(mGraph, mLog, mConfig, settings);
+                        GraphHelpers.DrawDistribution(this, mGraph, xyPlot, mLog, mPhoneLog, item, mConfig.MidnightHour, settings);
                         break;
                     case 4: //Intervals
-                        GraphHelpers.DrawIntervalsGraph(mGraph, mLog, mConfig, settings);
+                        GraphHelpers.DrawIntervalsGraph(this, mGraph, xyPlot, mLog, mPhoneLog, mConfig, settings);
                         break;
                     case 5: //Histogram
                         //mHistTimeScales = {"Hour of day", "Day of week", "Day of month", "Day of year",
                         //                   "Week of year", "Month of year"};
 
                         settings.timeScale = mHistTimeScales[mSecondaryIndex].toString();
-                        GraphHelpers.DrawHistogramGraph(mGraph, mLog, mConfig, settings);
+                        GraphHelpers.DrawHistogramGraph(this, mGraph, xyPlot, mLog, mPhoneLog, item, mConfig.MidnightHour, settings);
                         break;
                     case 6: //Info
                         //mInfoTypes = {"Stats", "Comments", "Recent History"};
@@ -675,13 +755,13 @@ public class LogViewer extends Activity implements Runnable
                         switch(infoType)
                         {
                             case "Stats":
-                                mStatsText = GraphHelpers.DrawStats(mLog, mConfig, settings);
+                                mStatsText = GraphHelpers.DrawStats(mLog, mPhoneLog, item, mConfig.MidnightHour, settings);
                                 break;
                             case "Comments":
-                                mStatsText = GraphHelpers.DrawComments(mLog, mConfig, settings);
+                                mStatsText = GraphHelpers.DrawComments(mLog, mPhoneLog, mConfig, settings);
                                 break;
                             default:
-                                mStatsText = GraphHelpers.DrawRecentHistory(mLog, mConfig, settings);
+                                mStatsText = GraphHelpers.DrawRecentHistory(mLog, mPhoneLog, mConfig, settings);
                                 break;
                         }
                         break;
@@ -708,18 +788,24 @@ public class LogViewer extends Activity implements Runnable
 
         try
         {
-            if (units.equals("Days"))
+            switch(units)
             {
-                numDays = timeLength;
-            } else if (units.equals("Weeks"))
-            {
-                numDays = timeLength * 7;
-            } else if (units.equals("Months"))
-            {
-                numDays = timeLength * 30;
-            } else if (units.equals("Years"))
-            {
-                numDays = timeLength * 365;
+                case "Days":
+                    numDays = timeLength;
+                    break;
+                case "Weeks":
+                    numDays = timeLength * 7;
+                    break;
+                case "Months":
+                    numDays = timeLength * 30;
+                    break;
+                case "Years":
+                    numDays = timeLength * 365;
+                    break;
+                default:
+                    Log.e("LogViewer", "Unexpected units: " + units);
+                    numDays = timeLength;
+                    break;
             }
         }
         catch(Exception e)
@@ -739,6 +825,7 @@ public class LogViewer extends Activity implements Runnable
         {
             Debug("LogViewer", "Loading data", false);
             mLog = new LogFile(mRootDirectory + "/" + mLogFile, true);
+            mPhoneLog = new PhoneLogFile(mRootDirectory + "/" + mPhoneLogFile, true);
             mInitialized = true;
         }
 

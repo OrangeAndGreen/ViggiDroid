@@ -1,5 +1,5 @@
 <resources>
-    <string name="hello">\nDave\'s Logger!\n</string>
+    <string name="hello"></string>
     <string name="app_name">Log-a-Life</string>
     <string name="safe_short">S</string>
     <string name="menu_short">M</string>

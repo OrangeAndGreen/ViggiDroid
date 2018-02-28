@@ -2,6 +2,7 @@ package com.viggi.lib_file;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
 
@@ -15,16 +16,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * Created by Dave on 2/22/2015.
+ * Represents a text file containing log entries
  */
 public class LogFile
 {
-    public String LogFilename = "/sdcard/00Logs/DaveLog.txt";
+    public String LogFilename = null;
     private List<LogEntry> LogEntries = null;
 
     public LogFile(String filename, boolean loadNow)
@@ -41,19 +42,18 @@ public class LogFile
         {
             File f = new File(LogFilename);
             BufferedReader br = new BufferedReader(new FileReader(f));
-            String log = "";
             char[] buf = new char[(int)f.length()];
             br.read(buf, 0, (int)f.length());
             br.close();
-            log = String.copyValueOf(buf);
+            String log = String.copyValueOf(buf);
             String[] logEntries = log.split("\n");
 
             //Convert the String array to a List<LogEntry>
-            LogEntries = new ArrayList<LogEntry>();
-            for(int i=0; i<logEntries.length; i++)
+            LogEntries = new ArrayList<>();
+            for(String logEntry : logEntries)
             {
-                String[] parts = logEntries[i].split(" - ");
-                if(parts != null)
+                String[] parts = logEntry.split(" - ");
+                if(parts.length > 1)
                 {
                     String type = parts[1];
                     String state = null;
@@ -85,40 +85,31 @@ public class LogFile
             Load();
 
         if(LogEntries == null)
-            LogEntries = new ArrayList<LogEntry>();
+            LogEntries = new ArrayList<>();
 
         return LogEntries;
     }
 
-    public Map<String, Integer> GetNumEntriesPerType(LoggerConfig config)
-    {
-        int numButtons = config.Buttons.size();
-        int numToggles = config.Toggles.size();
-        int[] ret = new int[numButtons + numToggles];
+//    public Map<String, Integer> GetNumEntriesPerType(LoggerConfig config)
+//    {
+//        Map<String, Integer> ret = new HashMap<>();
+//        for(LogItem item : config.Items)
+//        {
+//            ret.put(item.Name, 0);
+//        }
+//
+//        //Iterate over all entries and histogram the encounters
+//        for(int i=0; i<GetLogEntries().size(); i++)
+//        {
+//            LogItem item = config.GetEntryByName(GetLogEntries().get(i).GetType());
+//            if(item != null)
+//                ret.put(item.Name, ret.get(item.Name) + 1);
+//        }
+//
+//        return ret;
+//    }
 
-        for(int i=0; i<GetLogEntries().size(); i++)
-        {
-            int index = GetLogEntries().get(i).GetId(config);
-            if(index < 0)
-            {
-                index = GetLogEntries().get(i).GetToggleId(config);
-                if(index >=0 )
-                    index += config.Buttons.size();
-            }
-            if(index >= 0 && index < ret.length)
-                ret[index]++;
-        }
-
-        Map<String, Integer> dict = new HashMap<String, Integer>();
-        for(int i=0; i<numButtons; i++)
-            dict.put(config.Buttons.get(i), ret[i]);
-        for(int i=0; i<numToggles; i++)
-            dict.put(config.Toggles.get(i), ret[numButtons + i]);
-
-        return dict;
-    }
-
-    public List<LogEntry> ExtractLog(String category, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public List<LogEntry> ExtractLog(LogItem item, String filter, List<Boolean> dayFilters)
     {
         int numDayFilters = 0;
         for (int i=0; i<dayFilters.size(); i++)
@@ -130,27 +121,12 @@ public class LogFile
         }
         boolean dayFilteringEnabled = numDayFilters > 0 && numDayFilters < 7;
 
-        boolean isToggle = true;
-        int searchIndex = config.Toggles.indexOf(category);
-        if(searchIndex < 0)
-        {
-            isToggle = false;
-            searchIndex = config.Buttons.indexOf(category);
-        }
-
         //Populate the output array
-        List<LogEntry> output = new ArrayList<LogEntry>();
+        List<LogEntry> output = new ArrayList<>();
         for(int i=0; i<GetLogEntries().size(); i++)
         {
-            boolean addLine = true;
             //Filter for desired searchIndex
-            if(searchIndex >=0)
-            {
-                int index = GetLogEntries().get(i).GetId(config);
-                if(isToggle)
-                    index = GetLogEntries().get(i).GetToggleId(config);
-                addLine = index == searchIndex;
-            }
+            boolean addLine = item != null && GetLogEntries().get(i).GetType().equals(item.Name);
 
             //Filter by day-of-week
             if(addLine && dayFilteringEnabled)
@@ -173,7 +149,7 @@ public class LogFile
             //Filter by comment ("on" entries only for toggles)
             if(addLine)
             {
-                if(filter == null || (GetLogEntries().get(i).GetComment() != null && GetLogEntries().get(i).GetComment().contains(filter)) || (isToggle && GetLogEntries().get(i).GetToggleState() == "off"))
+                if(filter == null || (GetLogEntries().get(i).GetComment() != null && GetLogEntries().get(i).GetComment().contains(filter)) || (item.IsToggle && GetLogEntries().get(i).GetToggleState().equals("off")))
                 {
                     output.add(GetLogEntries().get(i));
                 }
@@ -182,19 +158,24 @@ public class LogFile
         return output;
     }
 
-    public static float[] ExtractDailyTotals(List<LogEntry> allEntries, String category, Calendar startDate, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public static float[] ExtractDailyTotals(List<LogEntry> allEntries, LogItem item, Calendar startDate, int midnightHour, String filter, List<Boolean> dayFilters)
     {
-        int catIndex = config.Toggles.indexOf(category);
-        if(catIndex >= 0)
-            return LogEntry.ExtractDailyToggleTotals(allEntries, catIndex, startDate, config, filter, dayFilters);
-        else
+        if(item != null)
         {
-            catIndex = config.Buttons.indexOf(category);
-            return LogEntry.ExtractDailyEventTotals(allEntries, catIndex, startDate, config, filter, dayFilters);
+            if(item.IsToggle)
+            {
+                return LogEntry.ExtractDailyToggleTotals(allEntries, item.Name, startDate, midnightHour, filter, dayFilters);
+            }
+            else
+            {
+                return LogEntry.ExtractDailyEventTotals(allEntries, item.Name, startDate, midnightHour, filter, dayFilters);
+            }
         }
+
+        return new float[0];
     }
 
-    public float[] GetHistogram(List<LogEntry> entries, String timeScale)
+    public float[] GetHistogram(List<LogEntry> entries, String timeScale, boolean normalize)
     {
         int histSize = GetNumEntriesForHistogramTimeScale(timeScale);
         float[] hist = new float[histSize];
@@ -205,20 +186,42 @@ public class LogFile
 
             int value = GetDataValueForHistogramTimeScale(timeScale, entry.GetDate());
 
-
             hist[value]++;
+
+            //TODO GRAPH: Return to this later
+            //Idea is to histogram on time for toggles, instead of times the button has been pressed
+            //But that will require handling day rollovers...
+//            if(entry.ToggleState != null)
+//            {
+//                if(entry.ToggleState.equals("on"))
+//                {
+//
+//                }
+//                else
+//                {
+//                    hist[value] += entry.;
+//                }
+//
+//            }
+//            else
+//            {
+//                hist[value]++;
+//            }
         }
 
-        //Convert the counts to percentages
-        if(entries.size() > 0)
-            for(int i=0; i<hist.length; i++)
-                hist[i] = hist[i] / entries.size() * 100;
+        if(normalize)
+        {
+            //Convert the counts to percentages
+            if(entries.size() > 0)
+                for(int i=0; i<hist.length; i++)
+                    hist[i] = hist[i] / entries.size() * 100;
+        }
 
         return hist;
     }
 
 
-    public static int GetNumEntriesForHistogramTimeScale(String timeScale)
+    private static int GetNumEntriesForHistogramTimeScale(String timeScale)
     {
         //{"Hour of day", "Day of week", "Day of month", "Day of year", "Week of year", "Month of year"};
         if(timeScale.equals("Hour of day"))
@@ -256,23 +259,22 @@ public class LogFile
         return 0;
     }
 
-    public String GetStats(String category, LoggerConfig config, String filter, List<Boolean> dayFilters)
+    public String GetStats(LogItem item, int midnightHour, String filter, List<Boolean> dayFilters)
     {
         String stats = "";
 
-        boolean isToggle = config.Toggles.indexOf(category) >= 0;
         String label = "";
         int multiplier = 1;
-        if(isToggle)
+        if(item.IsToggle)
         {
             label = " hours";
             multiplier = 2;
         }
 
-        List<LogEntry> subset = ExtractLog(category, config, filter, dayFilters);
+        List<LogEntry> subset = ExtractLog(item, filter, dayFilters);
         if(subset == null)
             return stats;
-        stats += category + ":\n";
+        stats += item.Name + ":\n";
         int subsetSize = subset.size();
         if(subsetSize == 0)
             return stats + "0 logged\n";
@@ -286,9 +288,9 @@ public class LogFile
         //Total entry stats
         float elapsedDays = ((float)(now.getTimeInMillis() - firstDate.getTimeInMillis())) / 1000 / 3600 / 24;
         float dailyAverage = subsetSize/elapsedDays;
-        stats += String.format("Total: %d entries (%.02f/day, %d/year)\n", subsetSize/multiplier, dailyAverage/multiplier, (int)(dailyAverage * 365/multiplier));
+        stats += String.format(Locale.getDefault(), "Total: %d entries (%.02f/day, %d/year)\n", subsetSize/multiplier, dailyAverage/multiplier, (int)(dailyAverage * 365/multiplier));
 
-        if(isToggle)
+        if(item.IsToggle)
         {
             //Total time stats
             long totalTime = 0;
@@ -309,12 +311,12 @@ public class LogFile
             if(onDate != null)
                 totalTime += now.getTimeInMillis() - onDate.getTimeInMillis();
             float totalHours = (float)totalTime / 1000 / 3600;
-            stats += String.format("Time: %s (%.02f hrs/day, %d hrs/yr)\n", DateStrings.GetElapsedTimeString(totalTime, 3), totalHours/elapsedDays, (int)(totalHours/elapsedDays * 365));
+            stats += String.format(Locale.getDefault(), "Time: %s (%.02f hrs/day, %d hrs/yr)\n", DateStrings.GetElapsedTimeString(totalTime, 3), totalHours/elapsedDays, (int)(totalHours/elapsedDays * 365));
         }
 
         //Calculate the data
         Calendar startDate = Calendar.getInstance();
-        float[] dailyTotals = ExtractDailyTotals(GetLogEntries(), category, startDate, config, filter, dayFilters);
+        float[] dailyTotals = ExtractDailyTotals(GetLogEntries(), item, startDate, midnightHour, filter, dayFilters);
         float[] allAve = ArrayMath.GetAllTimeRunningAverageCurve(dailyTotals);
         float[] runningAve = ArrayMath.GetRunningAverageCurve(dailyTotals, 30);
 
@@ -396,7 +398,7 @@ public class LogFile
 
             if(lastDate != null)
             {
-                if(isToggle)
+                if(item.IsToggle)
                 {
                     long interval = curDate.getTimeInMillis() - lastDate.getTimeInMillis();
                     if(subset.get(i).ToggleState.equals("off"))
@@ -449,11 +451,11 @@ public class LogFile
         }
 
         stats += "\n";
-        stats += String.format("Least/day: %.02f%s (%s)\nMost/day: %.02f%s (%s)\n", minTotal, label, DateStrings.GetDateString(minTotalDate),
+        stats += String.format(Locale.getDefault(), "Least/day: %.02f%s (%s)\nMost/day: %.02f%s (%s)\n", minTotal, label, DateStrings.GetDateString(minTotalDate),
                 maxTotal, label, DateStrings.GetDateString(maxTotalDate));
         stats += "\n";
 
-        if(isToggle)
+        if(item.IsToggle)
         {
             stats += String.format("Shortest off: %s (%s)\nLongest off: %s (%s)\n", DateStrings.GetElapsedTimeString(minOff, 3), DateStrings.GetDateTimeString(minOffDate),
                     DateStrings.GetElapsedTimeString(maxOff, 3), DateStrings.GetDateTimeString(maxOffDate));
@@ -468,178 +470,176 @@ public class LogFile
         }
 
         stats += "\n";
-        stats += String.format("All-time average:\nMin: %.02f%s/day (%s)\nNow: %.02f%s/day\nMax: %.02f%s/day (%s)\n", minAve, label, DateStrings.GetDateString(minAveDate), allAve[allAve.length - 1], label,
+        stats += String.format(Locale.getDefault(), "All-time average:\nMin: %.02f%s/day (%s)\nNow: %.02f%s/day\nMax: %.02f%s/day (%s)\n", minAve, label, DateStrings.GetDateString(minAveDate), allAve[allAve.length - 1], label,
                 maxAve, label, DateStrings.GetDateString(maxAveDate));
         stats += "\n";
-        stats += String.format("Running average:\nMin: %.02f%s/day (%s)\nNow: %.02f%s/day\nMax: %.02f%s/day (%s)\n", minRunning, label, DateStrings.GetDateString(minRunningDate), runningAve[runningAve.length - 1], label,
+        stats += String.format(Locale.getDefault(), "Running average:\nMin: %.02f%s/day (%s)\nNow: %.02f%s/day\nMax: %.02f%s/day (%s)\n", minRunning, label, DateStrings.GetDateString(minRunningDate), runningAve[runningAve.length - 1], label,
                 maxRunning, label, DateStrings.GetDateString(maxRunningDate));
 
-        if(!isToggle)
+        if(!item.IsToggle)
         {
-            int index = config.Buttons.indexOf(category);
-            if(index >= 0 && config.ButtonValues.get(index))
+            List<LogEntry> entries = ExtractLog(item, filter, dayFilters);
+            float[] values = new float[entries.size()];
+            for(int i=0; i<entries.size(); i++)
             {
-                List<LogEntry> entries = ExtractLog(category, config, filter, dayFilters);
-                float[] values = new float[entries.size()];
-                for(int i=0; i<entries.size(); i++)
+                try
                 {
-                    try
-                    {
-                        values[i] = Float.parseFloat(entries.get(i).GetComment());
-                    }
-                    catch(Exception e)
-                    { }
+                    values[i] = Float.parseFloat(entries.get(i).GetComment());
+                }
+                catch(Exception e)
+                {
+                    Log.e("LogFile", "Error parsing float while getting LogFile stats");
+                }
+            }
+
+            allAve = ArrayMath.GetAllTimeRunningAverageCurve(values);
+            runningAve = ArrayMath.GetRunningAverageCurve(values, 30);
+
+            minTotal = Float.MAX_VALUE;
+            maxTotal = Float.MIN_VALUE;
+            minTotalDate = Calendar.getInstance();
+            maxTotalDate = Calendar.getInstance();
+            minAve = Float.MAX_VALUE;
+            maxAve = Float.MIN_VALUE;
+            minAveDate = Calendar.getInstance();
+            maxAveDate = Calendar.getInstance();
+            minRunning = Float.MAX_VALUE;
+            maxRunning = Float.MIN_VALUE;
+            minRunningDate = Calendar.getInstance();
+            maxRunningDate = Calendar.getInstance();
+            curDate = (Calendar)startDate.clone();
+            for(int i=0; i<values.length; i++)
+            {
+                float curTotal = values[i];
+                if(curTotal < minTotal)
+                {
+                    minTotal = curTotal;
+                    minTotalDate = (Calendar)curDate.clone();
+                }
+                if(curTotal > maxTotal)
+                {
+                    maxTotal = curTotal;
+                    maxTotalDate = (Calendar)curDate.clone();
                 }
 
-                allAve = ArrayMath.GetAllTimeRunningAverageCurve(values);
-                runningAve = ArrayMath.GetRunningAverageCurve(values, 30);
-
-                minTotal = Float.MAX_VALUE;
-                maxTotal = Float.MIN_VALUE;
-                minTotalDate = Calendar.getInstance();
-                maxTotalDate = Calendar.getInstance();
-                minAve = Float.MAX_VALUE;
-                maxAve = Float.MIN_VALUE;
-                minAveDate = Calendar.getInstance();
-                maxAveDate = Calendar.getInstance();
-                minRunning = Float.MAX_VALUE;
-                maxRunning = Float.MIN_VALUE;
-                minRunningDate = Calendar.getInstance();
-                maxRunningDate = Calendar.getInstance();
-
-                curDate = (Calendar)startDate.clone();
-                for(int i=0; i<values.length; i++)
+                float curAve = allAve[i];
+                if(curAve < minAve)
                 {
-                    float curTotal = values[i];
-                    if(curTotal < minTotal)
-                    {
-                        minTotal = curTotal;
-                        minTotalDate = (Calendar)curDate.clone();
-                    }
-                    if(curTotal > maxTotal)
-                    {
-                        maxTotal = curTotal;
-                        maxTotalDate = (Calendar)curDate.clone();
-                    }
-
-                    float curAve = allAve[i];
-                    if(curAve < minAve)
-                    {
-                        minAve = curAve;
-                        minAveDate = (Calendar)curDate.clone();
-                    }
-                    if(curAve > maxAve)
-                    {
-                        maxAve = curAve;
-                        maxAveDate = (Calendar)curDate.clone();
-                    }
-
-                    float curRunning = runningAve[i];
-                    if(curRunning < minRunning)
-                    {
-                        minRunning = curRunning;
-                        minRunningDate = (Calendar)curDate.clone();
-                    }
-                    if(curRunning > maxRunning)
-                    {
-                        maxRunning = curRunning;
-                        maxRunningDate = (Calendar)curDate.clone();
-                    }
-
-                    curDate.add(Calendar.HOUR, 24);
+                    minAve = curAve;
+                    minAveDate = (Calendar)curDate.clone();
+                }
+                if(curAve > maxAve)
+                {
+                    maxAve = curAve;
+                    maxAveDate = (Calendar)curDate.clone();
                 }
 
-                stats += "\n";
-                stats += "***** Value stats *****\n";
-                stats += "\n";
-                stats += String.format("Least: %.02f (%s)\nMost: %.02f (%s)\n", minTotal, DateStrings.GetDateString(minTotalDate),
+                float curRunning = runningAve[i];
+                if(curRunning < minRunning)
+                {
+                    minRunning = curRunning;
+                    minRunningDate = (Calendar)curDate.clone();
+                }
+                if(curRunning > maxRunning)
+                {
+                    maxRunning = curRunning;
+                    maxRunningDate = (Calendar)curDate.clone();
+                }
+                curDate.add(Calendar.HOUR, 24);
+            }
+
+            stats += "\n";
+            stats += "***** Value stats *****\n";
+            stats += "\n";
+            stats += String.format(Locale.getDefault(), "Least: %.02f (%s)\nMost: %.02f (%s)\n", minTotal, DateStrings.GetDateString(minTotalDate),
                         maxTotal, DateStrings.GetDateString(maxTotalDate));
-                stats += "\n";
-                stats += String.format("All-time average:\nMin: %.02f (%s)\nNow: %.02f\nMax: %.02f (%s)\n", minAve, DateStrings.GetDateString(minAveDate), allAve[allAve.length - 1],
+            stats += "\n";
+            stats += String.format(Locale.getDefault(), "All-time average:\nMin: %.02f (%s)\nNow: %.02f\nMax: %.02f (%s)\n", minAve, DateStrings.GetDateString(minAveDate), allAve[allAve.length - 1],
                         maxAve, DateStrings.GetDateString(maxAveDate));
-                stats += "\n";
-                stats += String.format("Running average:\nMin: %.02f (%s)\nNow: %.02f\nMax: %.02f (%s)", minRunning, DateStrings.GetDateString(minRunningDate), runningAve[runningAve.length - 1],
+            stats += "\n";
+            stats += String.format(Locale.getDefault(), "Running average:\nMin: %.02f (%s)\nNow: %.02f\nMax: %.02f (%s)", minRunning, DateStrings.GetDateString(minRunningDate), runningAve[runningAve.length - 1],
                         maxRunning, DateStrings.GetDateString(maxRunningDate));
-            }
         }
 
         return stats;
     }
 
-    public String GetAllTimeStats()
+//    public String GetAllTimeStats()
+//    {
+//        String stats = "";
+//        Calendar now = Calendar.getInstance();
+//        Calendar firstDate = GetLogEntries().get(0).GetDate();
+//        String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 10);
+//
+//        stats += String.format("First log entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
+//        stats += String.format(Locale.getDefault(), "Total: %d entries\n", GetLogEntries().size());
+//
+//        return stats;
+//    }
+
+    public String GetCommentSummary(LogItem item, String filter, List<Boolean> dayFilters)
     {
-        String stats = "";
-        Calendar now = Calendar.getInstance();
-        Calendar firstDate = GetLogEntries().get(0).GetDate();
-        String elapsed = DateStrings.GetElapsedTimeString(firstDate, now, 10);
-
-        stats += String.format("First log entry: %s (%s ago)\n", DateStrings.GetPrintableDateString(firstDate), elapsed);
-        stats += String.format("Total: %d entries\n", GetLogEntries().size());
-
-        return stats;
-    }
-
-    public String GetCommentSummary(String category, LoggerConfig config, String filter, List<Boolean> dayFilters)
-    {
-        List<LogEntry> subset = null;
-        int catIndex = config.Toggles.indexOf(category);
-        if(catIndex >= 0)
-            subset = LogEntry.ExtractToggleLog(GetLogEntries(), catIndex, config, filter, dayFilters);
-        else
-        {
-            catIndex = config.Buttons.indexOf(category);
-            subset = LogEntry.ExtractEventLog(GetLogEntries(), catIndex, config, filter, dayFilters);
-        }
-
-        //Build the dictionary of comment instances
-        List<String> comments = new ArrayList<String>();
-        List<Integer> occurrences = new ArrayList<Integer>();
-        for(int i=0; i<subset.size(); i++)
-        {
-            LogEntry entry = subset.get(i);
-            if(entry.GetComment() != null && entry.GetComment().length() > 0)
-            {
-                int index = comments.indexOf(entry.GetComment());
-                if(index < 0)
-                {
-                    comments.add(entry.GetComment());
-                    occurrences.add(1);
-                }
-                else
-                {
-                    occurrences.set(index, occurrences.get(index) + 1);
-                }
-            }
-        }
-
-        //Extract the entries from most-to-least occurring
         String result = "";
-        while(comments.size() > 0)
+        if(item != null)
         {
-            int mostOccurrences = -1;
-            int mostIndex = 0;
-            for(int i=0; i<comments.size(); i++)
+            List<LogEntry> subset;
+            if(item.IsToggle)
             {
-                int curOccurrence = occurrences.get(i);
-                if(curOccurrence > mostOccurrences)
+                subset = LogEntry.ExtractToggleLog(GetLogEntries(), item.Name, filter, dayFilters);
+            }
+            else
+            {
+                subset = LogEntry.ExtractEventLog(GetLogEntries(), item.Name, filter, dayFilters);
+            }
+
+            //Build the dictionary of comment instances
+            List<String> comments = new ArrayList<>();
+            List<Integer> occurrences = new ArrayList<>();
+            for(int i=0; i<subset.size(); i++)
+            {
+                LogEntry entry = subset.get(i);
+                if(entry.GetComment() != null && entry.GetComment().length() > 0)
                 {
-                    mostOccurrences = curOccurrence;
-                    mostIndex = i;
+                    int index = comments.indexOf(entry.GetComment());
+                    if(index < 0)
+                    {
+                        comments.add(entry.GetComment());
+                        occurrences.add(1);
+                    }
+                    else
+                    {
+                        occurrences.set(index, occurrences.get(index) + 1);
+                    }
                 }
             }
 
-            result += String.format("%d: %s\n", occurrences.get(mostIndex), comments.get(mostIndex));
+            //Extract the entries from most-to-least occurring
+            while(comments.size() > 0)
+            {
+                int mostOccurrences = -1;
+                int mostIndex = 0;
+                for(int i=0; i<comments.size(); i++)
+                {
+                    int curOccurrence = occurrences.get(i);
+                    if(curOccurrence > mostOccurrences)
+                    {
+                        mostOccurrences = curOccurrence;
+                        mostIndex = i;
+                    }
+                }
 
-            comments.remove(mostIndex);
-            occurrences.remove(mostIndex);
+                result += String.format(Locale.getDefault(), "%d: %s\n", occurrences.get(mostIndex), comments.get(mostIndex));
+
+                comments.remove(mostIndex);
+                occurrences.remove(mostIndex);
+            }
         }
 
         return result;
     }
 
-    public void ExportLog(LoggerConfig config)
+    public void ExportLogToDirectory(String directory)
     {
-        String directory = config.ExportDirectory;
         String date = DateStrings.GetDateTimeString(Calendar.getInstance());
 
         String filename = String.format("%sDaveLog_%s.txt", directory, date);
@@ -647,7 +647,7 @@ public class LogFile
         ExportLog(filename);
     }
 
-    public void ExportLog(String filename)
+    private void ExportLog(String filename)
     {
         try
         {
@@ -660,12 +660,14 @@ public class LogFile
 
             fw.close();
         }
-        catch(Exception e) {}
+        catch(Exception e)
+        {
+            Log.e("LogFile", "Error exporting log");
+        }
     }
 
-    public void EmailLog(Context context, LoggerConfig config)
+    public void EmailLog(Context context, LoggerConfig config, String directory)
     {
-        String directory = config.ExportDirectory;
         String date = DateStrings.GetDateTimeString(Calendar.getInstance());
         String filename = String.format("%sDaveLog_%s.txt", directory, date);
 
@@ -683,26 +685,19 @@ public class LogFile
         context.startActivity(Intent.createChooser(emailIntent, "Send mail..."));
     }
 
-    public void WriteLog(String log)
-    {
-        try
-        {
-            FileWriter fw = new FileWriter(LogFilename, false);
-            fw.write(log);
-            fw.close();
-        }
-        catch (Exception e) {}
-    }
+//    public void WriteLog(String log)
+//    {
+//        try
+//        {
+//            FileWriter fw = new FileWriter(LogFilename, false);
+//            fw.write(log);
+//            fw.close();
+//        }
+//        catch (Exception e) {}
+//    }
 
-    public void AddLogEntry(Calendar curDate, int index, String state, String comment, LoggerConfig config)
+    public void AddLogEntry(Calendar curDate, String name, String state, String comment, Location location)
     {
-        //Find button or toggle
-        String label = null;
-        if(index < 1000)
-            label = config.Buttons.get(index);
-        else
-            label = config.Toggles.get(index-1000);
-
         //Add LogEntry to log file in memory
         if(comment != null)
             comment = comment.trim();
@@ -711,13 +706,24 @@ public class LogFile
         {
             //Write entry to log file
             FileWriter fw = new FileWriter(LogFilename, true);
-            fw.append(DateStrings.GetDateTimeString(curDate) + " - " + label);
+            fw.append(DateStrings.GetDateTimeString(curDate) + " - " + name);
             if(state != null)
             {
                 fw.append(" " + state);
             }
+
             if(comment != null)
+            {
                 fw.append(" - " + comment);
+            }
+
+            if(location != null)
+            {
+                fw.append(" (GPS:"
+                                + Location.convert(location.getLatitude(), Location.FORMAT_SECONDS) + ","
+                                + Location.convert(location.getLongitude(), Location.FORMAT_SECONDS) + ")");
+            }
+
             fw.append("\n");
             fw.close();
         }
@@ -727,7 +733,6 @@ public class LogFile
         }
 
         if(LogEntries != null)
-            LogEntries.add(new LogEntry(DateStrings.GetDateTimeString(curDate), label, state, comment));
+            LogEntries.add(new LogEntry(DateStrings.GetDateTimeString(curDate), name, state, comment));
     }
-
 }

@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "35652480943",
+    "firebase_url": "https://viggilog-33155.firebaseio.com",
+    "project_id": "viggilog-33155",
+    "storage_bucket": "viggilog-33155.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35652480943:android:e8a761b85a811c3b",
+        "android_client_info": {
+          "package_name": "com.viggi.logger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "35652480943-q5i4lgvoo2rfn0h04dh8jn61llp9id8l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJVS-HKiJNt1x6kmaMTPw7WOfH4fqenss"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

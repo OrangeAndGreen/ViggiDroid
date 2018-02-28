@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainScroll"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    style="@style/AppTheme"
+    >
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+        <!-- First row: date string and safe button  -->
+        <Button android:id="@+id/viewButton"
+            android:layout_width="70sp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:text="@string/view"
+            />
+        <Button android:id="@+id/safeButton"
+            android:layout_width="35sp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/viewButton"
+            android:text="@string/safe_short"
+            />
+        <Button android:id="@+id/menuButton"
+            android:layout_width="35sp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/safeButton"
+            android:text="@string/menu_short"
+            />
+        <TextView  android:id="@+id/introText"
+            style="@style/labelStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:text="@string/hello"
+            android:textSize="25sp"
+            />
+        <View   android:id="@+id/divider1"
+            android:layout_height="2dp"
+            android:layout_width="fill_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/viewButton"
+            android:background="@color/divider"
+            />
+
+        <!-- Second row: logging options  -->
+        <CheckBox android:id="@+id/dateCheck"
+            style="@style/labelStyle"
+            android:layout_width="150sp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/divider1"
+            android:layout_alignParentLeft="true"
+            android:text="@string/date_edit"
+            />
+        <CheckBox android:id="@+id/commentCheck"
+            style="@style/labelStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/divider1"
+            android:layout_toRightOf="@id/dateCheck"
+            android:text="@string/comment_add"
+            />
+        <CheckBox android:id="@+id/gridCheck"
+            style="@style/labelStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/divider1"
+            android:layout_alignParentRight="true"
+            android:text="Grid"
+            />
+        <View   android:id="@+id/divider2"
+            android:layout_height="2dp"
+            android:layout_width="fill_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/dateCheck"
+            android:background="@color/divider"
+            />
+
+        <!-- Third row and on: Toggles and Events -->
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_below="@id/divider2"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </RelativeLayout>
+</ScrollView>

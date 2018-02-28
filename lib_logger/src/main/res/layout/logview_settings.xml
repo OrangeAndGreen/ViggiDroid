@@ -48,6 +48,24 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:text="New Graph"
+                android:id="@+id/newGraphLabel"
+                android:layout_marginTop="20sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="false"
+                android:layout_alignParentTop="true" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/labelStyle"
+                android:id="@+id/newGraphInput"
+                android:layout_alignTop="@id/newGraphLabel"
+                android:layout_alignParentRight="true" />
+            <TextView
                 android:layout_width="170sp"
                 android:layout_height="wrap_content"
                 style="@style/labelStyle"
@@ -55,13 +73,14 @@
                 android:text="Filter"
                 android:id="@+id/filterLabel"
                 android:layout_marginTop="20sp"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="false"
-                android:layout_alignParentTop="true" />
+                android:layout_below="@id/newGraphLabel"
+                android:layout_alignParentLeft="true" />
             <EditText
                 android:id="@+id/filterText"
                 android:layout_width="200sp"
-                android:layout_height="wrap_content"
+                android:layout_height="30sp"
+                android:background="#FFFFFF"
+                android:textColor="#000000"
                 android:layout_toRightOf="@id/filterLabel"
                 android:layout_alignTop="@id/filterLabel"
                 />
@@ -80,7 +99,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/dataSpinner"
-                android:background="@drawable/border"
+                android:background="@drawable/spinner_bg"
                 android:spinnerMode="dropdown"
                 android:layout_marginTop="20px"
                 android:layout_alignTop="@id/dataSelectorLabel"
@@ -100,19 +119,23 @@
                 android:layout_below="@id/dataSpinner" />
 
             <EditText
-                android:layout_width="50sp"
-                android:layout_height="wrap_content"
+                android:layout_width="40sp"
+                android:layout_height="30sp"
                 android:id="@+id/timeLengthText"
+                android:background="#FFFFFF"
+                android:textColor="#000000"
+                android:layout_marginTop="7sp"
                 android:layout_alignTop="@id/lengthLabel"
                 android:layout_alignLeft="@id/dataSpinner"/>
             <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/lengthSpinner"
-                android:background="@drawable/border"
+                android:background="@drawable/spinner_bg"
                 android:layout_below="@id/lengthLabel"
                 android:spinnerMode="dropdown"
                 android:layout_marginTop="20px"
+                android:layout_marginLeft="20px"
                 android:layout_alignTop="@id/lengthLabel"
                 android:layout_toRightOf="@id/timeLengthText"
                 android:layout_alignParentRight="true"/>
@@ -133,7 +156,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/typeSpinner"
-                android:background="@drawable/border"
+                android:background="@drawable/spinner_bg"
                 android:layout_below="@id/typeSelectorLabel"
                 android:spinnerMode="dropdown"
                 android:layout_marginTop="20px"
@@ -157,7 +180,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/secondarySpinner"
-                android:background="#555555"
+                android:background="@drawable/spinner_bg"
                 android:layout_below="@id/secondarySelectorLabel"
                 android:spinnerMode="dropdown"
                 android:layout_marginTop="20px"
@@ -174,7 +197,7 @@
                 android:id="@+id/daysLabel"
                 android:text="Day Filters (Monday first)"
                 android:layout_marginTop="25px"
-                android:layout_below="@+id/secondarySelectorLabel"
+                android:layout_below="@+id/secondarySpinner"
                 android:layout_alignParentLeft="true"
                 />
             <ToggleButton

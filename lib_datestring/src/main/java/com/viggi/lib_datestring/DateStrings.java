@@ -320,4 +320,22 @@ public class DateStrings
 
         return activeDate;
     }
+
+    public static Calendar GetStartOfActiveDay(Calendar dateIn, int midnightHour)
+    {
+        if(dateIn == null)
+            return null;
+
+        Calendar activeDate = (Calendar) dateIn.clone();
+
+        if(activeDate.get(Calendar.HOUR_OF_DAY) <= midnightHour)
+        {
+            activeDate.add(Calendar.HOUR, -24);
+        }
+        activeDate.set(Calendar.HOUR_OF_DAY, midnightHour);
+        activeDate.set(Calendar.MINUTE, 0);
+        activeDate.set(Calendar.SECOND, 0);
+
+        return activeDate;
+    }
 }

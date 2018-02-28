@@ -121,7 +121,7 @@
             android:background="@color/divider"
             />
 
-        <!-- Fifth row on: Events -->
+        <!-- Fifth row and on: Events -->
         <LinearLayout
             android:id="@+id/listLayout"
             android:orientation="vertical"

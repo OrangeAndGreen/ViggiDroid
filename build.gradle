@@ -15,5 +15,7 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        //Added the line below to get Firebase crash-handling to work
+        google()
     }
 }

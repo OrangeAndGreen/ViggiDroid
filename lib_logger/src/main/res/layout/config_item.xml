@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:id="@+id/itemName"
+        android:textSize="24sp"
+        android:text="-----"/>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemOptionsLayout"
+        android:background="@drawable/border"
+        android:layout_below="@+id/itemName"
+        android:layout_alignParentLeft="true">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15sp"
+            android:layout_marginLeft="10sp"
+            android:id="@+id/itemToggleLabel"
+            android:text="Toggle"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/itemToggleLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/itemToggleCheck"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/itemToggleLabel"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15sp"
+            android:layout_marginLeft="10sp"
+            android:id="@+id/itemSafeLabel"
+            android:text="Safe"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/itemSafeLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/itemSafeCheck"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/itemSafeLabel"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15sp"
+            android:layout_marginLeft="10sp"
+            android:id="@+id/itemValueLabel"
+            android:text="Value"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/itemValueLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/itemValueCheck"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/itemValueLabel"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15sp"
+            android:layout_marginLeft="10sp"
+            android:id="@+id/itemBackupLabel"
+            android:text="Backup"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/itemBackupLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/itemBackupCheck"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/itemBackupLabel"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15sp"
+            android:layout_marginLeft="10sp"
+            android:id="@+id/itemLocationLabel"
+            android:text="Location"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/itemLocationLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/itemLocationCheck"/>
+    </RelativeLayout>
+
+    <View   android:id="@+id/configItemDivider"
+        android:layout_height="2dp"
+        android:layout_width="fill_parent"
+        android:layout_below="@+id/itemOptionsLayout"
+        android:background="@color/divider"
+        />
+
+</RelativeLayout>

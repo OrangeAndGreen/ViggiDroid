@@ -10,31 +10,26 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Dave on 2/22/2015.
+ * Holds the temporary state information used to make the Logger load faster and quickly display stats
  */
 public class LoggerStateFile
 {
     //Note: If you change this, you'll need to delete the Temp file before running the new app
     // Otherwise it will probably crash, or at least act strangely
     public static final int RecentTotalsHistoryLength = 8;
-    public static final int RecentEntriesHistoryLength = 3;
+    private static final int RecentEntriesHistoryLength = 3;
 
-    public String TempFilename = null;
-    public Calendar ActiveDate = null;
+    private String TempFilename = null;
+    private Calendar ActiveDate = null;
+    public Calendar LastPhoneCall = null;
 
     public boolean Safe = false;
 
-    public String[] EventNames = null;
-    public int[][] EventRecentCounts = null;
-    public double[] EventAllTimeAverages = null;
-    public double[] EventRecentAverages = null;
-    public Calendar[][] EventRecentHistories = null;
-
-    public String[] ToggleNames = null;
-    public boolean[] ToggleStates = null;
-    public Calendar[] ToggleLastDates = null;
+    private List<LoggerStateItem> Items = new ArrayList<>();
 
     private LoggerStateFile(String tempFilename)
     {
@@ -48,27 +43,6 @@ public class LoggerStateFile
 
         BufferedReader br = new BufferedReader(new FileReader(ret.TempFilename));
 
-        int numButtons = config.Buttons.size();
-        int numToggles = config.Toggles.size();
-
-        ret.EventNames = new String[numButtons];
-
-        ret.EventRecentCounts = new int[numButtons][];
-        ret.EventRecentHistories = new Calendar[numButtons][];
-        for (int i = 0; i < numButtons; i++)
-        {
-            ret.EventRecentCounts[i] = new int[RecentTotalsHistoryLength];
-            ret.EventRecentHistories[i] = new Calendar[RecentEntriesHistoryLength];
-        }
-
-        ret.EventAllTimeAverages = new double[numButtons];
-        ret.EventRecentAverages = new double[numButtons];
-
-        //Toggle setup
-        ret.ToggleNames = new String[numToggles];
-        ret.ToggleStates = new boolean[numToggles];
-        ret.ToggleLastDates = new Calendar[numToggles];
-
         while (true)
         {
             String line = br.readLine();
@@ -81,16 +55,18 @@ public class LoggerStateFile
 
             if (parts[0].equals("ActiveDate"))
                 ret.ActiveDate = DateStrings.ParseDateTimeString(parts[1]);
+            if (parts[0].equals("LastPhoneCall"))
+                ret.LastPhoneCall = DateStrings.ParseDateTimeString(parts[1]);
             if (parts[0].equals("Event"))
             {
                 //Break event into parts and find button index
                 String[] subparts = parts[1].split(", ");
-                int index = config.Buttons.indexOf(subparts[0]);
-                if (index < 0)
+                LogItem configItem = config.GetEntryByName(subparts[0]);
+                if(configItem == null)
                     continue;
 
-                //Assign event name and today count
-                ret.EventNames[index] = subparts[0];
+                LoggerStateItem stateItem = new LoggerStateItem();
+                stateItem.Name = subparts[0];
 
                 //DEFAULT: Name, daily total, prev1, prev2, prev3
                 double allTimeAverage = -1;
@@ -103,7 +79,7 @@ public class LoggerStateFile
                     int offset = 1;
                     for (int i = 0; i < RecentTotalsHistoryLength; i++)
                     {
-                        ret.EventRecentCounts[index][i] = Integer.valueOf(subparts[offset]);
+                        stateItem.RecentCounts[i] = Integer.valueOf(subparts[offset]);
                         offset++;
                     }
 
@@ -116,31 +92,75 @@ public class LoggerStateFile
                     //Parse recent entry dates
                     for (int i = 0; i < RecentEntriesHistoryLength; i++)
                     {
-                        ret.EventRecentHistories[index][i] = DateStrings.ParseDateTimeString(subparts[offset].trim());
+                        stateItem.RecentHistory[i] = DateStrings.ParseDateTimeString(subparts[offset].trim());
                         offset++;
                     }
                 }
                 else
                 {
                     //THE OLD WAY (for legacy support): Name, daily total, prev1, prev2, prev3
-                    ret.EventRecentCounts[index][0] = Integer.valueOf(subparts[1]);
+                    stateItem.RecentCounts[0] = Integer.valueOf(subparts[1]);
                     for (int i = 0; i < 3; i++)
-                        ret.EventRecentHistories[index][i] = DateStrings.ParseDateTimeString(subparts[i + 2].trim());
+                    {
+                        stateItem.RecentHistory[i] = DateStrings.ParseDateTimeString(subparts[i + 2].trim());
+                    }
                 }
 
-                ret.EventAllTimeAverages[index] = allTimeAverage;
-                ret.EventRecentAverages[index] = recentAverage;
+                stateItem.AllTimeAverage = allTimeAverage;
+                stateItem.RecentAverage = recentAverage;
+
+                ret.Items.add(stateItem);
             }
             if (parts[0].equals("Toggle"))
             {
                 String[] subparts = parts[1].split(", ");
-                int index = config.Toggles.indexOf(subparts[0]);
-                if (index < 0)
+                LogItem configItem = config.GetEntryByName(subparts[0]);
+                if(configItem == null)
                     continue;
 
-                ret.ToggleNames[index] = subparts[0];
-                ret.ToggleStates[index] = subparts[1].trim().equals("on");
-                ret.ToggleLastDates[index] = DateStrings.ParseDateTimeString(subparts[2].trim());
+                LoggerStateItem stateItem = new LoggerStateItem();
+                stateItem.Name = subparts[0];
+                stateItem.IsToggle = configItem.IsToggle;
+                stateItem.ToggleState = subparts[1].trim().equals("on");
+
+                double allTimeAverage;
+                double recentAverage;
+                if (subparts.length > 3)
+                {
+                    //NEW: Name, State, (recent totals), all-time average, recent average, (recent dates)
+                    //Name, (recent totals), all-time average, recent average, (recent dates)
+
+                    //Parse recent daily totals
+                    int offset = 2;
+                    for (int i = 0; i < RecentTotalsHistoryLength; i++)
+                    {
+                        stateItem.RecentCounts[i] = Double.valueOf(subparts[offset]);
+                        offset++;
+                    }
+
+                    //Parse all-time and recent averages
+                    allTimeAverage = Double.valueOf(subparts[offset]);
+                    offset++;
+                    recentAverage = Double.valueOf(subparts[offset]);
+                    offset++;
+
+                    //Parse recent entry dates
+                    for (int i = 0; i < RecentEntriesHistoryLength; i++)
+                    {
+                        stateItem.RecentHistory[i] = DateStrings.ParseDateTimeString(subparts[offset].trim());
+                        offset++;
+                    }
+
+                    stateItem.AllTimeAverage = allTimeAverage;
+                    stateItem.RecentAverage = recentAverage;
+                }
+                else
+                {
+                    //THE OLD WAY
+                    stateItem.RecentHistory[0] = DateStrings.ParseDateTimeString(subparts[2].trim());
+                }
+
+                ret.Items.add(stateItem);
             }
             if (parts[0].equals("Safe"))
             {
@@ -151,13 +171,13 @@ public class LoggerStateFile
         }
         br.close();
 
-        Log.i("LoggerState", String.format("%d buttons, %d toggles", numButtons, numToggles));
+        Log.i("LoggerState", String.format("%d items", ret.Items.size()));
 
         if (!DateStrings.SameDay(Calendar.getInstance(), ret.ActiveDate, config.MidnightHour))
         {
             Log.i("LoggerState", "Starting new day");
             ret.StartNewActiveDay(config);
-            ret.Save(config);
+            ret.Save();
         }
 
         return ret;
@@ -165,124 +185,141 @@ public class LoggerStateFile
 
     public static LoggerStateFile Create(String filename, List<LogEntry> entries, LoggerConfig config)
     {
-        int numButtons = config.Buttons.size();
-        int numToggles = config.Toggles.size();
-
         int numEntries = 0;
         if(entries != null)
             numEntries = entries.size();
-        Log.i("LoggerState", String.format("Creating new: %d buttons, %d toggles (%d entries)", numButtons, numToggles, numEntries));
+        Log.i("LoggerState", String.format("Creating new: %d entries", numEntries));
 
         LoggerStateFile ret = new LoggerStateFile(filename);
 
         ret.ActiveDate = DateStrings.GetActiveDate(Calendar.getInstance(), config.MidnightHour);
+        ret.LastPhoneCall = Calendar.getInstance();
 
-        ret.EventNames = new String[numButtons];
-        ret.EventRecentCounts = new int[numButtons][];
-        ret.EventAllTimeAverages = new double[numButtons];
-        ret.EventRecentAverages = new double[numButtons];
-        ret.EventRecentHistories = new Calendar[numButtons][];
-
-        ret.ToggleNames = new String[numToggles];
-        ret.ToggleStates = new boolean[numToggles];
-        ret.ToggleLastDates = new Calendar[numToggles];
-
-        for(int i=0; i<numButtons; i++)
+        for(LogItem configItem : config.Items)
         {
-            ret.EventNames[i] = config.Buttons.get(i);
-            ret.EventRecentCounts[i] = new int[RecentTotalsHistoryLength];
-            ret.EventRecentHistories[i] = new Calendar[RecentEntriesHistoryLength];
+            LoggerStateItem stateItem = new LoggerStateItem();
+
+            stateItem.Name = configItem.Name;
+            stateItem.IsToggle = configItem.IsToggle;
 
             if(entries != null && entries.size() > 0)
             {
-
-                float[] dailyTotals = LogEntry.ExtractDailyEventTotals(entries, i, entries.get(0).GetDate(), config, null, new ArrayList<Boolean>());
-                float total = 0;
-                for (int j = 0; j < dailyTotals.length; j++) {
-                    total += dailyTotals[j];
+                float[] dailyTotals;
+                if(configItem.IsToggle)
+                {
+                    dailyTotals = LogEntry.ExtractDailyToggleTotals(entries, stateItem.Name, entries.get(0).GetDate(), config.MidnightHour, null, new ArrayList<Boolean>());
+                }
+                else
+                {
+                    dailyTotals = LogEntry.ExtractDailyEventTotals(entries, stateItem.Name, entries.get(0).GetDate(), config.MidnightHour, null, new ArrayList<Boolean>());
                 }
 
-                ret.EventAllTimeAverages[i] = total / dailyTotals.length;
+                float total = 0;
+                for(float dailyTotal : dailyTotals)
+                {
+                    total += dailyTotal;
+                }
+
+                stateItem.AllTimeAverage = total / dailyTotals.length;
                 for (int j = 0; j < RecentTotalsHistoryLength; j++) {
-                    ret.EventRecentCounts[i][j] = (int) dailyTotals[dailyTotals.length - 1 - j];
+                    stateItem.RecentCounts[j] = dailyTotals[dailyTotals.length - 1 - j];
                 }
             }
-        }
-        for(int i=0; i<numToggles; i++)
-        {
-            ret.ToggleNames[i] = config.Toggles.get(i);
+
+            ret.Items.add(stateItem);
         }
 
         for(int i=0; i<numEntries; i++)
         {
             LogEntry curEntry = entries.get(i);
-            int index = curEntry.GetId(config);
-            if(index >=0)
+            LoggerStateItem item = ret.GetEntryByName(curEntry.GetType());
+
+            if(item != null)
             {
-                //Update event logger
-                ret.UpdateEventHistory(curEntry.GetDate(), index);
-            }
-            else
-            {
-                //Update toggle
-                index = curEntry.GetToggleId(config);
-                if(index >= 0)
+                if(item.IsToggle)
                 {
-                    boolean checked = curEntry.GetToggleState().trim().equals("on");
-                    ret.ToggleStates[index] = checked;
-                    ret.ToggleLastDates[index] = curEntry.GetDate();
+                    item.ToggleState = curEntry.GetToggleState().trim().equals("on");
                 }
+
+                ret.UpdateItemHistory(curEntry.GetDate(), item);
             }
         }
-        ret.Save(config);
+        ret.Save();
 
         return ret;
     }
 
+    public int NumItems()
+    {
+        return Items.size();
+    }
 
-    public void StartNewActiveDay(LoggerConfig config)
+    private void StartNewActiveDay(LoggerConfig config)
     {
         ActiveDate = DateStrings.GetActiveDate(Calendar.getInstance(), config.MidnightHour);
         Safe = false;
+        Calendar curDate = Calendar.getInstance();
 
-        for(int i=0; i < EventRecentCounts.length; i++)
+        for(LoggerStateItem item : Items)
         {
+            //For overnight toggles, add any remaining "on" time
+            if(item.IsToggle && item.ToggleState)
+            {
+                item.RecentCounts[0] += (curDate.getTimeInMillis() - item.RecentHistory[0].getTimeInMillis()) / (float)3600000;
+            }
+
+            //Shift the RecentCounts (0 is most recent)
             for (int j = 0; j < RecentTotalsHistoryLength - 1; j++)
             {
-                EventRecentCounts[i][RecentTotalsHistoryLength - 1 - j] = EventRecentCounts[i][RecentTotalsHistoryLength - 2 - j];
+                item.RecentCounts[RecentTotalsHistoryLength - 1 - j] = item.RecentCounts[RecentTotalsHistoryLength - 2 - j];
             }
-            EventRecentCounts[i][0] = 0;
+
+            item.RecentCounts[0] = 0;
         }
     }
 
     //Updates the list of 3 most recent entries
-    private void UpdateEventHistory(Calendar curDate, int index)
+    private void UpdateItemHistory(Calendar curDate, LoggerStateItem item)
     {
         //Rotate the dates, i.e 1->2, 0->1
         for(int i=0; i<RecentEntriesHistoryLength - 1; i++)
         {
-            EventRecentHistories[index][RecentEntriesHistoryLength - i - 1] =  EventRecentHistories[index][RecentEntriesHistoryLength - i - 2];
+            item.RecentHistory[RecentEntriesHistoryLength - i - 1] =  item.RecentHistory[RecentEntriesHistoryLength - i - 2];
         }
 
         //Assign the new 0 date
-        EventRecentHistories[index][0] = curDate;
+        item.RecentHistory[0] = curDate;
     }
 
-    public void UpdateEvent(int index, Calendar date, LoggerConfig config)
+    public void UpdateItem(LoggerStateItem item, Calendar date, int midnightHour)
     {
-        EventRecentCounts[index][0]++;
-        UpdateEventHistory(date, index);
-        Save(config);
+        if(item.IsToggle)
+        {
+            if(!item.ToggleState)
+            {
+                Calendar compareDate = item.RecentHistory[0];
+                if(DateStrings.GetActiveDiffInDays(date, item.RecentHistory[0], midnightHour) != 0)
+                {
+                    //Toggle was on overnight
+                    compareDate = (Calendar)date.clone();
+                    compareDate.set(Calendar.HOUR_OF_DAY, midnightHour);
+                    compareDate.set(Calendar.MINUTE, 0);
+                    compareDate.set(Calendar.SECOND, 0);
+                }
+
+                item.RecentCounts[0] += (date.getTimeInMillis() - compareDate.getTimeInMillis()) / (float)3600000;
+            }
+        }
+        else
+        {
+            item.RecentCounts[0]++;
+        }
+
+        UpdateItemHistory(date, item);
+        Save();
     }
 
-    public void UpdateToggle(int index, Calendar date, boolean state, LoggerConfig config)
-    {
-        ToggleStates[index] = state;
-        ToggleLastDates[index] = date;
-        Save(config);
-    }
-
-    public void Save(LoggerConfig config)
+    public void Save()
     {
         Log.i("LoggerState", "Saving LoggerState");
 
@@ -291,48 +328,75 @@ public class LoggerStateFile
             FileWriter fw = new FileWriter(TempFilename, false);
 
             fw.write(String.format("ActiveDate = %s\n", DateStrings.GetDateTimeString(ActiveDate)));
+            fw.write(String.format("LastPhoneCall = %s\n", DateStrings.GetDateTimeString(LastPhoneCall)));
             fw.write(String.format("Safe = %s\n", Safe));
 
-            for(int i=0; i<config.Buttons.size(); i++)
+            for(LoggerStateItem item : Items)
             {
-                String totalsString = "";
-                for(int j=0; j<RecentTotalsHistoryLength; j++)
+                //TODO LOGITEM: What can be reduced from the cases below?
+                if(item.IsToggle)
                 {
-                    if(j > 0)
-                        totalsString += ", ";
+                    String toggleState = "off";
+                    if(item.ToggleState)
+                        toggleState = "on";
 
-                    totalsString += String.format("%d", EventRecentCounts[i][j]);
+                    String totalsString = "";
+                    for(int j=0; j<RecentTotalsHistoryLength; j++)
+                    {
+                        if(j > 0)
+                            totalsString += ", ";
+
+                        totalsString += String.format(Locale.getDefault(), "%f", item.RecentCounts[j]);
+                    }
+
+                    String prevDatesString = "";
+                    for(int j=0; j<RecentEntriesHistoryLength; j++)
+                    {
+                        if(j > 0)
+                            prevDatesString += ", ";
+
+                        prevDatesString += DateStrings.GetDateTimeString(item.RecentHistory[j]);
+                    }
+
+                    //Name, daily total, yesterday total, all-time average, recent average, prev1, prev2, prev3
+                    fw.write(String.format(Locale.getDefault(), "Toggle = %s, %s, %s, %f, %f, %s\n",
+                            item.Name,
+                            toggleState,
+                            totalsString,
+                            item.AllTimeAverage,
+                            item.RecentAverage,
+                            prevDatesString
+                    ));
                 }
-
-                String prevDatesString = "";
-                for(int j=0; j<RecentEntriesHistoryLength; j++)
+                else
                 {
-                    if(j > 0)
-                        prevDatesString += ", ";
+                    String totalsString = "";
+                    for(int j=0; j<RecentTotalsHistoryLength; j++)
+                    {
+                        if(j > 0)
+                            totalsString += ", ";
 
-                    prevDatesString += DateStrings.GetDateTimeString(EventRecentHistories[i][j]);
+                        totalsString += String.format(Locale.getDefault(), "%d", (int)item.RecentCounts[j]);
+                    }
+
+                    String prevDatesString = "";
+                    for(int j=0; j<RecentEntriesHistoryLength; j++)
+                    {
+                        if(j > 0)
+                            prevDatesString += ", ";
+
+                        prevDatesString += DateStrings.GetDateTimeString(item.RecentHistory[j]);
+                    }
+
+                    //Name, daily total, yesterday total, all-time average, recent average, prev1, prev2, prev3
+                    fw.write(String.format(Locale.getDefault(), "Event = %s, %s, %f, %f, %s\n",
+                            item.Name,
+                            totalsString,
+                            item.AllTimeAverage,
+                            item.RecentAverage,
+                            prevDatesString
+                    ));
                 }
-
-                //Name, daily total, yesterday total, all-time average, recent average, prev1, prev2, prev3
-                fw.write(String.format("Event = %s, %s, %f, %f, %s\n",
-                        config.Buttons.get(i),
-                        totalsString,
-                        EventAllTimeAverages[i],
-                        EventRecentAverages[i],
-                        prevDatesString
-                ));
-            }
-
-            for(int i=0; i<config.Toggles.size(); i++)
-            {
-                String toggleState = "off";
-                if(ToggleStates[i])
-                    toggleState = "on";
-                fw.write(String.format("Toggle = %s, %s, %s\n",
-                        config.Toggles.get(i),
-                        toggleState,
-                        DateStrings.GetDateTimeString(ToggleLastDates[i])
-                ));
             }
 
             fw.close();
@@ -341,5 +405,18 @@ public class LoggerStateFile
         {
             Log.e("LoggerState", "Error saving LoggerState");
         }
+    }
+
+    public LoggerStateItem GetEntryByName(String name)
+    {
+        for(LoggerStateItem item : Items)
+        {
+            if(item.Name.equals(name))
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 }
