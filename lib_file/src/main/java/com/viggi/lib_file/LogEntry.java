@@ -132,7 +132,10 @@ public class LogEntry
         List<Float> countsPerDay = new ArrayList<>();
         Calendar lastDate = null;
         int dayCount = 0;
-        startDate.setTimeInMillis(entries.get(0).GetDate().getTimeInMillis());
+        if(entries.size() > 0)
+        {
+            startDate.setTimeInMillis(entries.get(0).GetDate().getTimeInMillis());
+        }
         for(int j=0; j<entries.size(); j++) //for each date
         {
             Calendar curDate = entries.get(j).GetDate();
@@ -159,12 +162,15 @@ public class LogEntry
             lastDate = curDate;
         }
 
-        //Add entries for every day between the last entry and now
-        int days = DateStrings.GetActiveDiffInDays(lastDate, Calendar.getInstance(), midnightHour) + 1;
-        for(int d=0; d<days; d++)
+        if(lastDate != null)
         {
-            countsPerDay.add((float)dayCount);
-            dayCount = 0;
+            //Add entries for every day between the last entry and now
+            int days = DateStrings.GetActiveDiffInDays(lastDate, Calendar.getInstance(), midnightHour) + 1;
+            for(int d=0; d<days; d++)
+            {
+                countsPerDay.add((float)dayCount);
+                dayCount = 0;
+            }
         }
 
         //Copy List<float> to DailyCounts[typeIndex][]

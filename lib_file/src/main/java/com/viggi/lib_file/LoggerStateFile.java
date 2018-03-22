@@ -222,7 +222,7 @@ public class LoggerStateFile
 
                 stateItem.AllTimeAverage = total / dailyTotals.length;
                 for (int j = 0; j < RecentTotalsHistoryLength; j++) {
-                    stateItem.RecentCounts[j] = dailyTotals[dailyTotals.length - 1 - j];
+                    stateItem.RecentCounts[j] = dailyTotals.length > j ? dailyTotals[dailyTotals.length - 1 - j] : 0;
                 }
             }
 
